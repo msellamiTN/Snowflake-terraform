@@ -1,22 +1,28 @@
 #requires -version 5.1
 <#
 .SYNOPSIS
-    Installe automatiquement TOUS les outils requis pour la formation Terraform & Snowflake.
+    Installation automatique de l'environnement de formation
+    Terraform & Snowflake.
+
 .DESCRIPTION
-    Ce script télécharge et installe chaque outil manquant — aucune intervention manuelle requise.
-    Outils installés :
-      1. Terraform 1.14.5       (téléchargement direct + PATH)
-      2. Snowflake CLI           (pip install ou installeur officiel)
-      3. Git                     (winget ou téléchargement .exe)
-      4. OpenSSL                 (fourni avec Git, ajouté au PATH)
-      5. VS Code                 (winget ou téléchargement .exe)
-      6. Azure CLI               (winget ou téléchargement .msi)
-      7. tflint                  (téléchargement direct + PATH)
-      8. Python 3.12             (winget ou téléchargement .exe — requis pour Snowflake CLI)
-    Le script est idempotent : un outil déjà installé à la bonne version est skippé.
+    Installe/verifie :
+      1. Terraform 1.14.5
+      2. Python 3.12
+      3. Snowflake CLI
+      4. Git
+      5. OpenSSL
+      6. VS Code
+      7. Azure CLI
+      8. tflint 0.50.0
+
+    Compatible Windows PowerShell 5.1.
+    Script idempotent : les outils deja conformes sont conserves.
+
 .EXAMPLE
-    .\scripts\Install-Tools.ps1
-    .\scripts\Install-Tools.ps1 -Force    # Réinstalle tout
+    powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Force
 #>
 
 [CmdletBinding()]
@@ -24,297 +30,887 @@ param(
     [string]$TerraformVersion = "1.14.5",
     [string]$TflintVersion    = "0.50.0",
     [string]$PythonVersion    = "3.12",
+
     [string]$TfInstallDir     = "C:\tools\tf-bin",
     [string]$TflintInstallDir = "C:\tools\tflint-bin",
+
     [switch]$Force
 )
 
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = "Stop"
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
-function Write-Step($num, $total, $name) {
-    Write-Host "`n── $num/$total — $name ──" -ForegroundColor Cyan
+$TotalSteps = 8
+$Results = @()
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+function Write-Step {
+    param(
+        [int]$Number,
+        [int]$Total,
+        [string]$Name
+    )
+
+    Write-Host ""
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host " $Number/$Total - $Name" -ForegroundColor Cyan
+    Write-Host "============================================================" -ForegroundColor Cyan
 }
 
-function Write-Ok($msg)   { Write-Host "  ✅ $msg" -ForegroundColor Green }
-function Write-Err($msg)  { Write-Host "  ❌ $msg" -ForegroundColor Red }
-function Write-Info($msg) { Write-Host "  ℹ️  $msg" -ForegroundColor Yellow }
-function Write-Log($msg)  { Write-Host "  $msg" -ForegroundColor DarkGray }
-
-function Test-CommandExists($name) {
-    return [bool](Get-Command $name -ErrorAction SilentlyContinue)
+function Write-Ok {
+    param([string]$Message)
+    Write-Host "[OK] $Message" -ForegroundColor Green
 }
 
-function Add-ToUserPath($dir) {
-    $currentPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
-    if ($currentPath -notlike "*$dir*") {
-        [Environment]::SetEnvironmentVariable('PATH', "$dir;$currentPath", 'User')
-        Write-Info "Ajouté au PATH utilisateur : $dir"
+function Write-Err {
+    param([string]$Message)
+    Write-Host "[ERROR] $Message" -ForegroundColor Red
+}
+
+function Write-Info {
+    param([string]$Message)
+    Write-Host "[INFO] $Message" -ForegroundColor Yellow
+}
+
+function Write-Log {
+    param([string]$Message)
+    Write-Host "       $Message" -ForegroundColor DarkGray
+}
+
+function Test-CommandExists {
+    param([string]$Name)
+
+    $command = Get-Command $Name -ErrorAction SilentlyContinue
+
+    if ($null -ne $command) {
+        return $true
     }
-    if ($env:PATH -notlike "*$dir*") {
-        $env:PATH = "$dir;$env:PATH"
+
+    return $false
+}
+
+function Refresh-Path {
+    $machinePath = [Environment]::GetEnvironmentVariable(
+        "PATH",
+        "Machine"
+    )
+
+    $userPath = [Environment]::GetEnvironmentVariable(
+        "PATH",
+        "User"
+    )
+
+    $env:PATH = "$machinePath;$userPath"
+}
+
+function Add-ToUserPath {
+    param([string]$Directory)
+
+    if (-not (Test-Path $Directory)) {
+        return
+    }
+
+    $currentUserPath = [Environment]::GetEnvironmentVariable(
+        "PATH",
+        "User"
+    )
+
+    if ([string]::IsNullOrWhiteSpace($currentUserPath)) {
+        $currentUserPath = ""
+    }
+
+    $escapedDirectory = [Regex]::Escape($Directory)
+
+    if ($currentUserPath -notmatch "(^|;)$escapedDirectory(;|$)") {
+
+        if ($currentUserPath.Length -gt 0) {
+            $newPath = "$Directory;$currentUserPath"
+        }
+        else {
+            $newPath = $Directory
+        }
+
+        [Environment]::SetEnvironmentVariable(
+            "PATH",
+            $newPath,
+            "User"
+        )
+
+        Write-Info "PATH utilisateur ajoute : $Directory"
+    }
+
+    if ($env:PATH -notmatch "(^|;)$escapedDirectory(;|$)") {
+        $env:PATH = "$Directory;$env:PATH"
     }
 }
 
-function Get-WingetPackage($packageId) {
+function Test-WingetAvailable {
+
+    if (-not (Test-CommandExists "winget")) {
+        return $false
+    }
+
     try {
-        $result = winget list --id $packageId --accept-source-agreements 2>&1
-        return ($result -match $packageId)
-    } catch {
+        $null = winget --version 2>&1
+        return $true
+    }
+    catch {
         return $false
     }
 }
 
-function Install-WingetPackage($packageId, $displayName) {
-    if (Get-WingetPackage $packageId) {
-        Write-Ok "$displayName déjà installé (winget)"
+function Get-WingetPackageInstalled {
+    param([string]$PackageId)
+
+    if (-not (Test-WingetAvailable)) {
+        return $false
+    }
+
+    try {
+
+        $output = winget list `
+            --id $PackageId `
+            --exact `
+            --accept-source-agreements 2>&1
+
+        foreach ($line in $output) {
+            if ($line -match [Regex]::Escape($PackageId)) {
+                return $true
+            }
+        }
+
+        return $false
+    }
+    catch {
+        return $false
+    }
+}
+
+function Install-WingetPackage {
+    param(
+        [string]$PackageId,
+        [string]$DisplayName
+    )
+
+    if (-not (Test-WingetAvailable)) {
+        Write-Info "winget indisponible."
+        return $false
+    }
+
+    if (-not $Force) {
+
+        if (Get-WingetPackageInstalled $PackageId) {
+            Write-Ok "$DisplayName deja installe via winget."
+            return $true
+        }
+    }
+
+    Write-Info "Installation de $DisplayName via winget..."
+
+    try {
+
+        winget install `
+            --id $PackageId `
+            --exact `
+            --accept-package-agreements `
+            --accept-source-agreements `
+            --silent 2>&1 |
+            ForEach-Object {
+                Write-Log $_
+            }
+
+        Start-Sleep -Seconds 2
+
+        Refresh-Path
+
+        if (Get-WingetPackageInstalled $PackageId) {
+            Write-Ok "$DisplayName installe."
+            return $true
+        }
+
+        Write-Err "winget n'a pas confirme l'installation de $DisplayName."
+        return $false
+    }
+    catch {
+
+        Write-Err "Echec winget pour $DisplayName."
+        Write-Log $_.Exception.Message
+
+        return $false
+    }
+}
+
+function Download-File {
+    param(
+        [string]$Url,
+        [string]$OutputFile
+    )
+
+    Write-Info "Telechargement : $Url"
+
+    try {
+
+        Invoke-WebRequest `
+            -Uri $Url `
+            -OutFile $OutputFile `
+            -UseBasicParsing
+
+        if (-not (Test-Path $OutputFile)) {
+            throw "Le fichier telecharge n'existe pas."
+        }
+
         return $true
     }
-    Write-Info "Installation de $displayName via winget..."
+    catch {
+
+        Write-Err "Echec du telechargement."
+        Write-Log $_.Exception.Message
+
+        return $false
+    }
+}
+
+function Install-ZipExecutable {
+    param(
+        [string]$Name,
+        [string]$Url,
+        [string]$InstallDirectory,
+        [string]$ExecutableName
+    )
+
+    $tempZip = Join-Path `
+        $env:TEMP `
+        ("{0}-{1}.zip" -f $Name, (Get-Random))
+
     try {
-        winget install --id $packageId --accept-package-agreements --accept-source-agreements --silent 2>&1 |
-            ForEach-Object { Write-Log $_ }
-        if (Get-WingetPackage $packageId) {
-            Write-Ok "$displayName installé via winget"
-            return $true
-        } else {
-            Write-Err "winget install échoué pour $displayName"
+
+        if (-not (Test-Path $InstallDirectory)) {
+            New-Item `
+                -ItemType Directory `
+                -Path $InstallDirectory `
+                -Force |
+                Out-Null
+        }
+
+        if (-not (Download-File $Url $tempZip)) {
             return $false
         }
-    } catch {
-        Write-Err "winget indisponible ou échec: $($_.Exception.Message)"
-        return $false
-    }
-}
 
-function Install-DirectDownload($name, $url, $outFile, $destDir, $exeName) {
-    Write-Info "Téléchargement de $name depuis $url..."
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $outFile -UseBasicParsing
-        if (-not (Test-Path $destDir)) {
-            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+        Write-Info "Extraction de $Name..."
+
+        Expand-Archive `
+            -Path $tempZip `
+            -DestinationPath $InstallDirectory `
+            -Force
+
+        $exe = Get-ChildItem `
+            -Path $InstallDirectory `
+            -Filter $ExecutableName `
+            -Recurse `
+            -File `
+            -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
+        if ($null -eq $exe) {
+            throw "$ExecutableName introuvable apres extraction."
         }
-        if ($outFile -match '\.zip$') {
-            Expand-Archive -Path $outFile -DestinationPath $destDir -Force
-        } elseif ($outFile -match '\.msi$') {
-            Start-Process msiexec.exe -ArgumentList "/i `"$outFile`" /quiet /norestart" -Wait
-        } else {
-            Copy-Item $outFile (Join-Path $destDir $exeName) -Force
+
+        # Si l'executable est dans un sous-dossier,
+        # on le remonte dans le dossier principal.
+        $target = Join-Path `
+            $InstallDirectory `
+            $ExecutableName
+
+        if ($exe.FullName -ne $target) {
+
+            Copy-Item `
+                -Path $exe.FullName `
+                -Destination $target `
+                -Force
         }
-        Remove-Item $outFile -Force -ErrorAction SilentlyContinue
-        Write-Ok "$name installé dans $destDir"
+
+        Add-ToUserPath $InstallDirectory
+
+        Write-Ok "$Name installe dans $InstallDirectory."
+
         return $true
-    } catch {
-        Write-Err "Échec téléchargement $name : $($_.Exception.Message)"
+    }
+    catch {
+
+        Write-Err "Echec installation de $Name."
+        Write-Log $_.Exception.Message
+
         return $false
+    }
+    finally {
+
+        if (Test-Path $tempZip) {
+            Remove-Item `
+                $tempZip `
+                -Force `
+                -ErrorAction SilentlyContinue
+        }
     }
 }
 
-# ── Results ──────────────────────────────────────────────────────────────────
+function Test-VersionContains {
+    param(
+        [string]$Actual,
+        [string]$Expected
+    )
 
-$results = @()
-$totalSteps = 8
+    if ([string]::IsNullOrWhiteSpace($Actual)) {
+        return $false
+    }
 
-# ── 1. Terraform ─────────────────────────────────────────────────────────────
+    return ($Actual -match [Regex]::Escape($Expected))
+}
 
-Write-Step 1 $totalSteps "Terraform $TerraformVersion"
+# ============================================================
+# ADMINISTRATOR CHECK
+# ============================================================
+
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host " TERRAFORM & SNOWFLAKE - INSTALLATION ENVIRONNEMENT" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host ""
+
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal(
+    [Security.Principal.WindowsIdentity]::GetCurrent()
+)
+
+$isAdmin = $currentPrincipal.IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator
+)
+
+if (-not $isAdmin) {
+
+    Write-Info "PowerShell n'est pas lance en administrateur."
+    Write-Info "Le script peut fonctionner, mais certaines installations"
+    Write-Info "peuvent necessiter des droits administrateur."
+    Write-Host ""
+}
+
+# ============================================================
+# 1 - TERRAFORM
+# ============================================================
+
+Write-Step 1 $TotalSteps "Terraform $TerraformVersion"
 
 $tfOk = $false
-if (-not $Force -and (Test-CommandExists 'terraform')) {
-    $ver = & terraform version 2>&1 | Select-Object -First 1
-    if ($ver -match $TerraformVersion) {
-        Write-Ok "Terraform $TerraformVersion déjà installé — $ver"
-        $tfOk = $true
-    } else {
-        Write-Info "Version actuelle: $ver — réinstallation vers $TerraformVersion"
+
+if (-not $Force -and (Test-CommandExists "terraform")) {
+
+    try {
+
+        $tfVersionOutput = & terraform version 2>&1 |
+            Select-Object -First 1
+
+        if (Test-VersionContains `
+            $tfVersionOutput `
+            $TerraformVersion) {
+
+            Write-Ok "Terraform $TerraformVersion deja installe."
+            Write-Log $tfVersionOutput
+
+            $tfOk = $true
+        }
+        else {
+
+            Write-Info "Version actuelle : $tfVersionOutput"
+            Write-Info "Installation de Terraform $TerraformVersion."
+        }
+    }
+    catch {
+        Write-Info "Terraform detecte mais version impossible a lire."
     }
 }
+
 if (-not $tfOk) {
-    $url = "https://releases.hashicorp.com/terraform/$TerraformVersion/terraform_${TerraformVersion}_windows_amd64.zip"
-    $zip = Join-Path $env:TEMP "terraform_${TerraformVersion}.zip"
-    $tfOk = Install-DirectDownload "Terraform" $url $zip $TfInstallDir "terraform.exe"
-    if ($tfOk) { Add-ToUserPath $TfInstallDir }
+
+    $terraformUrl = `
+        "https://releases.hashicorp.com/terraform/$TerraformVersion/terraform_${TerraformVersion}_windows_amd64.zip"
+
+    $tfOk = Install-ZipExecutable `
+        "Terraform" `
+        $terraformUrl `
+        $TfInstallDir `
+        "terraform.exe"
 }
-$results += [PSCustomObject]@{ Tool = "Terraform"; Ok = $tfOk }
 
-# ── 2. Python ────────────────────────────────────────────────────────────────
+$Results += [PSCustomObject]@{
+    Tool = "Terraform"
+    Version = $TerraformVersion
+    Ok = $tfOk
+}
 
-Write-Step 2 $totalSteps "Python $PythonVersion"
+# ============================================================
+# 2 - PYTHON
+# ============================================================
+
+Write-Step 2 $TotalSteps "Python $PythonVersion"
 
 $pyOk = $false
-if (-not $Force -and (Test-CommandExists 'python')) {
-    $ver = & python --version 2>&1
-    if ($ver -match $PythonVersion) {
-        Write-Ok "Python $PythonVersion déjà installé — $ver"
-        $pyOk = $true
-    } else {
-        Write-Info "Version actuelle: $ver — installation de Python $PythonVersion"
+
+Refresh-Path
+
+if (-not $Force -and (Test-CommandExists "python")) {
+
+    try {
+
+        $pythonVersionOutput = & python --version 2>&1
+
+        if (Test-VersionContains `
+            $pythonVersionOutput `
+            $PythonVersion) {
+
+            Write-Ok "Python $PythonVersion deja installe."
+            Write-Log $pythonVersionOutput
+
+            $pyOk = $true
+        }
+        else {
+
+            Write-Info "Version actuelle : $pythonVersionOutput"
+        }
+    }
+    catch {
+        Write-Info "Python detecte mais version impossible a lire."
     }
 }
+
 if (-not $pyOk) {
-    # Try winget first
-    $pyOk = Install-WingetPackage "Python.Python.3.12" "Python 3.12"
+
+    $pyOk = Install-WingetPackage `
+        "Python.Python.3.12" `
+        "Python 3.12"
+
     if (-not $pyOk) {
-        # Fallback: direct download
-        $url = "https://www.python.org/ftp/python/3.12.8/python-3.12.8-amd64.exe"
-        $exe = Join-Path $env:TEMP "python-3.12.8-amd64.exe"
+
+        $pythonInstaller = Join-Path `
+            $env:TEMP `
+            "python-3.12.8-amd64.exe"
+
+        $pythonUrl = `
+            "https://www.python.org/ftp/python/3.12.8/python-3.12.8-amd64.exe"
+
         try {
-            Write-Info "Téléchargement de Python 3.12..."
-            Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing
-            Start-Process $exe -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
-            Remove-Item $exe -Force -ErrorAction SilentlyContinue
-            $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ";" + [Environment]::GetEnvironmentVariable('PATH', 'User')
-            if (Test-CommandExists 'python') {
-                Write-Ok "Python 3.12 installé"
-                $pyOk = $true
-            } else {
-                Write-Err "Python installé mais non détecté — rouvrez PowerShell"
+
+            if (Download-File $pythonUrl $pythonInstaller) {
+
+                Write-Info "Installation silencieuse de Python..."
+
+                Start-Process `
+                    -FilePath $pythonInstaller `
+                    -ArgumentList `
+                    "/quiet InstallAllUsers=1 PrependPath=1 Include_test=0" `
+                    -Wait
+
+                Refresh-Path
+
+                if (Test-CommandExists "python") {
+
+                    $pythonVersionOutput = & python --version 2>&1
+
+                    Write-Ok "Python installe."
+                    Write-Log $pythonVersionOutput
+
+                    $pyOk = $true
+                }
+                else {
+
+                    Write-Err "Python installe mais non detecte."
+                }
             }
-        } catch {
-            Write-Err "Échec installation Python: $($_.Exception.Message)"
+        }
+        catch {
+
+            Write-Err "Echec installation Python."
+            Write-Log $_.Exception.Message
+        }
+        finally {
+
+            if (Test-Path $pythonInstaller) {
+                Remove-Item `
+                    $pythonInstaller `
+                    -Force `
+                    -ErrorAction SilentlyContinue
+            }
         }
     }
 }
-$results += [PSCustomObject]@{ Tool = "Python"; Ok = $pyOk }
 
-# ── 3. Snowflake CLI ─────────────────────────────────────────────────────────
+$Results += [PSCustomObject]@{
+    Tool = "Python"
+    Version = $PythonVersion
+    Ok = $pyOk
+}
 
-Write-Step 3 $totalSteps "Snowflake CLI"
+Refresh-Path
+
+# ============================================================
+# 3 - SNOWFLAKE CLI
+# ============================================================
+
+Write-Step 3 $TotalSteps "Snowflake CLI"
 
 $snowOk = $false
-if (-not $Force -and (Test-CommandExists 'snow')) {
-    $ver = & snow --version 2>&1
-    Write-Ok "Snowflake CLI déjà installé — $ver"
-    $snowOk = $true
-}
-if (-not $snowOk) {
-    if (Test-CommandExists 'python') {
-        Write-Info "Installation via pip..."
-        try {
-            & python -m pip install snowflake-cli 2>&1 | ForEach-Object { Write-Log $_ }
-            if (Test-CommandExists 'snow') {
-                $ver = & snow --version 2>&1
-                Write-Ok "Snowflake CLI installé — $ver"
-                $snowOk = $true
-            } else {
-                Write-Err "pip install terminé mais 'snow' non détecté"
-            }
-        } catch {
-            Write-Err "Échec pip: $($_.Exception.Message)"
-        }
-    } else {
-        Write-Err "Python requis pour Snowflake CLI. Installez Python d'abord."
+
+if (-not $Force -and (Test-CommandExists "snow")) {
+
+    try {
+
+        $snowVersion = & snow --version 2>&1
+
+        Write-Ok "Snowflake CLI deja installe."
+        Write-Log $snowVersion
+
+        $snowOk = $true
+    }
+    catch {
+        Write-Info "Commande snow detectee mais verification impossible."
     }
 }
-$results += [PSCustomObject]@{ Tool = "Snowflake CLI"; Ok = $snowOk }
 
-# ── 4. Git ───────────────────────────────────────────────────────────────────
+if (-not $snowOk) {
 
-Write-Step 4 $totalSteps "Git"
+    Refresh-Path
+
+    if (Test-CommandExists "python") {
+
+        try {
+
+            Write-Info "Mise a jour de pip..."
+
+            & python -m pip install `
+                --upgrade pip 2>&1 |
+                ForEach-Object {
+                    Write-Log $_
+                }
+
+            Write-Info "Installation de Snowflake CLI..."
+
+            & python -m pip install `
+                snowflake-cli 2>&1 |
+                ForEach-Object {
+                    Write-Log $_
+                }
+
+            Refresh-Path
+
+            if (Test-CommandExists "snow") {
+
+                $snowVersion = & snow --version 2>&1
+
+                Write-Ok "Snowflake CLI installe."
+                Write-Log $snowVersion
+
+                $snowOk = $true
+            }
+            else {
+
+                # Recherche du dossier Scripts Python.
+                $pythonScripts = @(
+                    "$env:APPDATA\Python\Python312\Scripts",
+                    "$env:LOCALAPPDATA\Programs\Python\Python312\Scripts",
+                    "C:\Program Files\Python312\Scripts"
+                )
+
+                foreach ($scriptDir in $pythonScripts) {
+
+                    if (Test-Path $scriptDir) {
+
+                        Add-ToUserPath $scriptDir
+                        Refresh-Path
+
+                        if (Test-CommandExists "snow") {
+
+                            Write-Ok "Snowflake CLI detecte apres ajout du PATH."
+
+                            $snowOk = $true
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        catch {
+
+            Write-Err "Echec installation Snowflake CLI."
+            Write-Log $_.Exception.Message
+        }
+    }
+    else {
+
+        Write-Err "Python n'est pas disponible."
+        Write-Info "Snowflake CLI necessite Python."
+    }
+}
+
+$Results += [PSCustomObject]@{
+    Tool = "Snowflake CLI"
+    Version = "latest"
+    Ok = $snowOk
+}
+
+# ============================================================
+# 4 - GIT
+# ============================================================
+
+Write-Step 4 $TotalSteps "Git"
 
 $gitOk = $false
-if (-not $Force -and (Test-CommandExists 'git')) {
-    $ver = & git --version 2>&1
-    Write-Ok "Git déjà installé — $ver"
-    $gitOk = $true
+
+if (-not $Force -and (Test-CommandExists "git")) {
+
+    try {
+
+        $gitVersion = & git --version 2>&1
+
+        Write-Ok "Git deja installe."
+        Write-Log $gitVersion
+
+        $gitOk = $true
+    }
+    catch {
+        Write-Info "Git detecte mais verification impossible."
+    }
 }
+
 if (-not $gitOk) {
-    # Try winget
-    $gitOk = Install-WingetPackage "Git.Git" "Git"
+
+    $gitOk = Install-WingetPackage `
+        "Git.Git" `
+        "Git"
+
     if (-not $gitOk) {
-        # Fallback: direct download
-        $url = "https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe"
-        $exe = Join-Path $env:TEMP "Git-installer.exe"
+
+        Write-Info "Tentative d'installation directe de Git..."
+
+        $gitUrl = `
+            "https://github.com/git-for-windows/git/releases/latest/download/Git-64-bit.exe"
+
+        $gitInstaller = Join-Path `
+            $env:TEMP `
+            "Git-64-bit.exe"
+
         try {
-            Write-Info "Téléchargement de Git..."
-            Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing
-            Start-Process $exe -ArgumentList "/VERYSILENT /NORESTART /COMPONENTS=gitlfs,assoc,assoc_sh" -Wait
-            Remove-Item $exe -Force -ErrorAction SilentlyContinue
-            $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ";" + [Environment]::GetEnvironmentVariable('PATH', 'User')
-            if (Test-CommandExists 'git') {
-                Write-Ok "Git installé"
-                $gitOk = $true
-            } else {
-                Write-Err "Git installé mais non détecté — rouvrez PowerShell"
+
+            if (Download-File $gitUrl $gitInstaller) {
+
+                Start-Process `
+                    -FilePath $gitInstaller `
+                    -ArgumentList `
+                    "/VERYSILENT /NORESTART" `
+                    -Wait
+
+                Refresh-Path
+
+                if (Test-CommandExists "git") {
+
+                    Write-Ok "Git installe."
+
+                    $gitOk = $true
+                }
+                else {
+
+                    Write-Err "Git installe mais non detecte."
+                }
             }
-        } catch {
-            Write-Err "Échec téléchargement Git: $($_.Exception.Message)"
+        }
+        catch {
+
+            Write-Err "Echec installation Git."
+            Write-Log $_.Exception.Message
+        }
+        finally {
+
+            if (Test-Path $gitInstaller) {
+
+                Remove-Item `
+                    $gitInstaller `
+                    -Force `
+                    -ErrorAction SilentlyContinue
+            }
         }
     }
 }
-$results += [PSCustomObject]@{ Tool = "Git"; Ok = $gitOk }
 
-# ── 5. OpenSSL ───────────────────────────────────────────────────────────────
+$Results += [PSCustomObject]@{
+    Tool = "Git"
+    Version = "latest"
+    Ok = $gitOk
+}
 
-Write-Step 5 $totalSteps "OpenSSL"
+Refresh-Path
+
+# ============================================================
+# 5 - OPENSSL
+# ============================================================
+
+Write-Step 5 $TotalSteps "OpenSSL"
 
 $sslOk = $false
-$openssl = Get-Command openssl -ErrorAction SilentlyContinue
-if (-not $openssl -and (Test-Path "C:\Program Files\Git\mingw64\bin\openssl.exe")) {
-    Add-ToUserPath "C:\Program Files\Git\mingw64\bin"
-    $openssl = Get-Command openssl -ErrorAction SilentlyContinue
-}
-if ($openssl) {
-    $ver = & openssl version 2>&1
-    Write-Ok "OpenSSL déjà disponible — $ver"
-    $sslOk = $true
-} else {
-    if ($gitOk) {
-        # Git was just installed — OpenSSL comes with it
-        $gitOpenssl = "C:\Program Files\Git\mingw64\bin\openssl.exe"
-        if (Test-Path $gitOpenssl) {
-            Add-ToUserPath "C:\Program Files\Git\mingw64\bin"
-            $ver = & openssl version 2>&1
-            Write-Ok "OpenSSL disponible via Git — $ver"
-            $sslOk = $true
-        } else {
-            Write-Err "OpenSSL non trouvé malgré Git installé"
-        }
-    } else {
-        Write-Err "OpenSSL non trouvé. Installez Git (inclut OpenSSL)."
+
+Refresh-Path
+
+if (Test-CommandExists "openssl") {
+
+    try {
+
+        $opensslVersion = & openssl version 2>&1
+
+        Write-Ok "OpenSSL disponible."
+        Write-Log $opensslVersion
+
+        $sslOk = $true
+    }
+    catch {
+        Write-Info "OpenSSL detecte mais version impossible a lire."
     }
 }
-$results += [PSCustomObject]@{ Tool = "OpenSSL"; Ok = $sslOk }
 
-# ── 6. VS Code ───────────────────────────────────────────────────────────────
+if (-not $sslOk) {
 
-Write-Step 6 $totalSteps "VS Code"
+    $gitOpenSSLPaths = @(
+        "C:\Program Files\Git\mingw64\bin\openssl.exe",
+        "C:\Program Files\Git\usr\bin\openssl.exe"
+    )
+
+    foreach ($opensslPath in $gitOpenSSLPaths) {
+
+        if (Test-Path $opensslPath) {
+
+            $opensslDir = Split-Path `
+                $opensslPath `
+                -Parent
+
+            Add-ToUserPath $opensslDir
+            Refresh-Path
+
+            if (Test-CommandExists "openssl") {
+
+                $opensslVersion = & openssl version 2>&1
+
+                Write-Ok "OpenSSL disponible via Git."
+                Write-Log $opensslVersion
+
+                $sslOk = $true
+                break
+            }
+        }
+    }
+}
+
+if (-not $sslOk) {
+
+    Write-Err "OpenSSL non disponible."
+    Write-Info "Installez Git for Windows puis relancez le script."
+}
+
+$Results += [PSCustomObject]@{
+    Tool = "OpenSSL"
+    Version = "Git/OpenSSL"
+    Ok = $sslOk
+}
+
+# ============================================================
+# 6 - VS CODE
+# ============================================================
+
+Write-Step 6 $TotalSteps "VS Code"
 
 $codeOk = $false
-if (-not $Force -and (Test-CommandExists 'code')) {
-    $ver = & code --version 2>&1 | Select-Object -First 1
-    Write-Ok "VS Code déjà installé — $ver"
-    $codeOk = $true
+
+if (-not $Force -and (Test-CommandExists "code")) {
+
+    try {
+
+        $codeVersion = & code --version 2>&1 |
+            Select-Object -First 1
+
+        Write-Ok "VS Code deja installe."
+        Write-Log "Version : $codeVersion"
+
+        $codeOk = $true
+    }
+    catch {
+        Write-Info "VS Code detecte mais verification impossible."
+    }
 }
+
 if (-not $codeOk) {
-    # Try winget
-    $codeOk = Install-WingetPackage "Microsoft.VisualStudioCode" "VS Code"
+
+    $codeOk = Install-WingetPackage `
+        "Microsoft.VisualStudioCode" `
+        "VS Code"
+
     if (-not $codeOk) {
-        # Fallback: direct download
-        $url = "https://update.code.visualstudio.com/latest/win32-x64/stable"
-        $exe = Join-Path $env:TEMP "VSCodeSetup.exe"
+
+        $codeInstaller = Join-Path `
+            $env:TEMP `
+            "VSCodeSetup.exe"
+
+        $codeUrl = `
+            "https://update.code.visualstudio.com/latest/win32-x64-user/stable"
+
         try {
-            Write-Info "Téléchargement de VS Code..."
-            Invoke-WebRequest -Uri $url -OutFile $exe -UseBasicParsing
-            Start-Process $exe -ArgumentList "/verysilent /norestart /mergetasks=!runcode,addcontextmenufiles,addcontextmenufolders,associatewithfiles,addtopath" -Wait
-            Remove-Item $exe -Force -ErrorAction SilentlyContinue
-            $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ";" + [Environment]::GetEnvironmentVariable('PATH', 'User')
-            if (Test-CommandExists 'code') {
-                Write-Ok "VS Code installé"
-                $codeOk = $true
-            } else {
-                Write-Err "VS Code installé mais non détecté — rouvrez PowerShell"
+
+            if (Download-File $codeUrl $codeInstaller) {
+
+                Start-Process `
+                    -FilePath $codeInstaller `
+                    -ArgumentList `
+                    "/VERYSILENT /NORESTART /MERGETASKS=addcontextmenufiles,addcontextmenufolders,associatewithfiles,addtopath" `
+                    -Wait
+
+                Refresh-Path
+
+                if (Test-CommandExists "code") {
+
+                    Write-Ok "VS Code installe."
+
+                    $codeOk = $true
+                }
+                else {
+
+                    Write-Err "VS Code installe mais non detecte."
+                }
             }
-        } catch {
-            Write-Err "Échec téléchargement VS Code: $($_.Exception.Message)"
+        }
+        catch {
+
+            Write-Err "Echec installation VS Code."
+            Write-Log $_.Exception.Message
+        }
+        finally {
+
+            if (Test-Path $codeInstaller) {
+
+                Remove-Item `
+                    $codeInstaller `
+                    -Force `
+                    -ErrorAction SilentlyContinue
+            }
         }
     }
 }
 
-# Install VS Code extensions
+# ------------------------------------------------------------
+# VS CODE EXTENSIONS
+# ------------------------------------------------------------
+
 if ($codeOk) {
-    Write-Info "Installation des extensions VS Code..."
+
+    Refresh-Path
+
     $extensions = @(
         "HashiCorp.terraform",
         "ms-azuretools.vscode-azureterraform",
@@ -322,97 +918,337 @@ if ($codeOk) {
         "redhat.vscode-yaml",
         "shd101wyy.markdown-preview-enhanced"
     )
-    foreach ($ext in $extensions) {
+
+    Write-Info "Installation des extensions VS Code..."
+
+    foreach ($extension in $extensions) {
+
         try {
-            & code --install-extension $ext --force 2>&1 | Out-Null
-            Write-Log "Extension installée: $ext"
-        } catch {
-            Write-Log "Extension skip: $ext"
+
+            Write-Log "Extension : $extension"
+
+            & code `
+                --install-extension $extension `
+                --force 2>&1 |
+                ForEach-Object {
+                    Write-Log $_
+                }
+
+        }
+        catch {
+
+            Write-Log "Extension non installee : $extension"
         }
     }
-    Write-Ok "Extensions VS Code installées"
+
+    Write-Ok "Traitement des extensions VS Code termine."
 }
-$results += [PSCustomObject]@{ Tool = "VS Code"; Ok = $codeOk }
 
-# ── 7. Azure CLI ─────────────────────────────────────────────────────────────
+$Results += [PSCustomObject]@{
+    Tool = "VS Code"
+    Version = "latest"
+    Ok = $codeOk
+}
 
-Write-Step 7 $totalSteps "Azure CLI"
+# ============================================================
+# 7 - AZURE CLI
+# ============================================================
+
+Write-Step 7 $TotalSteps "Azure CLI"
 
 $azOk = $false
-if (-not $Force -and (Test-CommandExists 'az')) {
-    $ver = (& az version 2>&1 | ConvertFrom-Json).'azure-cli'
-    Write-Ok "Azure CLI déjà installé — v$ver"
-    $azOk = $true
+
+if (-not $Force -and (Test-CommandExists "az")) {
+
+    try {
+
+        $azVersion = `
+            (& az version 2>&1 |
+            ConvertFrom-Json).'azure-cli'
+
+        Write-Ok "Azure CLI deja installe."
+        Write-Log "Version : $azVersion"
+
+        $azOk = $true
+    }
+    catch {
+
+        Write-Info "Azure CLI detecte."
+        $azOk = $true
+    }
 }
+
 if (-not $azOk) {
-    # Try winget
-    $azOk = Install-WingetPackage "Microsoft.AzureCLI" "Azure CLI"
+
+    $azOk = Install-WingetPackage `
+        "Microsoft.AzureCLI" `
+        "Azure CLI"
+
     if (-not $azOk) {
-        # Fallback: direct download MSI
-        $url = "https://aka.ms/installazurecliwindowsx64"
-        $msi = Join-Path $env:TEMP "azure-cli.msi"
+
+        $azureInstaller = Join-Path `
+            $env:TEMP `
+            "azure-cli.msi"
+
+        $azureUrl = `
+            "https://aka.ms/installazurecliwindowsx64"
+
         try {
-            Write-Info "Téléchargement d'Azure CLI..."
-            Invoke-WebRequest -Uri $url -OutFile $msi -UseBasicParsing
-            Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /quiet /norestart" -Wait
-            Remove-Item $msi -Force -ErrorAction SilentlyContinue
-            $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ";" + [Environment]::GetEnvironmentVariable('PATH', 'User')
-            if (Test-CommandExists 'az') {
-                Write-Ok "Azure CLI installé"
-                $azOk = $true
-            } else {
-                Write-Err "Azure CLI installé mais non détecté — rouvrez PowerShell"
+
+            if (Download-File $azureUrl $azureInstaller) {
+
+                Start-Process `
+                    -FilePath "msiexec.exe" `
+                    -ArgumentList `
+                    "/i `"$azureInstaller`" /quiet /norestart" `
+                    -Wait
+
+                Refresh-Path
+
+                if (Test-CommandExists "az") {
+
+                    Write-Ok "Azure CLI installe."
+
+                    $azOk = $true
+                }
+                else {
+
+                    Write-Err "Azure CLI installe mais non detecte."
+                }
             }
-        } catch {
-            Write-Err "Échec téléchargement Azure CLI: $($_.Exception.Message)"
+        }
+        catch {
+
+            Write-Err "Echec installation Azure CLI."
+            Write-Log $_.Exception.Message
+        }
+        finally {
+
+            if (Test-Path $azureInstaller) {
+
+                Remove-Item `
+                    $azureInstaller `
+                    -Force `
+                    -ErrorAction SilentlyContinue
+            }
         }
     }
 }
-$results += [PSCustomObject]@{ Tool = "Azure CLI"; Ok = $azOk }
 
-# ── 8. tflint ────────────────────────────────────────────────────────────────
+$Results += [PSCustomObject]@{
+    Tool = "Azure CLI"
+    Version = "latest"
+    Ok = $azOk
+}
 
-Write-Step 8 $totalSteps "tflint v$TflintVersion"
+# ============================================================
+# 8 - TFLINT
+# ============================================================
+
+Write-Step 8 $TotalSteps "tflint $TflintVersion"
 
 $tflintOk = $false
-if (-not $Force -and (Test-CommandExists 'tflint')) {
-    $ver = & tflint --version 2>&1 | Select-Object -First 1
-    Write-Ok "tflint déjà installé — $ver"
-    $tflintOk = $true
+
+Refresh-Path
+
+if (-not $Force -and (Test-CommandExists "tflint")) {
+
+    try {
+
+        $tflintVersionOutput = `
+            & tflint --version 2>&1 |
+            Select-Object -First 1
+
+        Write-Ok "tflint deja installe."
+        Write-Log $tflintVersionOutput
+
+        $tflintOk = $true
+    }
+    catch {
+        Write-Info "tflint detecte mais verification impossible."
+    }
 }
+
 if (-not $tflintOk) {
-    $url = "https://github.com/terraform-linters/tflint/releases/download/v${TflintVersion}/tflint_windows_amd64.zip"
-    $zip = Join-Path $env:TEMP "tflint_${TflintVersion}.zip"
-    $tflintOk = Install-DirectDownload "tflint" $url $zip $TflintInstallDir "tflint.exe"
-    if ($tflintOk) { Add-ToUserPath $TflintInstallDir }
+
+    $tflintUrl = `
+        "https://github.com/terraform-linters/tflint/releases/download/v$TflintVersion/tflint_windows_amd64.zip"
+
+    $tflintOk = Install-ZipExecutable `
+        "tflint" `
+        $tflintUrl `
+        $TflintInstallDir `
+        "tflint.exe"
 }
-$results += [PSCustomObject]@{ Tool = "tflint"; Ok = $tflintOk }
 
-# ── Résumé ───────────────────────────────────────────────────────────────────
-
-Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  RÉSUMÉ DE L'INSTALLATION AUTOMATIQUE" -ForegroundColor Cyan
-Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-
-$allOk = $true
-foreach ($r in $results) {
-    $icon = if ($r.Ok) { "✅" } else { "❌" }
-    Write-Host "  $icon $($r.Tool)"
-    if (-not $r.Ok) { $allOk = $false }
+$Results += [PSCustomObject]@{
+    Tool = "tflint"
+    Version = $TflintVersion
+    Ok = $tflintOk
 }
+
+# ============================================================
+# FINAL PATH REFRESH
+# ============================================================
+
+Refresh-Path
+
+# ============================================================
+# FINAL VERIFICATION
+# ============================================================
 
 Write-Host ""
-if ($allOk) {
-    Write-Host "🎉 Tous les outils sont installés ! Vous pouvez commencer la formation." -ForegroundColor Green
-} else {
-    $failed = $results | Where-Object { -not $_.Ok }
-    Write-Host "⚠️  $($failed.Count) outil(s) non installé(s) :" -ForegroundColor Yellow
-    foreach ($f in $failed) {
-        Write-Host "     — $($f.Tool)" -ForegroundColor Yellow
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host " VERIFICATION FINALE" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+
+$verificationCommands = @(
+    "terraform",
+    "python",
+    "snow",
+    "git",
+    "openssl",
+    "code",
+    "az",
+    "tflint"
+)
+
+foreach ($commandName in $verificationCommands) {
+
+    if (Test-CommandExists $commandName) {
+        Write-Ok "$commandName : disponible"
+    }
+    else {
+        Write-Err "$commandName : NON DETECTE"
+    }
+}
+
+# ============================================================
+# SUMMARY
+# ============================================================
+
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host " RESUME DE L'INSTALLATION" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+
+$allOk = $true
+
+foreach ($result in $Results) {
+
+    if ($result.Ok) {
+
+        Write-Host `
+            "[OK]    $($result.Tool) - $($result.Version)" `
+            -ForegroundColor Green
+    }
+    else {
+
+        Write-Host `
+            "[FAILED] $($result.Tool) - $($result.Version)" `
+            -ForegroundColor Red
+
+        $allOk = $false
     }
 }
 
 Write-Host ""
-Write-Host "  ⚠️  Si un outil n'est pas reconnu, FERMEZ et ROUVREZ PowerShell." -ForegroundColor Yellow
-Write-Host "     Le PATH n'est rafraîchi qu'à l'ouverture d'une nouvelle session." -ForegroundColor Yellow
+
+if ($allOk) {
+
+    Write-Host "============================================================" -ForegroundColor Green
+    Write-Host " INSTALLATION TERMINEE AVEC SUCCES" -ForegroundColor Green
+    Write-Host "============================================================" -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "L'environnement Terraform & Snowflake est pret." -ForegroundColor Green
+}
+else {
+
+    $failed = $Results |
+        Where-Object { -not $_.Ok }
+
+    Write-Host "============================================================" -ForegroundColor Yellow
+    Write-Host " INSTALLATION PARTIELLE" -ForegroundColor Yellow
+    Write-Host "============================================================" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Outils en echec :" -ForegroundColor Yellow
+
+    foreach ($item in $failed) {
+        Write-Host "  - $($item.Tool)" -ForegroundColor Yellow
+    }
+
+    Write-Host ""
+    Write-Host "Relancez le script apres avoir corrige les erreurs." `
+        -ForegroundColor Yellow
+}
+
 Write-Host ""
+Write-Host "IMPORTANT :" -ForegroundColor Yellow
+Write-Host "Si une commande reste introuvable, fermez puis rouvrez PowerShell."
+Write-Host ""
+
+# ============================================================
+# DISPLAY USEFUL VERSIONS
+# ============================================================
+
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host " VERSIONS DETECTEES" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+
+if (Test-CommandExists "terraform") {
+    try {
+        & terraform version 2>&1 |
+            Select-Object -First 1
+    }
+    catch {}
+}
+
+if (Test-CommandExists "python") {
+    try {
+        & python --version 2>&1
+    }
+    catch {}
+}
+
+if (Test-CommandExists "snow") {
+    try {
+        & snow --version 2>&1
+    }
+    catch {}
+}
+
+if (Test-CommandExists "git") {
+    try {
+        & git --version 2>&1
+    }
+    catch {}
+}
+
+if (Test-CommandExists "openssl") {
+    try {
+        & openssl version 2>&1
+    }
+    catch {}
+}
+
+if (Test-CommandExists "az") {
+    try {
+        & az version 2>&1 |
+            ConvertFrom-Json |
+            Select-Object -ExpandProperty 'azure-cli'
+    }
+    catch {}
+}
+
+if (Test-CommandExists "tflint") {
+    try {
+        & tflint --version 2>&1 |
+            Select-Object -First 1
+    }
+    catch {}
+}
+
+Write-Host ""
+Write-Host "Fin du script." -ForegroundColor Cyan
