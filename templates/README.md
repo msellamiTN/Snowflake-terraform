@@ -30,7 +30,7 @@ git push -u origin main
 Dans le fichier `.env.example` du dépôt de formation, renseignez :
 
 ```text
-TEMPLATE_REPO_URL=https://github.com/<votre-organisation>/data-platform-starter.git
+TEMPLATE_REPO_URL=https://github.com/msellamiTN/data-platform-starter.git
 ```
 
 Les ateliers Day 0 utilisent cette variable pour cloner le projet type.

@@ -62,7 +62,7 @@ flowchart TD
 
 ### 2. Votre URL de projet type
 
-Le formateur vous fournit l'URL du dépôt template `data-platform-starter`. Si elle n'est pas indiquée, demandez-la avant de commencer l'étape 2.
+Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
 
 ### 3. Vos identifiants Snowflake
 

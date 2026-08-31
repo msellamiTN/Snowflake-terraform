@@ -175,7 +175,7 @@ snow sql -q 'SELECT CURRENT_ROLE()' -c training
 **Test :**
 
 ```bash
-git ls-remote <TEMPLATE_REPO_URL>
+git ls-remote https://github.com/msellamiTN/data-platform-starter.git
 ```
 
 ---

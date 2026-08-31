@@ -29,31 +29,15 @@ Les deux scripts ont le même contrat : mêmes versions, mêmes vérifications, 
 
 Le projet type est le dépôt `data-platform-starter`. Il contient les scripts d'installation, la structure de gouvernance et les validateurs. **C'est votre racine de travail pour toute la formation.**
 
-### 1.1 — Obtenir l'URL
+### 1.1 — Cloner le projet type
 
-Le formateur vous fournit l'URL du dépôt template. Si elle est définie dans votre fichier `.env`, vous pouvez la lire :
-
-**Windows :**
-
-```powershell
-$env:TEMPLATE_REPO_URL
-```
-
-**Linux/macOS :**
-
-```bash
-echo $TEMPLATE_REPO_URL
-```
-
-Si la variable est vide, demandez l'URL au formateur.
-
-### 1.2 — Cloner
+Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
 
 **Windows :**
 
 ```powershell
 mkdir $HOME\Data2AI-Labs -Force
-git clone $env:TEMPLATE_REPO_URL $HOME\Data2AI-Labs\data-platform
+git clone https://github.com/msellamiTN/data-platform-starter.git $HOME\Data2AI-Labs\data-platform
 cd $HOME\Data2AI-Labs\data-platform
 ```
 
@@ -61,7 +45,7 @@ cd $HOME\Data2AI-Labs\data-platform
 
 ```bash
 mkdir -p $HOME/Data2AI-Labs
-git clone "$TEMPLATE_REPO_URL" "$HOME/Data2AI-Labs/data-platform"
+git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME/Data2AI-Labs/data-platform"
 cd "$HOME/Data2AI-Labs/data-platform"
 ```
 
