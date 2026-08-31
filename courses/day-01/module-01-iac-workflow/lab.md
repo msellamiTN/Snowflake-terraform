@@ -4,21 +4,21 @@
 |---|---|
 | **Durée** | 3 heures |
 | **Piste** | `[CORE]` |
-| **Workspace** | `$HOME/Data2AI-Labs/module-01-first-deployment` |
-| **Point de départ** | README et `.gitignore` uniquement |
+| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone du Jour 0) |
+| **Dossier de travail** | `environments/dev/` dans le clone |
 | **Coût** | Warehouse X-SMALL, initialement suspendu |
-| **Cleanup** | Conserver jusqu’au début du Jour 2 |
+| **Cleanup** | Conserver jusqu'au début du Jour 2 |
 
 ## Mission
 
-Vous êtes Data Platform Engineer. Votre équipe vous demande une zone RAW minimale composée d’une database, d’un schema d’ingestion et d’un warehouse économique. Le changement doit être relisible avant exécution et reproductible sans exposer de credential.
+Vous êtes Data Platform Engineer. Votre équipe vous demande une zone RAW minimale composée d'une database, d'un schema d'ingestion et d'un warehouse économique. Le changement doit être relisible avant exécution et reproductible sans exposer de credential.
 
 ## Architecture finale
 
 ```mermaid
 flowchart LR
     DEV[Apprenant] --> TF[Terraform CLI]
-    TF --> PROFILE[Profil Snowflake CLI]
+    TF --> PROFILE[Connexion Snowflake CLI training]
     PROFILE --> SF[(Snowflake)]
     TF --> STATE[(State local)]
     SF --> DB[Database RAW]
@@ -28,55 +28,40 @@ flowchart LR
 
 ## Objectifs
 
-- créer une configuration Terraform depuis un dossier presque vide;
-- utiliser un profil Snowflake local sans placer de secret dans le code;
+- créer une configuration Terraform depuis le clone du projet type;
+- utiliser la connexion Snowflake CLI `training` sans placer de secret dans le code;
 - expliquer les blocs `terraform`, `required_providers`, `provider` et `resource`;
 - lire un plan avant application;
 - prouver la création des trois ressources;
-- vérifier l’idempotence avec un second plan.
+- vérifier l'idempotence avec un second plan.
 
 ## Prérequis
 
-- [ ] M0 affiche `Ready for Day 1`;
-- [ ] `snow connection test -c terraform_svc` réussit;
-- [ ] vous connaissez votre préfixe unique de 2 à 12 caractères;
-- [ ] le rôle associé au profil peut créer une database, un schema et un warehouse dans la sandbox/Trial.
+- [ ] Jour 0 terminé : `Toolchain status: READY`;
+- [ ] `snow sql -q 'SELECT 1' -c training` réussit;
+- [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`;
+- [ ] vous connaissez votre préfixe unique (variable `LEARNER_PREFIX` dans `.env`).
 
-## Partie 1 — Créer le workspace
+## Partie 1 — Se placer dans le bon dossier
 
-Depuis la racine du dépôt de formation :
-
-### Windows
-
-```powershell
-.\scripts\New-StudentWorkspace.ps1 -Module 1 -Initials ABC
-Set-Location "$HOME\Data2AI-Labs\module-01-first-deployment"
-Get-ChildItem -Force
-```
-
-### Linux/macOS
+Tous les fichiers de M1 vont dans `environments/dev/` du clone.
 
 ```bash
-bash ./scripts/new-student-workspace.sh --module 1 --initials ABC
-cd "$HOME/Data2AI-Labs/module-01-first-deployment"
+cd $HOME/Data2AI-Labs/data-platform
+cd environments/dev
+```
+
+Vérifiez que le dossier contient uniquement les fichiers d'exemple :
+
+```bash
 ls -la
 ```
 
-Remplacez `ABC` par vos initiales. Le workspace doit être hors du dépôt de formation.
-
-```text
-module-01-first-deployment/
-├── .git/
-├── .gitignore
-├── .student-workspace.json
-└── README.md
-```
+**Attendu :** `README.md`, `backend.hcl.example`, `terraform.tfvars.example`. Aucun fichier `.tf`.
 
 ## Partie 2 — Déclarer Terraform et le provider
 
 ### Étape 2.1 — Créer `versions.tf`
-
-Créez puis ouvrez le fichier.
 
 **[WINDOWS]**
 
@@ -96,54 +81,52 @@ Ajoutez :
 
 ```hcl
 terraform {
-  required_version = ">= 1.14.0, < 2.0.0"
+  required_version = "= 1.14.5"
 
   required_providers {
     snowflake = {
       source  = "snowflakedb/snowflake"
-      version = "~> 2.14.0"
+      version = "= 2.14.0"
     }
   }
 }
 ```
 
-- `required_version` borne les versions Terraform compatibles;
+- `required_version` épingle exactement la version Terraform de la politique;
 - `source` identifie le provider officiel;
-- `~> 2.14.0` accepte les correctifs 2.14.x, pas une version mineure suivante non testée.
+- `= 2.14.0` épingle exactement la version du provider, sans accepter de correctif non testé.
+
+> **Pourquoi pas `~> 2.14.0` ?** Voir [docs/version-policy.md](../../docs/version-policy.md). Une contrainte souple autorise des versions différentes entre apprenants.
 
 ### Étape 2.2 — Créer `provider.tf`
 
 ```hcl
 provider "snowflake" {
-  profile = var.snowflake_profile
+  connection_name = var.snowflake_connection
 }
 ```
 
-Le profil est lu depuis la configuration locale Snowflake CLI. Aucun password, token ou private key n’est écrit dans ce projet.
+La connexion `training` a été créée au Jour 0 par le script `New-SnowflakeConnection`. Aucun password, token ou private key n'est écrit dans ce projet.
 
-### Checkpoint 1
+### Étape 2.3 — Formater et valider
 
-Depuis la racine du dépôt de formation :
-
-```text
-# Windows
-.\scripts\SelfPacedLab.ps1 -Module 1 -Task 1
-
-# Linux/macOS
-bash ./scripts/self-paced-lab.sh --module 1 --task 1
+```bash
+terraform fmt
+terraform init
+terraform validate
 ```
 
-Attendu : quatre contrôles `PASS`.
+**Attendu :** `The configuration is valid.`
 
 ## Partie 3 — Créer les variables et les noms
 
 ### Étape 3.1 — Créer `variables.tf`
 
 ```hcl
-variable "snowflake_profile" {
+variable "snowflake_connection" {
   type        = string
-  description = "Snowflake CLI profile configured during Module 00"
-  default     = "terraform_svc"
+  description = "Snowflake CLI connection name created during Day 0"
+  default     = "training"
 }
 
 variable "learner_prefix" {
@@ -151,8 +134,8 @@ variable "learner_prefix" {
   description = "Unique uppercase prefix assigned to the learner"
 
   validation {
-    condition     = can(regex("^[A-Z][A-Z0-9_]{1,11}$", var.learner_prefix))
-    error_message = "learner_prefix must contain 2-12 uppercase letters, digits, or underscores."
+    condition     = can(regex("^[A-Z][A-Z0-9]{2,4}$", var.learner_prefix))
+    error_message = "learner_prefix must contain 3-5 uppercase letters or digits."
   }
 }
 
@@ -162,8 +145,8 @@ variable "environment" {
   default     = "DEV"
 
   validation {
-    condition     = contains(["DEV", "TEST"], var.environment)
-    error_message = "environment must be DEV or TEST."
+    condition     = contains(["DEV", "UAT", "PROD"], var.environment)
+    error_message = "environment must be DEV, UAT or PROD."
   }
 }
 
@@ -187,35 +170,30 @@ Les validations empêchent les noms non conformes et les warehouses trop grands 
 locals {
   database_name  = "${var.learner_prefix}_RAW_${var.environment}"
   schema_name    = "INGESTION"
-  warehouse_name = "${var.learner_prefix}_ETL_${var.environment}"
+  warehouse_name = "WH_${var.learner_prefix}_ETL_${var.environment}"
   common_comment = "Managed by Terraform | Training | ${var.learner_prefix}"
 }
 ```
 
-### Étape 3.3 — Créer les valeurs locales
-
-Créez `terraform.tfvars` :
+### Étape 3.3 — Créer `terraform.tfvars`
 
 ```hcl
-snowflake_profile = "terraform_svc"
-learner_prefix    = "ABC"
-environment       = "DEV"
-warehouse_size    = "X-SMALL"
+snowflake_connection = "training"
+learner_prefix       = "ABC"
+environment          = "DEV"
+warehouse_size       = "X-SMALL"
 ```
 
-Remplacez `ABC` par votre préfixe. Le fichier est ignoré pour permettre une valeur propre à chaque apprenant. Il ne contient néanmoins aucun credential.
+Remplacez `ABC` par votre préfixe (celui de votre `.env`). Le fichier est ignoré par Git.
 
-Créez aussi `terraform.tfvars.example` avec des valeurs génériques identiques. Ce fichier documente l’interface et peut être versionné.
+### Étape 3.4 — Formater et valider
 
-### Checkpoint 2
-
-```text
-# Windows
-.\scripts\SelfPacedLab.ps1 -Module 1 -Task 2
-
-# Linux/macOS
-bash ./scripts/self-paced-lab.sh --module 1 --task 2
+```bash
+terraform fmt
+terraform validate
 ```
+
+**Attendu :** `The configuration is valid.`
 
 ## Partie 4 — Créer les ressources
 
@@ -265,47 +243,19 @@ output "warehouse_name" {
 }
 ```
 
-### Checkpoint 3
+### Étape 4.3 — Formater et valider
 
-```text
-# Windows
-.\scripts\SelfPacedLab.ps1 -Module 1 -Task 3
-
-# Linux/macOS
-bash ./scripts/self-paced-lab.sh --module 1 --task 3
-```
-
-Attendu : database, schema, dépendance implicite, warehouse économique et outputs détectés.
-
-## Partie 5 — Formater, initialiser et valider
-
-Depuis le workspace :
-
-```text
+```bash
 terraform fmt
-terraform init
 terraform validate
 ```
 
-`terraform init` crée `.terraform/` et `.terraform.lock.hcl`. Le dossier téléchargé reste ignoré; le lock file pourra être versionné dans un projet réel après revue.
+**Attendu :** `The configuration is valid.`
 
-### Checkpoint 4
+## Partie 5 — Planifier sans modifier
 
-```text
-# Windows
-.\scripts\SelfPacedLab.ps1 -Module 1 -Task 4
-
-# Linux/macOS
-bash ./scripts/self-paced-lab.sh --module 1 --task 4
-```
-
-Si `validate` échoue, ne passez pas directement à `plan`. Lisez le premier diagnostic, corrigez-le, puis rejouez uniquement ce checkpoint.
-
-## Partie 6 — Planifier sans modifier
-
-```text
+```bash
 terraform plan -out=m01.tfplan
-terraform show -json m01.tfplan > m01.tfplan.json
 ```
 
 Le plan attendu contient exactement :
@@ -316,37 +266,27 @@ Le plan attendu contient exactement :
 
 Il doit afficher `3 to add`, aucune modification et aucune destruction.
 
-### Checkpoint 5
+> `[SECURITY]` Le plan contient des données de configuration. Il est ignoré par `*.tfplan`. Ne le commitez pas.
 
-```text
-# Windows
-.\scripts\SelfPacedLab.ps1 -Module 1 -Task 5
+## Partie 6 — Appliquer après revue
 
-# Linux/macOS
-bash ./scripts/self-paced-lab.sh --module 1 --task 5
-```
+Avant de continuer, relisez le plan et confirmez votre préfixe. L'application crée trois objets dans le compte Snowflake.
 
-> `[SECURITY]` Le plan JSON peut contenir des données de configuration. Il est ignoré par `*.tfplan`, mais `m01.tfplan.json` doit aussi rester local; ne le commitez pas.
-
-## Partie 7 — Appliquer après revue
-
-Avant de continuer, relisez le plan et confirmez votre préfixe. L’application crée trois objets dans le compte associé au profil.
-
-```text
+```bash
 terraform apply m01.tfplan
 ```
 
-Attendu :
+**Attendu :**
 
 ```text
 Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ```
 
-## Partie 8 — Prouver le résultat
+## Partie 7 — Prouver le résultat
 
 ### Preuve Terraform
 
-```text
+```bash
 terraform output
 terraform state list
 ```
@@ -355,25 +295,25 @@ terraform state list
 
 Remplacez `ABC` par votre préfixe :
 
-```text
-snow sql -c terraform_svc -q "SHOW DATABASES LIKE 'ABC_RAW_DEV'"
-snow sql -c terraform_svc -q "SHOW SCHEMAS LIKE 'INGESTION' IN DATABASE ABC_RAW_DEV"
-snow sql -c terraform_svc -q "SHOW WAREHOUSES LIKE 'ABC_ETL_DEV'"
+```bash
+snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_DEV'"
+snow sql -c training -q "SHOW SCHEMAS LIKE 'INGESTION' IN DATABASE ABC_RAW_DEV"
+snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_DEV'"
 ```
 
-### Preuve d’idempotence
+### Preuve d'idempotence
 
-```text
+```bash
 terraform plan
 ```
 
-Attendu : `No changes`.
+**Attendu :** `No changes. Your infrastructure matches the configuration.`
 
 ## Erreur contrôlée — Préfixe invalide
 
 Dans `terraform.tfvars`, remplacez temporairement le préfixe par `abc-invalid`, puis exécutez :
 
-```text
+```bash
 terraform validate
 terraform plan
 ```
@@ -386,11 +326,13 @@ Cette erreur ne modifie aucune ressource distante.
 
 Ajoutez un output `resource_summary` contenant les trois noms dans un objet :
 
-```text
-{
-  database  = ...
-  schema    = ...
-  warehouse = ...
+```hcl
+output "resource_summary" {
+  value = {
+    database  = snowflake_database.raw.name
+    schema    = snowflake_schema.ingestion.name
+    warehouse = snowflake_warehouse.etl.name
+  }
 }
 ```
 
@@ -400,17 +342,17 @@ Critères :
 - [ ] `terraform validate` réussit;
 - [ ] `terraform output resource_summary` affiche vos trois noms;
 - [ ] `terraform plan` reste sans changement;
-- [ ] aucun credential n’est présent dans les fichiers `.tf` ou `.tfvars`.
+- [ ] aucun credential n'est présent dans les fichiers `.tf` ou `.tfvars`.
 
 ## Point de reprise
 
-Conservez le workspace et les ressources jusqu’au module State du Jour 2. Pour reprendre :
+Conservez le workspace et les ressources jusqu'au module State du Jour 2. Pour reprendre :
 
-```text
-cd $HOME/Data2AI-Labs/module-01-first-deployment
-snow connection test -c terraform_svc
+```bash
+cd $HOME/Data2AI-Labs/data-platform/environments/dev
+snow sql -q 'SELECT 1' -c training
 terraform init
 terraform plan
 ```
 
-N’exécutez pas encore `terraform destroy` : le module suivant réutilise ces ressources pour expliquer le state, le drift et l’import.
+N'exécutez pas encore `terraform destroy` : le module suivant réutilise ces ressources pour expliquer le state, le drift et l'import.
