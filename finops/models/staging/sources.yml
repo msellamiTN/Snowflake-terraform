@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: snowflake_account_usage
+    database: "{{ var("monitoring_database") }}"
+    schema: "{{ var("monitoring_schema") }}"
+    description: "Snowflake ACCOUNT_USAGE views for FinOps monitoring. These views have latency (typically 1-2 hours)."
+    tags: ["account_usage"]
+    tables:
+      - name: WAREHOUSE_METERING_HISTORY
+        description: "Credit usage by warehouse over time."
+        columns:
+          - name: WAREHOUSE_ID
+            tests: [not_null]
+          - name: WAREHOUSE_NAME
+            tests: [not_null]
+          - name: START_TIME
+            tests: [not_null]
+          - name: CREDITS_USED
+            tests: [not_null]
+
+      - name: RESOURCE_MONITORS
+        description: "Resource monitor configurations and current quota usage."
+        columns:
+          - name: NAME
+            tests: [not_null]
+
+      - name: QUERY_HISTORY
+        description: "Query execution history with cost and performance metrics."
+        columns:
+          - name: QUERY_ID
+            tests: [unique, not_null]
+          - name: START_TIME
+            tests: [not_null]
+
+      - name: WAREHOUSES
+        description: "Warehouse definitions and configurations."
+        columns:
+          - name: NAME
+            tests: [not_null]
+
+      - name: STORAGE_USAGE
+        description: "Storage consumption by database over time."
+        columns:
+          - name: USAGE_DATE
+            tests: [not_null]
+
+      - name: TAG_REFERENCES
+        description: "Tag associations for cost allocation by environment/team/domain."
+        columns:
+          - name: TAG_NAME
+            tests: [not_null]

@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: mart_warehouse_credits_daily
+    description: "Daily credit consumption by warehouse with 7-day rolling average and cumulative totals."
+    columns:
+      - name: warehouse_name
+        tests: [not_null]
+      - name: day
+        tests: [not_null]
+      - name: credits_used
+        tests: [not_null]
+      - name: credits_7day_avg
+        description: "7-day rolling average of credits used."
+
+  - name: mart_resource_monitor_risk
+    description: "Resource monitor status with risk classification and action recommendations."
+    columns:
+      - name: resource_monitor_name
+        tests: [not_null, unique]
+      - name: risk_status
+        tests:
+          - accepted_values:
+              values: ['OK', 'NOTIFY', 'WARNING', 'CRITICAL']
+      - name: usage_percent
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 200
+
+  - name: mart_inactive_warehouses
+    description: "Warehouse activity status over the last 30 days. Identifies never-used or inactive warehouses."
+    columns:
+      - name: warehouse_name
+        tests: [not_null, unique]
+      - name: activity_status
+        tests:
+          - accepted_values:
+              values: ['ACTIVE', 'INACTIVE_1D', 'INACTIVE_7D', 'NEVER_USED']
+
+  - name: mart_expensive_queries
+    description: "Queries from the last 7 days flagged as long-running, high-credit, or high-scan."
+    columns:
+      - name: query_id
+        tests: [not_null, unique]
+      - name: risk_flag
+        tests:
+          - accepted_values:
+              values: ['LONG_RUNNING', 'HIGH_CREDITS', 'HIGH_SCAN']
+
+  - name: mart_storage_trends
+    description: "30-day storage trends by database with daily growth percentage."
+    columns:
+      - name: database_name
+        tests: [not_null]
+      - name: usage_date
+        tests: [not_null]
+      - name: storage_gb
+        tests: [not_null]

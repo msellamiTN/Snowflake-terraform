@@ -1,0 +1,22 @@
+# Backend Configuration Template
+#
+# Copy this file to backend.hcl (gitignored) in your environment root directory.
+# Replace the placeholder values with your team and environment.
+#
+# Usage:
+#   terraform init -backend-config=backend.hcl
+#
+# The backend.hcl file is gitignored and must never be committed.
+# In CI/CD pipelines, these values are injected as environment variables
+# or pipeline variables.
+
+resource_group_name  = "rg-wevops-tf-state"
+storage_account_name = "sawevopstfstate"
+container_name       = "tfstate"
+key                  = "training/<team>/<environment>/<module>.tfstate"
+
+# For production with Azure AD authentication (no SAS token):
+# use_azuread_auth     = true
+# use_oidc             = true
+# subscription_id      = "<your-subscription-id>"
+# tenant_id            = "<your-tenant-id>"

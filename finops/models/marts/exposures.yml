@@ -1,0 +1,34 @@
+version: 2
+
+exposures:
+  - name: finops_dashboard
+    type: dashboard
+    description: "FinOps dashboard for Snowflake cost monitoring and anomaly detection."
+    url: "https://app.snowflake.com"
+    depends_on:
+      - ref('mart_warehouse_credits_daily')
+      - ref('mart_resource_monitor_risk')
+      - ref('mart_inactive_warehouses')
+      - ref('mart_expensive_queries')
+      - ref('mart_storage_trends')
+    owner:
+      name: "Data Platform Team"
+      email: "data-platform@example.com"
+
+  - name: warehouse_credits_report
+    type: report
+    description: "Weekly warehouse credit consumption report for cost allocation."
+    depends_on:
+      - ref('mart_warehouse_credits_daily')
+    owner:
+      name: "FinOps Team"
+      email: "finops@example.com"
+
+  - name: resource_monitor_alerts
+    type: application
+    description: "Automated alerts when resource monitors approach suspend thresholds."
+    depends_on:
+      - ref('mart_resource_monitor_risk')
+    owner:
+      name: "Data Platform Team"
+      email: "data-platform@example.com"

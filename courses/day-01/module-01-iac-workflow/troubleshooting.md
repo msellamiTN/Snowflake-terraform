@@ -1,0 +1,28 @@
+﻿# Troubleshooting — M1
+
+| Symptôme | Diagnostic non destructif | Correction minimale | Prévention |
+|---|---|---|---|
+| Module M1 introuvable | Lister `student-track/module-01-*` | Utiliser la version refondue du dépôt | Préflight du catalogue |
+| Workspace existe déjà | Vérifier le chemin affiché | Choisir un autre `WorkspaceRoot` | Ne jamais supprimer automatiquement |
+| Branche créée au mauvais endroit | `git rev-parse --show-toplevel` | Recréer sous `$HOME/Data2AI-Labs` | Workspace hors dépôt du cours |
+| Provider non trouvé | Lire `versions.tf`, tester accès registry | Corriger source/version puis `terraform init` | Checkpoint 1 |
+| Profil Snowflake absent | `snow connection test -c terraform_svc` | Refaire le checkpoint M0 | Ne pas ajouter un password au provider |
+| `Invalid account` | Tester le même profil avec Snow CLI | Corriger la configuration locale | Une seule source de connexion |
+| Permission insuffisante | `SELECT CURRENT_ROLE()` puis erreur exacte | Demander le rôle sandbox prévu | Ne pas basculer génériquement sur ACCOUNTADMIN |
+| Préfixe refusé | Lire le message de validation | Utiliser 2–12 caractères majuscules/chiffres/underscore | Validation de variable |
+| Resource already exists | Vérifier le préfixe et `terraform state list` | Choisir le préfixe attribué; l’import vient au M3 | Préfixe unique |
+| `terraform fmt -check` échoue | `terraform fmt -diff` | Exécuter `terraform fmt` | Format avant chaque plan |
+| Plan contient delete | `terraform show m01.tfplan` | Arrêter; vérifier workspace, state et préfixe | Revue obligatoire |
+| Plan contient plus de 3 créations | Lire les adresses | Comparer `main.tf` au lab | Checkpoint structurel |
+| Warehouse démarre à consommer | `SHOW WAREHOUSES` | Suspendre le warehouse si aucune requête n’est nécessaire | Initially suspended + auto-suspend |
+| Second plan non vide | Lire l’attribut modifié | Corriger code ou drift intentionnellement | Ne pas appliquer sans comprendre |
+
+## Informations à communiquer pour obtenir de l’aide
+
+- OS et shell;
+- chemin retourné par `pwd`/`Get-Location`;
+- version Terraform et provider;
+- adresse de ressource concernée;
+- message d’erreur expurgé.
+
+Ne communiquez jamais `terraform.tfvars`, un PAT, une clé privée, un state ou la configuration Snowflake complète.

@@ -1,0 +1,13 @@
+﻿# Dépannage — M5 : Modules & Git Registry
+
+| Symptôme | Cause | Solution |
+|----------|-------|----------|
+| `terraform init` échoue : `module not found` | Mauvais chemin source | Vérifier le chemin relatif : `../../../03-day2-modules/modules/landing-zone` |
+| `terraform init` échoue : `git clone failed` | URL Git incorrecte ou pas d'accès | Vérifier le format URL : `git::https://...` et que le PAT ADO a un accès en lecture |
+| `terraform init` échoue : `ref not found` | Le tag n'existe pas | Vérifier que le tag existe : `git tag -l 'v*'` dans le dépôt de modules |
+| `terraform plan` échoue : `unsupported argument` | Incompatibilité de version de module | S'assurer que la version du module correspond aux inputs attendus ; vérifier le CHANGELOG |
+| `terraform plan` montre 0 ressource | Module non appelé | Ajouter le bloc `module "landing_zone" { source = ... }` |
+| `Error: duplicate resource` | Le module crée une ressource qui existe aussi à la racine | Supprimer le doublon de la racine ou utiliser un bloc `moved` |
+| `tflint` avertit sur la source du module | Tflint non initialisé | Exécuter `tflint --init` avant `tflint --recursive` |
+| `terraform fmt -check` échoue dans le module | Code du module non formaté | Exécuter `terraform fmt` dans le répertoire du module |
+

@@ -1,0 +1,46 @@
+﻿# Copy to ~/.dbt/profiles.yml and replace placeholders
+# Authentication: key-pair (JWT) is recommended for production.
+# For training, password auth can be used as fallback.
+
+finops:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      organization_name: <snowflake-organization>
+      account_name: <snowflake-account>
+      user: DATA2AI
+      role: ACCOUNTADMIN
+      database: DB_FINOPS_DEV
+      warehouse: WH_FINOPS_DEV
+      schema: marts
+      authenticator: snowflake
+      password: "<SNOWFLAKE_PASSWORD>"
+      threads: 4
+
+    test:
+      type: snowflake
+      organization_name: <snowflake-organization>
+      account_name: <snowflake-account>
+      user: DATA2AI
+      role: ACCOUNTADMIN
+      database: DB_FINOPS_TEST
+      warehouse: WH_FINOPS_TEST
+      schema: marts
+      authenticator: snowflake
+      password: "<SNOWFLAKE_PASSWORD>"
+      threads: 4
+
+    # Production profile using JWT key-pair auth
+    prod:
+      type: snowflake
+      organization_name: <snowflake-organization>
+      account_name: <snowflake-account>
+      user: TERRAFORM_SVC
+      role: ACCOUNTADMIN
+      database: DB_FINOPS_PROD
+      warehouse: WH_FINOPS_PROD
+      schema: marts
+      private_key_path: "../../secrets/snowflake_key.p8"
+      threads: 4
+

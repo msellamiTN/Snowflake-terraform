@@ -1,0 +1,4 @@
+snowflake_profile = "terraform_svc"
+learner_prefix    = "ABC"
+environment       = "DEV"
+warehouse_size    = "X-SMALL"

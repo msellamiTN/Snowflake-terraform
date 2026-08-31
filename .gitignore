@@ -1,0 +1,47 @@
+# Terraform runtime
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+crash.log
+crash.*.log
+
+# Local variable and backend files
+*.tfvars
+*.tfvars.json
+*.backend.hcl
+!*.tfvars.example
+
+# Credentials and secrets
+.env
+.env.*
+.env-*
+!.env.example
+secrets/
+*.p8
+*.pem
+*.key
+*.pub
+*.token
+
+# Generated learner workspaces and reports
+student-workspace/
+student-track/_reports/
+.student-workspace.json
+
+# Python / dbt runtime
+.venv/
+venv/
+__pycache__/
+*.pyc
+finops/target/
+finops/logs/
+finops/dbt_packages/
+finops/profiles.yml
+
+# IDE and operating system
+.vscode/*.local.json
+.idea/
+.DS_Store
+Thumbs.db
