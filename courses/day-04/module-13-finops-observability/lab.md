@@ -1,16 +1,19 @@
 ﻿# Lab M13 — Observabilité et FinOps as Code avec dbt
 
-**Durée :** 90 min — Extension post-formation
-**Code :** `finops/`, `azure-pipelines.yml`
-**Pattern :** Metadata-Driven Observability
-**Piliers WAF :** Optimisation des coûts, Excellence opérationnelle
-**Phase CAF :** Manage
+| Élément | Valeur |
+|---|---|
+| **Durée** | 90 min |
+| **Piste** | `[EXTENSION]` |
+| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
+| **Dossier de travail** | `finops/` (à créer) |
+| **Coût** | Warehouse FinOps X-SMALL |
+| **Cleanup** | Détruire à la fin |
 
-## Contexte métier
+## Mission
 
-Le propriétaire de la plateforme doit attribuer les crédits consommés, détecter les warehouses inactifs et prévenir un dépassement avant la facture. Des exports manuels ne fournissent ni historique fiable ni contrôle continu.
+Le propriétaire de la plateforme doit attribuer les crédits consommés, détecter les warehouses inactifs et prévenir un dépassement avant la facture. Vous allez configurer dbt avec le package `get-select/dbt_snowflake_monitoring` pour transformer la télémétrie Snowflake en indicateurs de décision.
 
-## Contexte architecture
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -20,107 +23,198 @@ flowchart LR
     PIPE[Azure DevOps Audit] --> STG
 ```
 
-## Objectifs pédagogiques
+## Objectifs
 
-- Expliquer la latence de 1 à 3 heures des vues `ACCOUNT_USAGE`.
-- Construire et tester les modèles `finops` existants.
-- Interpréter crédits, requêtes coûteuses, stockage et warehouses inactifs.
-- Relier Resource Monitors, tags et coût par équipe.
-- Exécuter `dbt build` dans le stage Audit du pipeline.
+- configurer un projet dbt avec le package `dbt_snowflake_monitoring` 4.6.0;
+- expliquer la latence de 1 à 3 heures des vues `ACCOUNT_USAGE`;
+- construire et tester les modèles FinOps;
+- interpréter crédits, requêtes coûteuses et warehouses inactifs.
 
-## Concept — Pourquoi avant comment
+## Prérequis
 
-Terraform définit les garde-fous de coût ; dbt transforme la télémétrie en indicateurs de décision. L'observabilité n'est pas un dashboard isolé : ses modèles, tests et seuils sont versionnés et déployés comme le reste de la plateforme.
+- [ ] M12 terminé : la plateforme est déployée;
+- [ ] dbt installé (vérifié au Jour 0);
+- [ ] `dbt --version` affiche une version < 3.0.0;
+- [ ] accès au schema `SNOWFLAKE.ACCOUNT_USAGE` (rôle `ACCOUNTADMIN` ou équivalent).
 
-## Pattern d'entreprise
+## Partie 1 — Créer le projet dbt FinOps
 
-**Metadata-Driven Observability** sépare les sources `ACCOUNT_USAGE`, une couche staging stable et des marts orientés décisions. L'alternative — requêtes SQL ponctuelles — est écartée car elle n'est ni testée, ni historisée, ni réutilisable.
+### Étape 1.1 — Créer la structure
 
-## Implémentation
+```bash
+cd $HOME/Data2AI-Labs/data-platform
+mkdir -p finops/models/staging finops/models/marts
+```
 
-### Étape 1 — Préparer le profil sans secret versionné
+### Étape 1.2 — Créer `finops/dbt_project.yml`
 
-Copiez `finops/profiles.yml.example` vers `~/.dbt/profiles.yml`. Remplacez uniquement les placeholders localement. En CI, injectez `SNOWFLAKE_*` depuis le Variable Group.
+```yaml
+name: finops
+version: 1.0.0
+profile: finops
 
-### Étape 2 — Vérifier les sources et la latence
+models:
+  finops:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
+```
 
-```powershell
-Set-Location finops
-python -m pip install -r requirements.txt
+### Étape 1.3 — Créer `finops/packages.yml`
+
+```yaml
+packages:
+  - package: get-select/dbt_snowflake_monitoring
+    version: 4.6.0
+  - package: dbt-labs/dbt_utils
+    version: 1.3.3
+```
+
+### Étape 1.4 — Créer `finops/profiles.yml.example`
+
+```yaml
+finops:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: ZVFXOZW-PM71247
+      user: DATA2AI
+      role: ACCOUNTADMIN
+      database: DB_FINOPS_DEV
+      warehouse: WH_ABC_FINOPS_DEV
+      schema: PUBLIC
+      authenticator: snowflake
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_FILE') }}"
+```
+
+> `[SECURITY]` Copiez ce fichier vers `~/.dbt/profiles.yml` et remplacez les valeurs localement. Ne commitez jamais `profiles.yml` avec des secrets.
+
+### Étape 1.5 — Créer le profil local
+
+```bash
+cp finops/profiles.yml.example ~/.dbt/profiles.yml
+```
+
+Éditez `~/.dbt/profiles.yml` avec vos valeurs réelles.
+
+### Étape 1.6 — Installer les dépendances
+
+```bash
+cd finops
 dbt deps
+```
+
+**Attendu :** les packages `dbt_snowflake_monitoring` 4.6.0 et `dbt_utils` 1.3.3 sont installés.
+
+### Étape 1.7 — Tester la connexion
+
+```bash
 dbt debug --target dev
 ```
 
-Les modèles staging lisent `WAREHOUSE_METERING_HISTORY`, `QUERY_HISTORY`, `STORAGE_USAGE` et `RESOURCE_MONITORS`.
+**Attendu :** `All checks passed!`
 
-### Étape 3 — Construire la couche FinOps
+## Partie 2 — Construire la couche FinOps
 
-```powershell
-dbt build --target dev
-dbt show --select mart_warehouse_credits_daily --limit 10
-dbt show --select mart_resource_monitor_risk --limit 10
-dbt show --select mart_expensive_queries --limit 10
+### Étape 2.1 — Créer le warehouse FinOps
+
+```bash
+snow sql -c training -q "CREATE WAREHOUSE WH_ABC_FINOPS_DEV WAREHOUSE_SIZE = 'X-SMALL' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE INITIALLY_SUSPENDED = TRUE"
 ```
 
-### Étape 4 — Relier contrôle préventif et observation
+Remplacez `ABC` par votre préfixe.
 
-Vérifiez que chaque warehouse géré par le module `landing-zone` est attaché à un Resource Monitor et que les tags `environment`, `team` et `cost_center` permettent l'attribution.
+### Étape 2.2 — Créer la database FinOps
 
-## Validation
+```bash
+snow sql -c training -q "CREATE DATABASE DB_FINOPS_DEV COMMENT = 'FinOps monitoring database'"
+```
 
-### Résultat attendu
+### Étape 2.3 — Construire les modèles
 
-`dbt build` termine sans erreur ; les cinq marts existent et les statuts de risque sont bornés par les tests.
+```bash
+dbt build --target dev
+```
 
-### Vérification Snowflake
+**Attendu :** les modèles du package `dbt_snowflake_monitoring` sont construits sans erreur.
+
+> Si vous obtenez `insufficient privileges`, vérifiez que votre rôle a accès à `SNOWFLAKE.ACCOUNT_USAGE`.
+
+## Partie 3 — Interpréter les indicateurs
+
+### Étape 3.1 — Crédits par warehouse
+
+```bash
+dbt show --select snowflake_monitoring.mart_warehouse_credits_daily --limit 10
+```
+
+**Attendu :** une table avec les crédits consommés par warehouse et par jour.
+
+### Étape 3.2 — Warehouses inactifs
+
+```bash
+dbt show --select snowflake_monitoring.mart_warehouse_credits_daily --limit 10
+```
+
+Identifiez les warehouses avec 0 crédits sur les derniers jours.
+
+### Étape 3.3 — Requêtes coûteuses
+
+```bash
+dbt show --select snowflake_monitoring.mart_query_history --limit 10
+```
+
+**Attendu :** les requêtes triées par coût.
+
+### Étape 3.4 — Vérifier dans Snowflake
 
 ```sql
 SELECT * FROM DB_FINOPS_DEV.MARTS.MART_WAREHOUSE_CREDITS_DAILY ORDER BY USAGE_DATE DESC LIMIT 10;
-SELECT * FROM DB_FINOPS_DEV.MARTS.MART_INACTIVE_WAREHOUSES WHERE ACTIVITY_STATUS <> 'ACTIVE';
 SELECT * FROM DB_FINOPS_DEV.MARTS.MART_RESOURCE_MONITOR_RISK WHERE RISK_STATUS IN ('WARNING', 'CRITICAL');
 ```
 
-### Critères d'acceptation
+## Partie 4 — Relier contrôle préventif et observation
 
-- [ ] `dbt debug` valide connexion, rôle, database, warehouse et schema.
-- [ ] `dbt build` exécute modèles et tests.
-- [ ] Les résultats sont interprétés avec la latence `ACCOUNT_USAGE`.
-- [ ] Le pipeline Audit exécute le même build.
-- [ ] Aucune valeur secrète n'est présente dans Git.
+### Étape 4.1 — Vérifier les Resource Monitors
 
-## Troubleshooting
+```bash
+snow sql -c training -q "SHOW RESOURCE MONITORS"
+```
 
-| Symptôme | Diagnostic | Récupération | Prévention |
-|---|---|---|---|
-| Source vide | Vérifier la fenêtre temporelle et la latence | Attendre la disponibilité `ACCOUNT_USAGE` | Documenter la fraîcheur attendue |
-| `insufficient privileges` | `SHOW GRANTS TO ROLE` | Accorder les privilèges de monitoring au rôle de gouvernance | Rôle FinOps dédié |
-| Profil introuvable | `dbt debug --config-dir` | Placer `profiles.yml` hors du dépôt | Variables CI et Key Vault |
-| Test de plage en échec | Examiner le modèle et la source | Corriger le calcul, pas le test | Revue des seuils |
+### Étape 4.2 — Vérifier les tags
 
-Voir aussi `troubleshooting.md`.
+Si vous avez tagué vos ressources en M4 :
 
-## Notes d'architecte
+```bash
+snow sql -c training -q "SELECT * FROM ABC_RAW_DEV.INFORMATION_SCHEMA.TAG_REFERENCES"
+```
 
-`ACCOUNT_USAGE` convient à l'analyse et au pilotage, pas à l'alerte temps réel. Les seuils 75/90/100/110 % restent appliqués par les Resource Monitors ; dbt fournit tendance, attribution et preuve d'audit.
+### Étape 4.3 — Attribuer les coûts
 
-## Bonnes pratiques Enterprise
+Les marts FinOps permettent d'attribuer les coûts par :
 
-- Utiliser un warehouse FinOps dédié et auto-suspendu.
-- Exécuter les tests avec chaque évolution de modèle.
-- Taguer les coûts par environnement, domaine et équipe.
-- Conserver les définitions de métriques dans Git.
+- warehouse (compute);
+- database (storage);
+- rôle (attribution métier);
+- environnement (DEV, UAT, PROD).
 
-## Notes de production
+## Challenge
 
-| Training | Production |
-|---|---|
-| `ACCOUNTADMIN` possible en sandbox | Rôle `GOVERNANCE` dédié avec privilèges minimaux |
-| Profil local par mot de passe | JWT et secret Key Vault injecté en CI |
-| Lecture ponctuelle | Build planifié, alertes et SLO de fraîcheur |
+Créez un mart personnalisé `mart_cost_by_environment` qui agrège les crédits par environnement en utilisant le préfixe du nom de warehouse.
 
-## Réflexion
+Critères :
 
-1. Quel délai de détection est acceptable pour un dépassement de crédits ?
-2. Comment attribuer un warehouse partagé à plusieurs domaines ?
-3. Quels indicateurs doivent bloquer la création d'un nouveau Data Product ?
+- [ ] `dbt build` réussit;
+- [ ] le mart contient une ligne par environnement;
+- [ ] les coûts sont agrégés correctement.
 
+## Cleanup
+
+```bash
+snow sql -c training -q "DROP DATABASE DB_FINOPS_DEV"
+snow sql -c training -q "DROP WAREHOUSE WH_ABC_FINOPS_DEV"
+```

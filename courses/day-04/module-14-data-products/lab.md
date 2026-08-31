@@ -1,16 +1,19 @@
 ﻿# Lab M14 — Data Products as Code avec Terraform et Snow CLI
 
-**Durée :** 120 min — Extension post-formation
-**Code :** `project/06-data-products/`
-**Pattern :** Data Product, Data Mesh, Medallion Architecture
-**Piliers WAF :** Les cinq piliers
-**Phase CAF :** Adopt
+| Élément | Valeur |
+|---|---|
+| **Durée** | 120 min |
+| **Piste** | `[EXTENSION]` |
+| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
+| **Dossier de travail** | `modules/data-product/` et `environments/dev/` |
+| **Coût** | Warehouses X-SMALL |
+| **Cleanup** | Détruire à la fin |
 
-## Contexte métier
+## Mission
 
-Les domaines SALES et FINANCE doivent livrer des données avec autonomie sans contourner sécurité, coûts et standards. La plateforme publie un contrat structurel ; les équipes produit publient leur SQL versionné à travers la même chaîne de contrôle.
+Les domaines SALES et FINANCE doivent livrer des données avec autonomie sans contourner sécurité, coûts et standards. Vous allez créer un module `data-product` qui déploie la structure (database, schemas RAW/SILVER/GOLD, rôles, stage) et publier le contenu SQL avec Snow CLI.
 
-## Contexte architecture
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -22,103 +25,381 @@ flowchart LR
     SQL --> FINOPS[M13 FinOps]
 ```
 
-## Objectifs pédagogiques
+## Objectifs
 
-- Expliquer la frontière Terraform/Snow CLI.
-- Déployer un produit de domaine via un module réutilisable.
-- Implémenter RAW, SILVER et GOLD selon Medallion.
-- Publier tables et vues par SQL versionné.
-- Vérifier ownership, rôles, Future Grants et zero-drift.
+- créer un module `data-product` réutilisable;
+- déployer deux domaines (SALES et FINANCE) avec `for_each`;
+- implémenter l'architecture Medallion (RAW, SILVER, GOLD);
+- publier le contenu SQL avec Snow CLI, pas avec `local-exec`;
+- vérifier ownership, rôles, Future Grants et zero-drift.
 
-## Concept — Pourquoi avant comment
+## Prérequis
 
-Terraform excelle pour les objets structurels à cycle de vie long : databases, schemas, stages, rôles et grants. Snow CLI convient aux artefacts SQL qui évoluent avec le produit. Mélanger les deux cycles dans des `local-exec` détruit la lisibilité du plan et la reprise sur erreur.
+- [ ] M12 terminé : la plateforme est déployée;
+- [ ] M13 terminé (recommandé) : FinOps est configuré;
+- [ ] `snow sql -c training` fonctionne.
 
-## Pattern d'entreprise
+## Partie 1 — Créer le module data-product
 
-Le pattern **Data Product** attribue un owner, un contrat, des rôles et des indicateurs à un domaine. **Medallion** matérialise les niveaux RAW, SILVER et GOLD. Le **Data Mesh** fédère ces produits sous les garde-fous de la plateforme.
+### Étape 1.1 — Créer la structure
 
-## Implémentation
-
-### Étape 1 — Valider le module structurel
-
-```powershell
-terraform -chdir=project/06-data-products/environments/dev init -backend=false
-terraform -chdir=project/06-data-products/environments/dev validate
-terraform -chdir=project/06-data-products/environments/dev plan
+```bash
+cd $HOME/Data2AI-Labs/data-platform
+mkdir -p modules/data-product
 ```
 
-Le root instancie `module.data_product` avec `for_each` pour SALES et FINANCE.
+### Étape 1.2 — Créer `modules/data-product/variables.tf`
 
-### Étape 2 — Appliquer la structure
+```hcl
+variable "learner_prefix" {
+  type        = string
+  description = "Learner prefix"
+}
 
-```powershell
-terraform -chdir=project/06-data-products/environments/dev apply
-terraform -chdir=project/06-data-products/environments/dev output data_products
+variable "environment" {
+  type        = string
+  description = "Deployment environment"
+  default     = "DEV"
+}
+
+variable "domain" {
+  type        = string
+  description = "Domain name (e.g. SALES, FINANCE)"
+}
+
+variable "owner" {
+  type        = string
+  description = "Domain owner email"
+}
+
+variable "warehouse_size" {
+  type        = string
+  default     = "X-SMALL"
+}
 ```
 
-### Étape 3 — Publier le contenu SQL
+### Étape 1.3 — Créer `modules/data-product/main.tf`
 
-```powershell
-snow sql -f project/06-data-products/sql/sales/orders.sql --database DB_SALES_DEV --warehouse WH_ETL_DEV
-snow sql -f project/06-data-products/sql/finance/ledger.sql --database DB_FINANCE_DEV --warehouse WH_ETL_DEV
+```hcl
+locals {
+  db_name   = "${var.learner_prefix}_${var.domain}_${var.environment}"
+  wh_name   = "WH_${var.learner_prefix}_${var.domain}_${var.environment}"
+  role_prod = "ROLE_${var.learner_prefix}_${var.domain}_PROD_${var.environment}"
+  role_read = "ROLE_${var.learner_prefix}_${var.domain}_RDR_${var.environment}"
+  comment   = "Data Product | ${var.domain} | Owner: ${var.owner}"
+}
+
+# Database
+resource "snowflake_database" "this" {
+  name    = local.db_name
+  comment = local.comment
+}
+
+# Medallion schemas
+resource "snowflake_schema" "raw" {
+  database = snowflake_database.this.name
+  name     = "RAW"
+  comment  = local.comment
+}
+
+resource "snowflake_schema" "silver" {
+  database = snowflake_database.this.name
+  name     = "SILVER"
+  comment  = local.comment
+}
+
+resource "snowflake_schema" "gold" {
+  database = snowflake_database.this.name
+  name     = "GOLD"
+  comment  = local.comment
+}
+
+# Warehouse
+resource "snowflake_warehouse" "this" {
+  name                = local.wh_name
+  warehouse_size      = var.warehouse_size
+  auto_suspend        = 60
+  auto_resume         = true
+  initially_suspended = true
+  comment             = local.comment
+}
+
+# Roles
+resource "snowflake_account_role" "producer" {
+  name    = local.role_prod
+  comment = "Producer role for ${var.domain}"
+}
+
+resource "snowflake_account_role" "reader" {
+  name    = local.role_read
+  comment = "Reader role for ${var.domain}"
+}
+
+# Grants
+resource "snowflake_grant_privileges_to_account_role" "producer_db" {
+  privileges        = ["USAGE"]
+  account_role_name = snowflake_account_role.producer.name
+  on_database       = snowflake_database.this.name
+}
+
+resource "snowflake_grant_privileges_to_account_role" "producer_schemas" {
+  for_each = toset(["RAW", "SILVER", "GOLD"])
+
+  privileges        = ["USAGE", "CREATE TABLE", "CREATE VIEW"]
+  account_role_name = snowflake_account_role.producer.name
+  on_schema {
+    schema_name = "${snowflake_database.this.name}.${each.value}"
+  }
+}
+
+resource "snowflake_grant_privileges_to_account_role" "reader_db" {
+  privileges        = ["USAGE"]
+  account_role_name = snowflake_account_role.reader.name
+  on_database       = snowflake_database.this.name
+}
+
+# Future Grants: new tables in GOLD get SELECT for reader
+resource "snowflake_grant_privileges_to_account_role" "reader_future_gold" {
+  privileges        = ["SELECT"]
+  account_role_name = snowflake_account_role.reader.name
+  on_schema_object {
+    future {
+      database_name = snowflake_database.this.name
+      schema_name   = "GOLD"
+      object_type   = "TABLE"
+    }
+  }
+}
+
+# Stage for raw ingestion
+resource "snowflake_stage" "raw" {
+  name     = "STG_RAW"
+  database = snowflake_database.this.name
+  schema   = "RAW"
+  comment  = local.comment
+}
 ```
 
-### Étape 4 — Prouver la séparation des responsabilités
+### Étape 1.4 — Créer `modules/data-product/outputs.tf`
 
-Le rôle producteur écrit et transforme ; le rôle lecteur consomme les futures tables. Les providers `sysadmin` et `securityadmin` séparent objets et autorisations.
+```hcl
+output "database_name" {
+  value = snowflake_database.this.name
+}
 
-## Validation
+output "warehouse_name" {
+  value = snowflake_warehouse.this.name
+}
+
+output "role_producer" {
+  value = snowflake_account_role.producer.name
+}
+
+output "role_reader" {
+  value = snowflake_account_role.reader.name
+}
+
+output "stage_name" {
+  value = snowflake_stage.raw.name
+}
+```
+
+### Étape 1.5 — Créer `modules/data-product/versions.tf`
+
+```hcl
+terraform {
+  required_version = ">= 1.14.0, < 2.0.0"
+
+  required_providers {
+    snowflake = {
+      source  = "snowflakedb/snowflake"
+      version = "= 2.14.0"
+    }
+  }
+}
+```
+
+### Étape 1.6 — Formater et valider
+
+```bash
+cd modules/data-product
+terraform fmt
+terraform validate
+```
+
+## Partie 2 — Déployer deux domaines avec for_each
+
+### Étape 2.1 — Ajouter l'appel dans `environments/dev/main.tf`
+
+```hcl
+locals {
+  data_products = {
+    SALES = {
+      owner = "sales@data2ai.com"
+    }
+    FINANCE = {
+      owner = "finance@data2ai.com"
+    }
+  }
+}
+
+module "data_product" {
+  source   = "../../modules/data-product"
+  for_each = local.data_products
+
+  learner_prefix = var.learner_prefix
+  environment    = var.environment
+  domain         = each.key
+  owner          = each.value.owner
+  warehouse_size = "X-SMALL"
+}
+```
+
+### Étape 2.2 — Ajouter les outputs
+
+```hcl
+output "data_products" {
+  value = {
+    for k, v in module.data_product : k => {
+      database  = v.database_name
+      warehouse = v.warehouse_name
+      producer  = v.role_producer
+      reader    = v.role_reader
+    }
+  }
+  description = "Deployed data products"
+}
+```
+
+### Étape 2.3 — Planifier et appliquer
+
+```bash
+cd environments/dev
+terraform fmt
+terraform init
+terraform validate
+terraform plan
+terraform apply
+```
+
+**Attendu :** 2 databases, 6 schemas, 2 warehouses, 4 rôles, 2 stages, grants.
+
+### Étape 2.4 — Vérifier
+
+```bash
+snow sql -c training -q "SHOW DATABASES LIKE 'ABC_SALES_DEV'"
+snow sql -c training -q "SHOW DATABASES LIKE 'ABC_FINANCE_DEV'"
+snow sql -c training -q "SHOW SCHEMAS IN DATABASE ABC_SALES_DEV"
+```
+
+## Partie 3 — Publier le contenu SQL avec Snow CLI
+
+### Étape 3.1 — Créer les fichiers SQL
+
+```bash
+mkdir -p sql/sales sql/finance
+```
+
+`sql/sales/orders.sql` :
 
 ```sql
-SHOW SCHEMAS IN DATABASE DB_SALES_DEV;
-SHOW GRANTS TO ROLE RL_SALES_READER_DEV;
-SHOW FUTURE GRANTS IN DATABASE DB_SALES_DEV;
-SELECT * FROM DB_SALES_DEV.GOLD.DAILY_REVENUE LIMIT 10;
+CREATE OR REPLACE TABLE ABC_SALES_DEV.SILVER.ORDERS AS
+SELECT
+  1 AS ORDER_ID,
+  '2026-01-01' AS ORDER_DATE,
+  100.00 AS AMOUNT
+UNION ALL
+SELECT 2, '2026-01-02', 200.00;
+
+CREATE OR REPLACE VIEW ABC_SALES_DEV.GOLD.DAILY_REVENUE AS
+SELECT
+  ORDER_DATE,
+  SUM(AMOUNT) AS TOTAL_REVENUE
+FROM ABC_SALES_DEV.SILVER.ORDERS
+GROUP BY ORDER_DATE;
 ```
 
-### Critères d'acceptation
+`sql/finance/ledger.sql` :
 
-- [ ] SALES et FINANCE possèdent RAW, SILVER et GOLD.
-- [ ] Chaque domaine possède un stage RAW et une paire de rôles.
-- [ ] Le SQL est déployé avec Snow CLI, pas avec `local-exec`.
-- [ ] `terraform plan` retourne `No changes` après publication SQL.
-- [ ] DEV et TEST utilisent des states et des noms distincts.
+```sql
+CREATE OR REPLACE TABLE ABC_FINANCE_DEV.SILVER.LEDGER AS
+SELECT
+  1 AS ENTRY_ID,
+  '2026-01-01' AS ENTRY_DATE,
+  'REVENUE' AS TYPE,
+  300.00 AS AMOUNT;
+```
 
-## Troubleshooting
+### Étape 3.2 — Exécuter le SQL avec Snow CLI
 
-| Symptôme | Diagnostic | Récupération | Prévention |
-|---|---|---|---|
-| Warehouse absent | `SHOW WAREHOUSES LIKE 'WH_ETL_%'` | Déployer M12 avant M14 | Dépendance documentée |
-| Preview stage refusée | Vérifier provider 2.14.0 | Réinitialiser avec la version verrouillée | Matrice CI |
-| SQL dans le mauvais contexte | `SELECT CURRENT_DATABASE(), CURRENT_ROLE()` | Passer explicitement database/warehouse | Paramètres CLI obligatoires |
-| Grant manquant | `SHOW GRANTS TO ROLE` | Corriger le module et réappliquer | Aucun grant manuel permanent |
+```bash
+snow sql -c training -f sql/sales/orders.sql
+snow sql -c training -f sql/finance/ledger.sql
+```
 
-Voir `troubleshooting.md` pour la récupération détaillée.
+### Étape 3.3 — Vérifier
 
-## Notes d'architecte
+```bash
+snow sql -c training -q "SELECT * FROM ABC_SALES_DEV.GOLD.DAILY_REVENUE"
+snow sql -c training -q "SELECT * FROM ABC_FINANCE_DEV.SILVER.LEDGER"
+```
 
-La frontière Terraform/Snow CLI est une décision de cycle de vie : Terraform publie le contrat stable ; Snow CLI publie le contenu à fréquence élevée. Le pipeline orchestre les deux sans masquer le SQL dans le state.
+### Étape 3.4 — Prouver le zero-drift
 
-## Bonnes pratiques Enterprise
+```bash
+terraform plan -detailed-exitcode
+```
 
-- Un owner, un SLA et un coût attribuable par produit.
-- Contrats de schéma compatibles en arrière.
-- Rôles producteur/lecteur dédiés, Future Grants testés.
-- Promotion DEV → TEST → PROD à partir du même commit.
+**Attendu :** code 0 — le SQL publié ne modifie pas la structure gérée par Terraform.
 
-## Notes de production
+> C'est la séparation des responsabilités : Terraform gère la structure, Snow CLI gère le contenu.
 
-| Training | Production |
-|---|---|
-| Stage interne | Storage Integration Azure et Private Endpoint selon exigences |
-| Deux domaines | Catalogue de domaines piloté par métadonnées |
-| SQL séquentiel | Tests de contrat, approbation et rollback |
-| JWT local | Workload identity et Key Vault |
+## Partie 4 — Vérifier les Future Grants
 
-## Réflexion
+### Étape 4.1 — Lister les Future Grants
 
-1. Qui approuve une rupture de contrat GOLD ?
-2. Comment un produit expose-t-il fraîcheur, qualité et coût ?
-3. Quel garde-fou reste central et lequel appartient au domaine ?
+```bash
+snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA ABC_SALES_DEV.GOLD"
+```
 
+**Attendu :** `GRANT SELECT ON FUTURE TABLES TO ROLE ROLE_ABC_SALES_RDR_DEV`.
+
+### Étape 4.2 — Tester le Future Grant
+
+Créez une table manuellement dans GOLD :
+
+```bash
+snow sql -c training -q "CREATE TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE (ID INT)"
+snow sql -c training -q "SHOW GRANTS ON TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE"
+```
+
+**Attendu :** le rôle reader a déjà SELECT grâce au Future Grant.
+
+### Étape 4.3 — Nettoyer
+
+```bash
+snow sql -c training -q "DROP TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE"
+```
+
+## Challenge
+
+Ajoutez un troisième domaine `MARKETING` avec un owner et un warehouse dédié. Publiez une vue `CAMPAIGN_PERFORMANCE` dans le schema GOLD.
+
+Critères :
+
+- [ ] `terraform plan` crée les ressources MARKETING;
+- [ ] `snow sql -f` publie la vue;
+- [ ] `terraform plan -detailed-exitcode` retourne 0;
+- [ ] le Future Grant est configuré pour le reader.
+
+## Cleanup
+
+```bash
+cd environments/dev
+terraform destroy
+```
+
+```bash
+snow sql -c training -q "DROP DATABASE ABC_SALES_DEV"
+snow sql -c training -q "DROP DATABASE ABC_FINANCE_DEV"
+```
