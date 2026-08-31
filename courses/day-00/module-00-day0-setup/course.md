@@ -56,12 +56,13 @@ Il **ne fournit pas** le code Terraform. Vous créerez les fichiers `.tf` au fil
 
 ### PAT (Personal Access Token)
 
-Le PAT est un jeton temporaire utilisé pour la formation. Il est :
+Le PAT est un jeton temporaire utilisé pour la formation. Le flux est :
 
-- saisi via une invite masquée — jamais affiché;
-- stocké par Snowflake CLI dans sa configuration;
-- jamais placé dans un fichier du dépôt;
-- effacé de l'environnement dès que possible par le script de connexion.
+1. le **formateur** pré-remplit `.env.example` avec les identifiants Snowflake, Azure et Azure DevOps;
+2. l'**apprenant** copie `.env.example` en `.env` et ajoute son préfixe et son PAT;
+3. le **script de connexion** lit `.env` automatiquement et crée la connexion Snowflake CLI;
+4. le PAT est jamais affiché, jamais stocké dans un fichier commité;
+5. le script efface le token de l'environnement dès que possible.
 
 ### Progression d'authentification
 

@@ -66,14 +66,18 @@ Le formateur vous fournit l'URL du dépôt template `data-platform-starter`. Si 
 
 ### 3. Vos identifiants Snowflake
 
-Le formateur vous fournit :
+Le formateur a pré-rempli le fichier `.env.example` du projet type avec :
 
 - l'identifiant d'organisation Snowflake;
 - l'identifiant de compte Snowflake;
-- votre nom d'utilisateur Snowflake;
-- votre rôle (généralement `SYSADMIN` pour la formation);
-- un PAT temporaire;
-- votre préfixe apprenant unique (3 à 5 lettres).
+- le nom d'utilisateur Snowflake;
+- le rôle (généralement `SYSADMIN`);
+- les paramètres Azure et Azure DevOps.
+
+Vous copiez `.env.example` en `.env`, puis vous ajoutez uniquement :
+
+- votre **préfixe apprenant** unique (3 à 5 lettres);
+- votre **PAT** temporaire.
 
 ## Règles de sécurité
 

@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 #
-# Creates a Snowflake CLI connection using a PAT entered securely.
+# Creates a Snowflake CLI connection using credentials from .env or a masked prompt.
 #
-# The PAT is entered via a masked prompt, never displayed, never logged, and
-# never passed as a command-line argument. It is exported to the
-# SNOWFLAKE_PAT environment variable only for the duration of the snow
-# commands, then unset.
+# The script reads .env from the project root if it exists. It uses the
+# Snowflake parameters found there. If a parameter is missing or .env does
+# not exist, the script prompts for it interactively.
+#
+# The PAT is read from .env (SNOWFLAKE_PAT) or entered via a masked prompt.
+# It is never displayed, never logged, and never passed as a command-line
+# argument.
 #
 # Usage:
 #   ./scripts/new-snowflake-connection.sh
@@ -13,11 +16,44 @@
 
 set -uo pipefail
 
-connection_name='training'
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+project_root="$(cd "$script_dir/.." && pwd)"
+env_file="${project_root}/.env"
+
+# ------------------------------------------------------------------
+# Load .env if it exists
+# ------------------------------------------------------------------
+
+declare -A env_values
+
+if [[ -f "$env_file" ]]; then
+  printf '[INFO] Loading .env from %s\n' "$env_file" >&2
+  while IFS='=' read -r key value; do
+    # Skip comments and empty lines
+    [[ "$key" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "$key" ]] && continue
+    # Trim whitespace and quotes
+    key="${key//[[:space:]]/}"
+    value="${value//[[:space:]]/}"
+    value="${value#\"}"
+    value="${value%\"}"
+    value="${value#\'}"
+    value="${value%\'}"
+    env_values["$key"]="$value"
+  done < "$env_file"
+else
+  printf '[INFO] No .env file found. You will be prompted for all values.\n' >&2
+fi
+
+# ------------------------------------------------------------------
+# Arguments
+# ------------------------------------------------------------------
+
+connection_name=''
 organization=''
 account=''
 user=''
-role='SYSADMIN'
+role=''
 host=''
 
 while [[ $# -gt 0 ]]; do
@@ -32,12 +68,27 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# ------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------
+
+get_config_value() {
+  local key="$1" override="$2" default="${3:-}"
+  if [[ -n "$override" ]]; then printf '%s' "$override"; return 0; fi
+  if [[ -n "${env_values[$key]:-}" ]]; then printf '%s' "${env_values[$key]}"; return 0; fi
+  if [[ -n "$default" ]]; then printf '%s' "$default"; return 0; fi
+  printf ''
+}
+
 read_required() {
-  local prompt="$1" value
+  local prompt="$1" default="${2:-}" value
   while true; do
-    printf '%s: ' "$prompt"
+    printf '%s' "$prompt"
+    [[ -n "$default" ]] && printf ' [%s]' "$default"
+    printf ': '
     read -r value
     if [[ -n "$value" ]]; then printf '%s' "$value"; return 0; fi
+    if [[ -n "$default" ]]; then printf '%s' "$default"; return 0; fi
     printf '  A value is required.\n' >&2
   done
 }
@@ -50,19 +101,36 @@ read_masked() {
   printf '%s' "$value"
 }
 
+# ------------------------------------------------------------------
+# Resolve parameters
+# ------------------------------------------------------------------
+
 printf '\n============================================================\n'
 printf ' Snowflake CLI connection setup\n'
 printf '============================================================\n'
-printf '\nThe PAT is entered securely and never displayed or logged.\n\n'
+printf '\nThe PAT is read from .env or entered securely.\n'
+printf 'It is never displayed or logged.\n\n'
+
+connection_name="$(get_config_value 'SNOWFLAKE_CONNECTION' "$connection_name" 'training')"
+organization="$(get_config_value 'SNOWFLAKE_ORGANIZATION' "$organization")"
+account="$(get_config_value 'SNOWFLAKE_ACCOUNT' "$account")"
+user="$(get_config_value 'SNOWFLAKE_USER' "$user")"
+role="$(get_config_value 'SNOWFLAKE_ROLE' "$role" 'SYSADMIN')"
+host="$(get_config_value 'SNOWFLAKE_HOST' "$host")"
 
 [[ -z "$organization" ]] && organization="$(read_required 'Snowflake organization name')"
 [[ -z "$account" ]]      && account="$(read_required 'Snowflake account name')"
 [[ -z "$user" ]]         && user="$(read_required 'Snowflake user name')"
 
-token="$(read_masked 'Snowflake PAT (token):')"
+# PAT: try .env first, then prompt
+token="${env_values['SNOWFLAKE_PAT']:-}"
 
 if [[ -z "$token" ]]; then
-  printf '[ERROR] No token entered. Aborting.\n'
+  token="$(read_masked 'Snowflake PAT (token):')"
+fi
+
+if [[ -z "$token" ]]; then
+  printf '[ERROR] No token available. Aborting.\n'
   exit 1
 fi
 
@@ -76,7 +144,6 @@ if [[ -n "$host" ]]; then
   snow_args+=(-h "$host")
 fi
 
-# Export the token only for the snow subprocess.
 export SNOWFLAKE_PAT="$token"
 
 printf '\nCreating the connection...\n'
@@ -102,11 +169,10 @@ else
   printf "       Check with: snow connection test -c %s\n" "$connection_name"
 fi
 
-# Clear the token from the environment.
 unset SNOWFLAKE_PAT
 
 printf '\nDone.\n'
 printf '\nNext steps:\n'
 printf "  - Use the connection:  snow sql -q 'SELECT 1' -c %s\n" "$connection_name"
-printf '  - Do not store the PAT in any file.\n'
+printf '  - Do not store the PAT in any committed file.\n'
 printf '  - Rotate the PAT when the training module is complete.\n'

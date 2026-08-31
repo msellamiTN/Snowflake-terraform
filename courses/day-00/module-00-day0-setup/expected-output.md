@@ -56,17 +56,17 @@ Warnings: 0
 
 ### Sortie attendue du script de connexion
 
+Avec `.env` pré-rempli par le formateur et `SNOWFLAKE_PAT` renseigné :
+
 ```text
 ============================================================
  Snowflake CLI connection setup
 ============================================================
 
-The PAT is entered securely and never displayed or logged.
+The PAT is read from .env or entered securely.
+It is never displayed or logged.
 
-Snowflake organization name: MYORG
-Snowflake account name: MYACCOUNT
-Snowflake user name: DATA2AI
-Snowflake PAT (token): ********
+[INFO] Loading .env from .../.env
 
 Creating the connection...
 [OK] Connection 'training' created.
@@ -78,9 +78,11 @@ Done.
 
 Next steps:
   - Use the connection:  snow sql -q 'SELECT 1' -c training
-  - Do not store the PAT in any file.
+  - Do not store the PAT in any committed file.
   - Rotate the PAT when the training module is complete.
 ```
+
+Si `SNOWFLAKE_PAT` était vide dans `.env`, le script demande le PAT de façon masquée avant de continuer.
 
 ### Vérification de la connexion
 
@@ -151,6 +153,8 @@ find $HOME/Data2AI-Labs/data-platform -name '*.tf' -type f
 
 - [ ] `Toolchain status: READY`
 - [ ] Tous les outils Core en `PASS`
+- [ ] `.env` copié depuis `.env.example` et complété avec `LEARNER_PREFIX` et `SNOWFLAKE_PAT`
+- [ ] `git check-ignore .env` retourne `.env`
 - [ ] `snow sql -q 'SELECT 1' -c training` retourne un résultat
 - [ ] Projet type cloné sous `$HOME/Data2AI-Labs/data-platform`
 - [ ] Scripts présents dans `scripts/` du clone

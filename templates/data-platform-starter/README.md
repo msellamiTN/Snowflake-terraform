@@ -82,29 +82,44 @@ chmod +x scripts/install-tools.sh
 ./scripts/install-tools.sh
 ```
 
-### 3. Configurer la connexion Snowflake
+### 3. Configurer `.env`
+
+Le formateur a pré-rempli `.env.example` avec les paramètres d'accès Snowflake, Azure et Azure DevOps.
+
+```bash
+cp .env.example .env
+```
+
+Ouvrez `.env` et ajoutez uniquement :
+
+- `LEARNER_PREFIX` : votre préfixe apprenant (fourni par le formateur);
+- `SNOWFLAKE_PAT` : votre PAT temporaire (fourni par le formateur).
+
+Les autres valeurs sont déjà remplies par le formateur. `.env` est gitignored.
+
+### 4. Configurer la connexion Snowflake
 
 **Windows :**
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\New-SnowflakeConnection.ps1 `
-    -ConnectionName training -Organization <ORG> -Account <ACCT> -User <USER> -Role SYSADMIN
+powershell -ExecutionPolicy Bypass -File .\scripts\New-SnowflakeConnection.ps1
 ```
 
 **Linux/macOS :**
 
 ```bash
-./scripts/new-snowflake-connection.sh \
-    -n training -o <ORG> -a <ACCT> -u <USER> -r SYSADMIN
+./scripts/new-snowflake-connection.sh
 ```
 
-### 4. Valider
+Le script lit `.env` automatiquement et crée la connexion `training`.
+
+### 5. Valider
 
 ```bash
 snow sql -q 'SELECT 1' -c training
 ```
 
-### 5. Suivre les ateliers
+### 6. Suivre les ateliers
 
 Chaque atelier du parcours indique quels fichiers créer et où. Le dépôt cloné est la **racine de travail** pour tous les fichiers `.tf`, modules et configurations.
 

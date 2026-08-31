@@ -2,7 +2,18 @@
 
 This directory holds local secret files that are **never committed to Git**.
 
-The `.gitignore` excludes the entire `secrets/` directory. This README is the only tracked file here, so the directory exists in the clone without exposing any secret.
+The `.gitignore` excludes all files in `secrets/` except this README, so the directory exists in the clone without exposing any secret.
+
+## Relationship with .env
+
+The `.env` file (also gitignored) holds configuration values including identifiers and optionally the PAT. The `secrets/` directory holds file-based secrets such as private keys and PAT files used by Terraform and dbt.
+
+| File | In `.env` | In `secrets/` |
+|---|---|---|
+| Snowflake PAT | `SNOWFLAKE_PAT` variable | `snowflake_pat.txt` file |
+| Private key | Path via `SNOWFLAKE_PRIVATE_KEY_FILE` | `snowflake_key.p8` file |
+| Public key | — | `snowflake_key.pub` file |
+| Backend config | Azure variables | `backend.hcl` file |
 
 ## Expected files
 

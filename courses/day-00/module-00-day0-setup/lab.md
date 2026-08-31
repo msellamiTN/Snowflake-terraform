@@ -16,55 +16,85 @@
 
 ---
 
-## 1. Configurer la connexion Snowflake
+## 1. Configurer votre fichier `.env`
 
-Le script de connexion assistée saisit le PAT de façon masquée, crée la connexion et la teste. Le token n'est jamais affiché ni stocké dans un fichier.
+Le formateur a pré-rempli `.env.example` avec les paramètres d'accès Snowflake, Azure et Azure DevOps. Vous copiez ce fichier en `.env` et vous ajoutez uniquement vos valeurs personnelles.
 
-### 1.1 — Lancer le script
+### 1.1 — Copier `.env.example`
 
 **Windows :**
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\New-SnowflakeConnection.ps1 `
-    -ConnectionName training `
-    -Organization <VOTRE_ORGANISATION> `
-    -Account <VOTRE_COMPTE> `
-    -User <VOTRE_USER> `
-    -Role SYSADMIN
+cp .env.example .env
+```
+
+**Linux/macOS :**
+
+```bash
+cp .env.example .env
+```
+
+### 1.2 — Mettre à jour vos valeurs personnelles
+
+Ouvrez `.env` dans votre éditeur. Mettez à jour uniquement :
+
+| Variable | Valeur |
+|---|---|
+| `LEARNER_PREFIX` | Votre préfixe apprenant (3-5 lettres majuscules, fourni par le formateur) |
+| `SNOWFLAKE_PAT` | Votre PAT temporaire (fourni par le formateur) |
+
+Les autres valeurs (organisation, compte, utilisateur, rôle, Azure, Azure DevOps) sont déjà remplies par le formateur.
+
+> `.env` est gitignored. Il ne sera jamais commité.
+
+### 1.3 — Vérifier que `.env` est ignoré
+
+```bash
+git check-ignore .env
+```
+
+**Attendu :** `.env` — Git confirme qu'il ignore le fichier.
+
+---
+
+## 2. Configurer la connexion Snowflake
+
+Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de façon masquée.
+
+### 2.1 — Lancer le script
+
+**Windows :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\New-SnowflakeConnection.ps1
 ```
 
 **Linux/macOS :**
 
 ```bash
 chmod +x scripts/new-snowflake-connection.sh
-./scripts/new-snowflake-connection.sh \
-    -n training \
-    -o <VOTRE_ORGANISATION> \
-    -a <VOTRE_COMPTE> \
-    -u <VOTRE_USER> \
-    -r SYSADMIN
+./scripts/new-snowflake-connection.sh
 ```
 
-Si vous omettez les paramètres, le script vous les demande interactivement.
-
-### 1.2 — Saisir le PAT
-
-Le script affiche :
-
-```text
-Snowflake PAT (token):
-```
-
-Saisissez votre PAT. Il ne s'affiche pas à l'écran. Appuyez sur Entrée.
+Le script lit les paramètres depuis `.env` et crée la connexion `training`.
 
 **Attendu :**
 
 ```text
+[INFO] Loading .env from .../.env
 [OK] Connection 'training' created.
 [OK] Connection test succeeded.
 ```
 
-### 1.3 — Vérifier la connexion
+Si `SNOWFLAKE_PAT` était vide dans `.env`, le script affiche :
+
+```text
+Snowflake PAT (token): ********
+```
+
+Saisissez votre PAT. Il ne s'affiche pas à l'écran.
+
+### 2.2 — Vérifier la connexion
 
 ```bash
 snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
