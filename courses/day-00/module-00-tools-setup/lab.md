@@ -1,296 +1,232 @@
-﻿# Étape 1 — Installer et vérifier les outils
+﻿# Étape 1 — Installer et vérifier les outils (scripts d'abord)
 
-**Durée cible : 30 minutes**
+**Durée cible : 40 minutes**
 
 **Retour au parcours :** [Jour 0 — Commencer ici](../README.md)
 
 ## Résultat attendu
 
-À la fin de cette étape, ces trois commandes obligatoires fonctionnent :
+À la fin de cette étape, le rapport de la chaîne d'outils affiche :
 
 ```text
-git --version
-terraform version
-snow --version
+Toolchain status: READY
 ```
 
-VS Code est recommandé mais facultatif. OpenSSL, Azure CLI, AWS CLI, Google Cloud CLI, TFLint et dbt ne sont pas requis pour terminer le Jour 0.
+et tous les outils **Core** sont en `PASS`.
 
-## 1. Choisir votre piste
+## Approche
 
-- [Windows et PowerShell](#piste-windows)
-- [Linux et Bash](#piste-linux)
-- [macOS](#piste-macos)
+Le Jour 0 est **automatisé**. Vous clonez d'abord le projet type, puis vous exécutez les scripts qui se trouvent **dans le clone**. Ensuite, vous lisez le rapport et comprenez ce qui a été fait.
 
-Suivez une seule piste. Rejoignez ensuite [la vérification commune](#5-vérification-commune).
+- **Windows** : `scripts/Install-Tools.ps1`
+- **Linux/macOS** : `scripts/install-tools.sh`
+
+Les deux scripts ont le même contrat : mêmes versions, mêmes vérifications, même format de rapport.
+
+---
+
+## 1. Cloner le projet type
+
+Le projet type est le dépôt `data-platform-starter`. Il contient les scripts d'installation, la structure de gouvernance et les validateurs. **C'est votre racine de travail pour toute la formation.**
+
+### 1.1 — Obtenir l'URL
+
+Le formateur vous fournit l'URL du dépôt template. Si elle est définie dans votre fichier `.env`, vous pouvez la lire :
+
+**Windows :**
+
+```powershell
+$env:TEMPLATE_REPO_URL
+```
+
+**Linux/macOS :**
+
+```bash
+echo $TEMPLATE_REPO_URL
+```
+
+Si la variable est vide, demandez l'URL au formateur.
+
+### 1.2 — Cloner
+
+**Windows :**
+
+```powershell
+mkdir $HOME\Data2AI-Labs -Force
+git clone $env:TEMPLATE_REPO_URL $HOME\Data2AI-Labs\data-platform
+cd $HOME\Data2AI-Labs\data-platform
+```
+
+**Linux/macOS :**
+
+```bash
+mkdir -p $HOME/Data2AI-Labs
+git clone "$TEMPLATE_REPO_URL" "$HOME/Data2AI-Labs/data-platform"
+cd "$HOME/Data2AI-Labs/data-platform"
+```
+
+### 1.3 — Vérifier que les scripts sont présents
+
+```bash
+ls scripts/
+```
+
+**Attendu :**
+
+```text
+Install-Tools.ps1
+install-tools.sh
+New-SnowflakeConnection.ps1
+new-snowflake-connection.sh
+validate.ps1
+validate.sh
+```
+
+> À partir d'ici, **toutes les commandes s'exécutent depuis la racine du clone** (`$HOME/Data2AI-Labs/data-platform`).
 
 ---
 
 ## Piste Windows
 
-### 2W.1 — Ouvrir PowerShell sans privilège administrateur
+### 2W.1 — Ouvrir PowerShell
 
-Ouvrez PowerShell puis vérifiez :
+Ouvrez PowerShell 5.1 ou 7 dans le dossier du clone. Vous n'avez pas besoin de privilèges administrateur : les outils sont installés sous votre profil utilisateur.
 
-```powershell
-$PSVersionTable.PSVersion
-[Environment]::Is64BitOperatingSystem
-```
+### 2W.2 — Diagnostic initial
 
-Attendu : PowerShell 5.1 ou 7 et `True` pour un poste 64 bits.
-
-> N’utilisez une session administrateur que si la politique de votre poste l’exige pour une installation précise.
-
-### 2W.2 — Vérifier les outils avant d’installer
+Exécutez le script en mode `Check` pour voir l'état actuel sans rien installer :
 
 ```powershell
-Get-Command git -ErrorAction SilentlyContinue
-Get-Command terraform -ErrorAction SilentlyContinue
-Get-Command snow -ErrorAction SilentlyContinue
-Get-Command code -ErrorAction SilentlyContinue
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check -ReportPath .\preflight
 ```
 
-Pour chaque commande qui retourne un chemin, l’outil est déjà présent. Ne le réinstallez pas.
+**Attendu :** un rapport s'affiche et deux fichiers sont créés (`preflight.md` et `preflight.json`). Les outils déjà installés sont en `PASS`, les autres en `FAIL` ou `WARN`.
 
-### 2W.3 — Installer Git si nécessaire
+### 2W.3 — Installation
 
-Si `winget` est disponible :
+Exécutez le script en mode installation :
 
 ```powershell
-winget --version
-winget install --id Git.Git -e --source winget
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -ReportPath .\preflight
 ```
 
-Fermez complètement PowerShell, ouvrez une nouvelle fenêtre, puis exécutez :
+**Attendu :** le script installe les outils manquants sous `$HOME\.data2ai`. Les outils Python (Snow CLI, dbt) sont installés dans un environnement virtuel isolé. Le rapport final indique `Toolchain status: READY`.
+
+### 2W.4 — Corriger les échecs
+
+Si un outil est en `FAIL`, le rapport affiche la procédure manuelle officielle. Suivez-la, puis relancez le script :
 
 ```powershell
-git --version
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 ```
 
-### 2W.4 — Installer Terraform si nécessaire
+### 2W.5 — Rouvrir le terminal
 
-Utilisez l’une des méthodes suivantes :
-
-1. le package approuvé par votre entreprise;
-2. l’installation HashiCorp officielle;
-3. le script `scripts/Install-LabEnvironment.ps1` uniquement sur un poste de formation Windows autorisé.
-
-Après installation, ouvrez un nouveau terminal :
-
-```powershell
-terraform version
-where.exe terraform
-```
-
-Attendu : Terraform 1.14.x et un chemin unique compréhensible.
-
-### 2W.5 — Installer Snowflake CLI si nécessaire
-
-Utilisez l’installateur ou la procédure officielle Snowflake adaptée à Windows. N’exécutez pas un `pip install` global sur un poste partagé ou d’entreprise.
-
-Vérifiez dans un nouveau terminal :
-
-```powershell
-snow --version
-where.exe snow
-```
-
-### 2W.6 — Installer un éditeur
-
-VS Code est recommandé :
-
-```powershell
-code --version
-```
-
-Si `code` n’est pas disponible mais que votre éditeur peut créer des fichiers texte UTF-8, vous pouvez continuer.
+Si une commande reste introuvable après l'installation, fermez et rouvrez PowerShell pour rafraîchir le `PATH`.
 
 ---
 
-## Piste Linux
+## Piste Linux / macOS
 
-### 2L.1 — Identifier votre distribution
+### 2U.1 — Ouvrir un terminal
+
+Ouvrez Bash dans le dossier du clone. Vous n'avez pas besoin de `sudo` : les outils sont installés sous `$HOME/.data2ai`.
+
+### 2U.2 — Diagnostic initial
 
 ```bash
-uname -a
-cat /etc/os-release
+chmod +x scripts/install-tools.sh
+./scripts/install-tools.sh --check --report-path ./preflight
 ```
 
-### 2L.2 — Vérifier les outils existants
+**Attendu :** un rapport s'affiche et deux fichiers sont créés (`preflight.md` et `preflight.json`).
+
+### 2U.3 — Installation
 
 ```bash
-command -v git || true
-command -v terraform || true
-command -v snow || true
-command -v code || true
+./scripts/install-tools.sh --report-path ./preflight
 ```
 
-### 2L.3 — Installer Git
+**Attendu :** le script installe les outils manquants. Terraform et tflint sont téléchargés sous `$HOME/.data2ai/bin`. Les outils Python sont installés dans un environnement virtuel isolé sous `$HOME/.data2ai/venv`.
 
-Utilisez le gestionnaire de paquets de votre distribution. Exemple Debian/Ubuntu :
+### 2U.4 — Corriger les échecs
+
+Si un outil est en `FAIL`, le rapport affiche la procédure manuelle. Suivez-la, puis relancez :
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y git
+./scripts/install-tools.sh --check
 ```
 
-Si vous n’avez pas les droits `sudo`, demandez le package approuvé à votre administrateur. Ne contournez pas la politique du poste.
+### 2U.5 — Rouvrir le terminal
 
-### 2L.4 — Installer Terraform
-
-Utilisez le dépôt HashiCorp officiel ou le gestionnaire de versions approuvé par votre entreprise. Vérifiez ensuite :
+Si une commande reste introuvable, ouvrez un nouveau terminal ou exécutez :
 
 ```bash
-terraform version
-command -v terraform
-```
-
-### 2L.5 — Installer Snowflake CLI
-
-Utilisez la procédure officielle Snowflake. Si votre organisation utilise Python pour cette installation, créez un environnement isolé ou utilisez l’outil de packaging approuvé; n’installez pas dans le Python système global.
-
-```bash
-snow --version
-command -v snow
+export PATH="$HOME/.data2ai/bin:$HOME/.data2ai/venv/bin:$PATH"
 ```
 
 ---
 
-## Piste macOS
+## Vérification commune
 
-### 2M.1 — Vérifier les outils
+### 3.1 — Vérifier les versions
 
-```bash
-uname -m
-command -v git || true
-command -v terraform || true
-command -v snow || true
-```
+**Windows :**
 
-### 2M.2 — Installer les outils manquants
-
-Utilisez Homebrew si son usage est autorisé sur votre poste :
-
-```bash
-brew --version
-brew install git
-brew tap hashicorp/tap
-brew install hashicorp/tap/terraform
-```
-
-Installez Snowflake CLI avec la procédure officielle Snowflake, dans un environnement isolé si elle s’appuie sur Python.
-
-Ouvrez un nouveau terminal puis vérifiez :
-
-```bash
-git --version
+```powershell
 terraform version
 snow --version
+az version
+python --version
+dbt --version
 ```
+
+**Linux/macOS :**
+
+```bash
+terraform version
+snow --version
+az version
+python3 --version
+dbt --version
+```
+
+**Attendu :** chaque commande retourne une version. Les versions doivent correspondre à la [politique de versions](../../docs/version-policy.md).
+
+### 3.2 — Lire le rapport
+
+Ouvrez `preflight.md` et vérifiez :
+
+- [ ] tous les outils **Core** sont en `PASS`;
+- [ ] les outils **Course** (Azure CLI, dbt) sont en `PASS` ou documentés comme manquants;
+- [ ] aucune valeur secrète n'apparaît dans le rapport;
+- [ ] le statut final est `READY`.
+
+### 3.3 — Comprendre ce que le script a fait
+
+Répondez à ces questions pour valider votre compréhension :
+
+1. **Où sont installés Terraform et tflint ?**
+   - Windows : `$HOME\.data2ai\bin`
+   - Linux/macOS : `$HOME/.data2ai/bin`
+
+2. **Où sont installés Snow CLI et dbt ?**
+   - Dans un environnement virtuel Python isolé sous `$HOME/.data2ai/venv`.
+
+3. **Comment le PATH a-t-il été modifié ?**
+   - Windows : le dossier `$HOME\.data2ai\bin` a été ajouté au PATH utilisateur.
+   - Linux/macOS : le script affiche l'instruction `export PATH=...` à ajouter à votre profil shell.
+
+4. **Pourquoi un environnement virtuel isolé ?**
+   - Pour éviter les conflits avec d'autres projets Python sur votre poste et garantir des versions reproductibles.
+
+5. **Que faire si une politique d'entreprise bloque l'installation ?**
+   - Le script affiche la procédure manuelle officielle. Suivez-la, puis relancez le mode `Check`.
 
 ---
-
-## 3. Obtenir le dépôt de formation
-
-### Si le dépôt est déjà ouvert
-
-Ne le clonez pas une deuxième fois. Depuis le terminal intégré :
-
-```text
-git rev-parse --show-toplevel
-git status --short
-```
-
-Le premier résultat doit se terminer par `Snowflake-terraform`. Ne supprimez pas les modifications affichées.
-
-### Si le dépôt n’est pas encore présent
-
-Demandez au formateur l’URL exacte et le dossier de destination. Ensuite :
-
-```text
-git clone <URL_FOURNIE_PAR_LE_FORMATEUR>
-cd Snowflake-terraform
-```
-
-Le support ne force pas une URL personnelle ou une branche particulière.
-
-## 4. Vérifier la protection locale
-
-Depuis la racine du dépôt :
-
-```text
-git check-ignore .env
-git check-ignore secrets/probe.token
-```
-
-Attendu :
-
-```text
-.env
-secrets/probe.token
-```
-
-Si une ligne manque, ne créez encore aucun credential. Ouvrez le troubleshooting du lab principal.
-
-## 5. Vérification commune
-
-### Windows
-
-```powershell
-$required = @('git', 'terraform', 'snow')
-foreach ($tool in $required) {
-    if (Get-Command $tool -ErrorAction SilentlyContinue) {
-        Write-Host "[PASS] $tool"
-    } else {
-        Write-Host "[FAIL] $tool"
-    }
-}
-```
-
-### Linux/macOS
-
-```bash
-for tool in git terraform snow; do
-  if command -v "$tool" >/dev/null 2>&1; then
-    printf '[PASS] %s\n' "$tool"
-  else
-    printf '[FAIL] %s\n' "$tool"
-  fi
-done
-```
-
-Critère : trois lignes `PASS`.
-
-## 6. Préflight local
-
-Cette commande ne se connecte pas à Snowflake et ne modifie rien.
-
-### Windows
-
-```powershell
-.\scripts\Setup-Day0.ps1 -AccessScenario SANDBOX -SkipSnowflake
-```
-
-### Linux/macOS
-
-```bash
-bash ./scripts/setup-day0.sh --scenario SANDBOX --skip-snowflake
-```
-
-À ce stade, `.env local` peut encore être en `FAIL`; il sera créé dans l’étape suivante. Git, Terraform, Snowflake CLI, `.env.example` et `.gitignore` doivent être en `PASS`.
 
 ## Checkpoint
 
-- [ ] Git répond;
-- [ ] Terraform 1.14.x répond;
-- [ ] Snowflake CLI répond;
-- [ ] vous êtes à la racine du bon dépôt;
-- [ ] `.env` et `secrets/` sont ignorés;
-- [ ] vous savez quel éditeur utiliser.
+[CHECK] Le rapport affiche `Toolchain status: READY` et tous les outils Core sont en `PASS`.
 
-## Étape suivante
-
-1. Lisez le [cours court : configuration et secrets](../module-00-day0-setup/course.md).
-2. Continuez avec le [lab principal Day 0](../module-00-day0-setup/lab.md).
-
-En cas d’échec, utilisez le [troubleshooting Day 0](../module-00-day0-setup/troubleshooting.md) et rejouez uniquement la vérification concernée.
+Si ce checkpoint passe, passez à l'[étape suivante](../module-00-day0-setup/lab.md) : configurer la connexion Snowflake.

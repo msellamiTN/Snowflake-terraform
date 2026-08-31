@@ -1,334 +1,208 @@
-# Lab M0 — Préparer un environnement sans panique
+# Étape 2 — Configurer la connexion Snowflake et valider
 
-| Élément | Valeur |
+**Durée cible : 30 minutes**
+
+**Retour au parcours :** [Jour 0 — Commencer ici](../README.md)
+
+## Résultat attendu
+
+À la fin de cette étape :
+
+- la connexion Snowflake `training` répond à `snow sql -q 'SELECT 1' -c training`;
+- la structure du projet type est inspectée et comprise;
+- la validation finale affiche `Toolchain status: READY`.
+
+> **Toutes les commandes s'exécutent depuis la racine du clone** (`$HOME/Data2AI-Labs/data-platform`).
+
+---
+
+## 1. Configurer la connexion Snowflake
+
+Le script de connexion assistée saisit le PAT de façon masquée, crée la connexion et la teste. Le token n'est jamais affiché ni stocké dans un fichier.
+
+### 1.1 — Lancer le script
+
+**Windows :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\New-SnowflakeConnection.ps1 `
+    -ConnectionName training `
+    -Organization <VOTRE_ORGANISATION> `
+    -Account <VOTRE_COMPTE> `
+    -User <VOTRE_USER> `
+    -Role SYSADMIN
+```
+
+**Linux/macOS :**
+
+```bash
+chmod +x scripts/new-snowflake-connection.sh
+./scripts/new-snowflake-connection.sh \
+    -n training \
+    -o <VOTRE_ORGANISATION> \
+    -a <VOTRE_COMPTE> \
+    -u <VOTRE_USER> \
+    -r SYSADMIN
+```
+
+Si vous omettez les paramètres, le script vous les demande interactivement.
+
+### 1.2 — Saisir le PAT
+
+Le script affiche :
+
+```text
+Snowflake PAT (token):
+```
+
+Saisissez votre PAT. Il ne s'affiche pas à l'écran. Appuyez sur Entrée.
+
+**Attendu :**
+
+```text
+[OK] Connection 'training' created.
+[OK] Connection test succeeded.
+```
+
+### 1.3 — Vérifier la connexion
+
+```bash
+snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
+```
+
+**Attendu :** une ligne avec votre utilisateur, votre rôle et votre compte.
+
+---
+
+## 2. Inspecter la structure du projet type
+
+### 2.1 — Lister les dossiers
+
+```bash
+ls -la
+ls environments/
+ls modules/
+ls docs/
+ls scripts/
+```
+
+**Attendu :**
+
+```text
+environments/
+  dev/
+  uat/
+  prod/
+modules/
+docs/
+  architecture.md
+  naming-conventions.md
+  runbook.md
+  adr/
+scripts/
+  Install-Tools.ps1
+  install-tools.sh
+  New-SnowflakeConnection.ps1
+  new-snowflake-connection.sh
+  validate.ps1
+  validate.sh
+azure-pipelines.yml
+CODEOWNERS
+.gitignore
+.gitattributes
+.editorconfig
+.tflint.hcl
+```
+
+### 2.2 — Vérifier l'absence de code de ressource
+
+```bash
+find . -name '*.tf' -type f
+```
+
+**Attendu :** aucun résultat. Le squelette ne contient aucun fichier `.tf`. Vous les créerez à partir du Jour 1.
+
+### 2.3 — Comprendre le rôle du squelette
+
+| Élément | Rôle |
 |---|---|
-| **Durée** | 1 h 00, après installation des outils |
-| **Piste** | `[CORE]` |
-| **OS** | Windows/PowerShell ou Linux/macOS/Bash |
-| **Scénarios** | Sandbox préprovisionnée ou Snowflake Trial personnel |
-| **Résultat** | `Ready for Day 1` |
-| **Action distante** | Test de connexion uniquement |
+| `environments/dev/`, `uat/`, `prod/` | Racines Terraform pour chaque environnement |
+| `modules/` | Modules réutilisables que vous créerez |
+| `docs/` | Architecture, conventions de nommage, runbook, décisions |
+| `azure-pipelines.yml` | Pipeline CI/CD Azure DevOps |
+| `.gitignore` | Exclut state, plans, secrets, tfvars |
+| `.tflint.hcl` | Configuration du linter |
+| `CODEOWNERS` | Propriété du code et revue obligatoire |
+| `scripts/` | Installation, connexion et validation locale |
 
-## Navigation
+### 2.4 — Renommer l'origine (optionnel)
 
-**Point de départ :** [Jour 0 — Commencer ici](../README.md)
-
-**Étape précédente :** [Installer et vérifier les outils](../module-00-tools-setup/lab.md)
-
-**Aide :** [Troubleshooting](troubleshooting.md) · [Résultats attendus](expected-output.md)
-
-### Votre progression
-
-- [ ] Partie 1 — choisir Sandbox ou Trial;
-- [ ] Partie 2 — confirmer le dépôt;
-- [ ] Partie 3 — confirmer les outils;
-- [ ] Partie 4 — créer `.env` sans secret;
-- [ ] Partie 5 — configurer et tester Snowflake CLI;
-- [ ] Partie 6 — obtenir `Ready for Day 1`;
-- [ ] Partie 7 — créer et valider le workspace M00.
-
-> Ne sautez pas un checkpoint. En cas d’erreur, corrigez uniquement l’étape courante puis reprenez ici.
-
-## Mission
-
-Vous devez préparer un poste reproductible sans placer de secret dans Git. Le Day 0 sépare volontairement :
-
-1. la vérification locale, non destructive;
-2. la configuration d’une connexion Snowflake par l’apprenant;
-3. les opérations administratives éventuelles, réalisées selon le scénario choisi;
-4. la validation finale commune.
-
-Le script `Setup-Day0` n’installe rien et ne modifie aucune ressource. Il ne fait ni `git pull`, ni création d’utilisateur, ni modification de network policy.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    USER[Apprenant] --> REPO[Dépôt local]
-    REPO --> PREFLIGHT[Préflight non destructif]
-    USER --> CONFIG[Configuration Snow CLI locale]
-    CONFIG --> SF[(Snowflake sandbox ou Trial)]
-    PREFLIGHT --> CHECK{Ready for Day 1 ?}
-    SF --> CHECK
-```
-
-## Objectifs
-
-- vérifier Git, Terraform et Snowflake CLI;
-- créer une configuration locale à partir d’un template public;
-- protéger `.env`, PAT, clés et artefacts Terraform;
-- tester une connexion sans afficher le credential;
-- créer un workspace M00 presque vide;
-- produire un rapport de readiness.
-
-## Partie 1 — Identifier votre scénario
-
-### Scénario A — Sandbox
-
-Le formateur fournit hors Git :
-
-- organization et account;
-- utilisateur/connexion à utiliser;
-- PAT temporaire ou procédure d’activation;
-- préfixe individuel;
-- date d’expiration et procédure de reset.
-
-Vous ne créez pas de network policy, d’utilisateur global ou de rôle élevé sans consigne explicite du formateur.
-
-### Scénario B — Trial personnel
-
-Vous êtes propriétaire du compte Trial. Vous configurez d’abord une connexion PAT personnelle. La création d’une identité de service et JWT sera pratiquée au Jour 4, après l’apprentissage du RBAC.
-
-> `[SECURITY]` N’utilisez pas un mot de passe dans un fichier du dépôt. Ne partagez jamais un PAT, une clé privée ou le contenu complet de `config.toml`.
-
-## Partie 2 — Obtenir le dépôt
-
-Si le dépôt est déjà ouvert, restez à sa racine et n’exécutez pas de `git pull` automatique.
-
-**[WINDOWS]**
-
-```powershell
-Get-Location
-git status --short
-```
-
-**[UNIX]**
+Pour éviter d'écraser le template, renommez l'origine et ajoutez votre propre dépôt apprenant :
 
 ```bash
-pwd
-git status --short
+git remote rename origin template
+git remote add origin <VOTRE_REPO_APPRENANT>
 ```
 
-**[CHECK]** Le chemin se termine par `Snowflake-terraform`. Les modifications éventuellement affichées ne doivent pas être supprimées.
+> Si vous n'avez pas encore de dépôt apprenant, ignorez cette étape pour l'instant. Vous le créerez au Jour 1.
 
-Pour une première installation seulement, clonez l’URL communiquée par le formateur dans un dossier de votre choix, puis ouvrez ce dossier. Le lab ne suppose aucune URL de dépôt codée en dur.
+---
 
-## Partie 3 — Vérifier les outils
+## 3. Validation finale
 
-### Windows
+### 3.1 — Relancer le diagnostic
+
+**Windows :**
 
 ```powershell
-git --version
-terraform version
-snow --version
-$PSVersionTable.PSVersion
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 ```
 
-### Linux/macOS
+**Linux/macOS :**
 
 ```bash
-git --version
-terraform version
-snow --version
-bash --version
+./scripts/install-tools.sh --check
 ```
 
-Attendu : chaque commande se termine sans erreur. VS Code est recommandé mais un autre éditeur est accepté.
+**Attendu :** `Toolchain status: READY`.
 
-Si un outil manque, utilisez la procédure officielle adaptée à votre OS, ouvrez un nouveau terminal, puis rejouez uniquement ces quatre commandes. N’installez pas Snowflake CLI dans le Python global d’une machine d’entreprise si votre politique exige un environnement isolé.
-
-## Partie 4 — Créer la configuration publique locale
-
-Le dépôt fournit `.env.example`, qui ne contient aucun secret.
-
-**[WINDOWS]**
-
-```powershell
-Copy-Item .env.example .env
-code .env
-```
-
-**[UNIX]**
+### 3.2 — Vérifier la connexion
 
 ```bash
-cp .env.example .env
-${EDITOR:-code} .env
+snow sql -q 'SELECT 1' -c training
 ```
 
-Renseignez les identifiants non secrets correspondant à votre scénario :
+**Attendu :** un résultat contenant `1`.
 
-```text
-TRAINING_ACCESS_SCENARIO=SANDBOX
-SNOWFLAKE_ORGANIZATION=<organization>
-SNOWFLAKE_ACCOUNT=<account>
-SNOWFLAKE_ADMIN_USER=<user-provided-for-your-scenario>
-SNOWFLAKE_TERRAFORM_USER=TERRAFORM_SVC
-SNOWFLAKE_ROLE=SYSADMIN
-SNOWFLAKE_ADMIN_CONNECTION=admin
-SNOWFLAKE_TERRAFORM_CONNECTION=terraform_svc
-SNOWFLAKE_AUTH_MODE=PAT
-TRAINING_NETWORK_ALLOWED_IPS=<your-public-ip>/32
-ENVIRONMENT=DEV
-TEAM=DATA_ENG
-```
-
-Remplacez tous les `<...>`. Ne placez pas le PAT dans `.env`.
-
-### Checkpoint — Git ignore
-
-**[WINDOWS et UNIX]**
-
-```text
-git check-ignore .env
-git check-ignore secrets/probe.token
-```
-
-Attendu : `.env` puis `secrets/probe.token`. Si une commande ne renvoie rien, arrêtez-vous et corrigez `.gitignore`.
-
-## Partie 5 — Configurer Snowflake CLI
-
-Créez d’abord le dossier local protégé.
-
-**[WINDOWS]**
-
-```powershell
-New-Item -ItemType Directory -Path secrets -Force | Out-Null
-```
-
-**[UNIX]**
+### 3.3 — Vérifier le projet
 
 ```bash
-mkdir -p secrets
-chmod 700 secrets
+git status
 ```
 
-### Piste sandbox
+**Attendu :** branche propre, aucun fichier modifié (sauf `preflight.md` et `preflight.json` qui sont ignorés).
 
-Suivez le mécanisme fourni par le formateur. En général, vous enregistrez le PAT temporaire dans `secrets/snowflake_terraform_pat.txt`, puis créez une connexion nommée `terraform_svc`.
+---
 
-### Piste Trial
+## Checkpoint
 
-Dans Snowsight, créez un PAT pour votre utilisateur selon la procédure disponible dans votre compte. Copiez-le une seule fois dans `secrets/snowflake_terraform_pat.txt`.
+[CHECK] Les trois conditions suivantes sont réunies :
 
-> N’écrivez pas une commande contenant directement le token : elle pourrait rester dans l’historique du shell.
+1. `Toolchain status: READY`
+2. `snow sql -q 'SELECT 1' -c training` retourne un résultat
+3. Le projet type est cloné et ne contient aucun fichier `.tf`
 
-Ajoutez ensuite la connexion. Remplacez les valeurs `<...>` par celles de `.env`; ne remplacez jamais le chemin `-t` par le token lui-même.
+Si ce checkpoint passe, le Jour 0 est terminé. Passez à [M1 — Premier déploiement](../../day-01/module-01-iac-workflow/lab.md).
 
-**[WINDOWS]**
+---
 
-```powershell
-snow connection add -n terraform_svc `
-  -a "<account>" `
-  -h "<organization>-<account>.snowflakecomputing.com" `
-  -u "<user>" `
-  -r "<role>" `
-  -A "PROGRAMMATIC_ACCESS_TOKEN" `
-  -t "$PWD\secrets\snowflake_terraform_pat.txt" `
-  --no-interactive
-```
+## La suite : votre racine de travail
 
-**[UNIX]**
+À partir du Jour 1, **tous les fichiers `.tf` que vous créerez** iront dans ce clone :
 
-```bash
-snow connection add -n terraform_svc \
-  -a "<account>" \
-  -h "<organization>-<account>.snowflakecomputing.com" \
-  -u "<user>" \
-  -r "<role>" \
-  -A "PROGRAMMATIC_ACCESS_TOKEN" \
-  -t "$PWD/secrets/snowflake_terraform_pat.txt" \
-  --no-interactive
-```
+- `environments/dev/versions.tf`, `provider.tf`, `main.tf`... pour M1;
+- `modules/landing-zone/` pour M5;
+- `environments/uat/` et `environments/prod/` pour M8;
+- etc.
 
-Si votre version de Snowflake CLI refuse une option, exécutez `snow connection add --help` et comparez les noms `--authenticator` et `--token-file-path`. Ne basculez pas vers un mot de passe.
-
-### Checkpoint — Connexion
-
-```text
-snow connection test -c terraform_svc
-snow sql -c terraform_svc -q "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()"
-```
-
-Attendu : `Connection status: OK` et les identifiants correspondant à votre scénario. La sortie ne doit pas afficher le PAT.
-
-## Partie 6 — Exécuter le préflight non destructif
-
-### Windows
-
-```powershell
-.\scripts\Setup-Day0.ps1 -AccessScenario SANDBOX -Connection terraform_svc
-```
-
-Pour un Trial, remplacez `SANDBOX` par `TRIAL`.
-
-### Linux/macOS
-
-```bash
-bash ./scripts/setup-day0.sh --scenario SANDBOX --connection terraform_svc
-```
-
-Pour vérifier uniquement le poste avant de recevoir les accès :
-
-```text
-# Windows
-.\scripts\Setup-Day0.ps1 -AccessScenario SANDBOX -SkipSnowflake
-
-# Linux/macOS
-bash ./scripts/setup-day0.sh --scenario SANDBOX --skip-snowflake
-```
-
-Attendu final :
-
-```text
-Ready for Day 1
-```
-
-## Partie 7 — Créer le workspace M00
-
-Le workspace est créé hors du dépôt, dans `$HOME/Data2AI-Labs`, afin qu’un `git init` pédagogique ne modifie pas les branches du dépôt de formation.
-
-### Windows
-
-```powershell
-.\scripts\New-StudentWorkspace.ps1 -Module 0 -Initials ABC
-.\scripts\SelfPacedLab.ps1 -Module 0 -All -Report
-```
-
-### Linux/macOS
-
-```bash
-bash ./scripts/new-student-workspace.sh --module 0 --initials ABC
-bash ./scripts/self-paced-lab.sh --module 0 --all --report
-```
-
-Remplacez `ABC` par vos initiales, en deux à quatre lettres majuscules.
-
-Structure attendue :
-
-```text
-$HOME/Data2AI-Labs/
-└── module-00-environment/
-    ├── .git/
-    ├── .gitignore
-    ├── .student-workspace.json
-    └── README.md
-```
-
-Le rapport contient uniquement PASS/FAIL. Il ne contient aucun secret.
-
-## Validation finale
-
-- [ ] Git, Terraform et Snowflake CLI sont disponibles;
-- [ ] `.env` ne contient plus de placeholder;
-- [ ] `.env` et `secrets/` sont ignorés;
-- [ ] `snow connection test -c terraform_svc` réussit;
-- [ ] le préflight affiche `Ready for Day 1`;
-- [ ] le workspace M00 se trouve hors du dépôt;
-- [ ] le validateur M00 réussit;
-- [ ] aucun secret n’apparaît dans `git status`.
-
-## Challenge
-
-Expliquez, sans montrer votre configuration :
-
-1. où se trouve votre workspace;
-2. quel scénario vous utilisez;
-3. comment le PAT reste hors Git;
-4. quelle commande prouve la connexion;
-5. pourquoi le Day 0 ne crée pas encore `TERRAFORM_SVC` ou une network policy globale.
-
-## Cleanup
-
-Aucune ressource Snowflake ou Cloud n’est créée par le préflight. À la fin d’une sandbox, suivez la date d’expiration du formateur. Pour un Trial personnel, conservez la connexion jusqu’au Jour 5 puis révoquez le PAT lors du cleanup final.
-
-Ne supprimez pas un workspace existant. Pour recommencer, choisissez un autre `-WorkspaceRoot` ou `--workspace-root`.
+Chaque atelier indique le chemin exact depuis la racine du clone. Les scripts `validate.ps1` et `validate.sh` dans `scripts/` vérifient votre travail localement avant de pousser.

@@ -1,71 +1,92 @@
-# Cours M0 — Préparation de l’environnement
+# Jour 0 — Concepts : environnement, outils et sécurité
 
-**Durée : 10 minutes**
+**Retour au parcours :** [Jour 0 — Commencer ici](../README.md)
 
-## Pourquoi cette capacité existe
+## Pourquoi un Jour 0 ?
 
-Un lab échoue souvent avant le premier exercice à cause d’un PATH différent, d’un mauvais compte, d’un rôle trop faible, d’un secret exposé ou d’une action administrative non prévue. Le Day 0 établit un poste vérifiable et une frontière claire entre configuration publique, credential local et ressource distante.
+Le Jour 0 prépare votre poste pour les 5 jours de pratique. Un poste mal configuré est la première cause de perte de temps en formation. L'automatisation garantit que tous les apprenants démarrent dans le même état.
 
-## Objectifs
+## Ce qui est installé
 
-- distinguer identifiant, configuration et secret;
-- choisir le scénario sandbox ou Trial;
-- comparer PAT de démarrage et JWT key-pair de production;
-- expliquer pourquoi un préflight doit être non destructif;
-- produire une preuve de readiness sans exposer de credential.
+| Outil | Version | Rôle | Niveau |
+|---|---|---|---|
+| Git | latest | Versionnement et collaboration | Core |
+| Terraform | 1.14.5 | Infrastructure as Code | Core |
+| Python | 3.12 | Exécution de Snow CLI et dbt | Core |
+| Snowflake CLI | latest stable | Connexions et SQL Snowflake | Core |
+| Azure CLI | 2.83.0 | Authentification et ressources Azure | Course |
+| dbt | < 3.0.0 | Transformations et FinOps | Course |
+| tflint | 0.50.0 | Linter Terraform | Optional |
+| VS Code | latest | Éditeur recommandé | Optional |
+| OpenSSL | latest | Génération de clés RSA | Optional |
 
-## Modèle mental
+Les versions sont définies dans la [politique de versions](../../docs/version-policy.md).
 
-```mermaid
-flowchart LR
-    TEMPLATE[.env.example public] --> LOCAL[.env local ignore]
-    SECRET[PAT ou clé privée] --> STORE[secrets local ignore]
-    LOCAL --> CLI[Snowflake CLI]
-    STORE --> CLI
-    CLI --> SF[(Snowflake)]
-    CHECK[Préflight] --> CLI
-```
+## Où sont installés les outils
 
-- `.env.example` décrit les noms attendus et reste versionné;
-- `.env` contient les identifiants propres au participant et reste local;
-- `secrets/` contient les credentials et reste local;
-- Snowflake CLI référence ces informations sans les afficher;
-- le préflight vérifie l’état mais ne crée ni utilisateur ni policy.
-
-## Sandbox versus Trial
-
-| Dimension | Sandbox | Trial personnel |
+| Plateforme | Dossier binaire | Environnement Python |
 |---|---|---|
-| Administration | formateur/équipe plateforme | apprenant propriétaire |
-| Identité initiale | fournie et limitée | utilisateur du compte Trial |
-| Credential | PAT temporaire fourni | PAT créé par l’apprenant |
-| Préfixe | imposé par participant | choisi et conservé |
-| Cleanup | politique de session | responsabilité de l’apprenant |
+| Windows | `$HOME\.data2ai\bin` | `$HOME\.data2ai\venv` |
+| Linux/macOS | `$HOME/.data2ai/bin` | `$HOME/.data2ai/venv` |
 
-Les deux scénarios convergent vers une connexion `terraform_svc` utilisable par les labs. Le nom est une convention locale; il ne garantit pas que l’utilisateur distant porte le même nom.
+L'installation sous le profil utilisateur évite d'avoir besoin de privilèges administrateur et isole la formation du reste du système.
 
-## PAT versus JWT
+## Pourquoi un environnement virtuel Python ?
 
-| Méthode | Usage dans le parcours | Limites |
+Snow CLI et dbt sont des paquets Python. Les installer dans l'interpréteur global peut entrer en conflit avec d'autres projets. L'environnement virtuel isolé garantit :
+
+- des versions reproductibles;
+- aucune interférence avec d'autres projets;
+- une suppression propre en fin de formation.
+
+## Le projet type
+
+Le projet type `data-platform-starter` est le **point d'entrée unique** de l'apprenant. Il est cloné au Jour 0 et devient la racine de travail pour toute la formation. Il contient :
+
+- les **scripts** d'installation (`Install-Tools.ps1`, `install-tools.sh`), de connexion (`New-SnowflakeConnection.ps1`, `new-snowflake-connection.sh`) et de validation (`validate.ps1`, `validate.sh`);
+- la **structure de gouvernance** (dossiers `environments/`, `modules/`, `docs/`);
+- les fichiers de qualité (`.gitignore`, `.editorconfig`, `.tflint.hcl`);
+- le pipeline CI/CD Azure DevOps;
+- la documentation (architecture, conventions, runbook, ADR);
+- la propriété du code (`CODEOWNERS`).
+
+Il **ne fournit pas** le code Terraform. Vous créerez les fichiers `.tf` au fil des modules, en suivant les ateliers du Jour 1 au Jour 5. Tous les fichiers que vous créerez iront dans ce clone.
+
+## Authentification Snowflake
+
+### PAT (Personal Access Token)
+
+Le PAT est un jeton temporaire utilisé pour la formation. Il est :
+
+- saisi via une invite masquée — jamais affiché;
+- stocké par Snowflake CLI dans sa configuration;
+- jamais placé dans un fichier du dépôt;
+- effacé de l'environnement dès que possible par le script de connexion.
+
+### Progression d'authentification
+
+| Étape | Méthode | Raison |
 |---|---|---|
-| PAT | démarrage rapide en sandbox/Trial | expiration, stockage et politiques de compte |
-| JWT key-pair | cible production et CI/CD, étudiée au Jour 4 | génération, attribution et rotation des clés |
+| Jour 0 à Jour 3 | PAT temporaire | Démarrer sans friction |
+| Jour 4 et au-delà | JWT key-pair avec Key Vault | Pratique de production |
+| CI/CD | Fédération d'identité Azure | Aucun secret en clair |
 
-Un PAT ne « contourne » pas la sécurité : il constitue un credential programmatique soumis aux politiques du compte. Une network policy globale ne doit pas être créée automatiquement. Si le compte l’exige, l’administrateur fournit une policy restreinte ou un mécanisme temporaire approuvé.
+## Règles de sécurité
 
-## Training versus Production
+1. **Aucun secret dans le dépôt.** Le `.gitignore` exclut `.env`, `secrets/`, clés, jetons et `tfvars`.
+2. **Le PAT est temporaire.** Il doit être rotationné après la formation.
+3. **Aucun `ACCOUNTADMIN` comme correction générique.** Le rôle `SYSADMIN` suffit pour la formation.
+4. **Aucune ressource Cloud créée au Jour 0.** Le Jour 0 prépare le poste, pas l'infrastructure.
 
-| Dimension | Training | Production |
-|---|---|---|
-| Credential | PAT temporaire ou Trial | key-pair/OAuth selon standard entreprise |
-| Stockage | fichier local ignoré et permissions limitées | secret manager et rotation |
-| Rôle | droits bornés au lab | moindre privilège et séparation des responsabilités |
-| Validation | préflight local + test de connexion | contrôle continu, audit et alerting |
+## Ce que le script a fait (résumé)
 
-## Règles à retenir
+1. Vérifié les outils déjà installés.
+2. Téléchargé et installé les outils manquants sous votre profil.
+3. Créé un environnement virtuel Python pour Snow CLI et dbt.
+4. Ajouté les dossiers d'installation à votre PATH.
+5. Vérifié les versions attendues.
+6. Généré un rapport Markdown et JSON sans aucune valeur secrète.
 
-1. ne jamais afficher ou committer un credential;
-2. vérifier le répertoire avant une commande;
-3. séparer validation locale et changement distant;
-4. ne pas utiliser `ACCOUNTADMIN` comme correction générique;
-5. diagnostiquer un contrôle à la fois et reprendre au dernier checkpoint.
+## Suite
+
+Passez à l'[atelier pratique](../module-00-tools-setup/lab.md) pour exécuter les scripts.

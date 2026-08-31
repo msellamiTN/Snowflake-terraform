@@ -1,8 +1,12 @@
 ﻿# Guide formateur — Terraform & Snowflake
 
-**Durée officielle : 5 jours × 6 heures — 30 heures**  
-**Modalité :** instructor-led ou accompagnement d’un parcours self-paced  
-**Programme maître :** [`PROGRAMME_FORMATION.md`](../PROGRAMME_FORMATION.md)
+**Durée officielle : 5 jours × 6 heures — 30 heures**
+
+**Modalité :** instructor-led ou accompagnement d’un parcours self-paced
+
+**Stack :** Snowflake Enterprise, Terraform, Azure, Azure DevOps, dbt
+
+**Références :** [programme](../PROGRAMME_FORMATION.md) · [architecture](../docs/reference-architecture.md) · [versions](../docs/version-policy.md)
 
 ## 1. Responsabilité du formateur
 
@@ -19,19 +23,23 @@ Objectif de répartition :
 
 ### J-10 à J-5
 
-- [ ] choisir le scénario principal : sandbox fournie ou Trial personnel;
-- [ ] confirmer Windows/PowerShell et Linux/macOS/Bash pour chaque participant;
-- [ ] publier les versions testées des outils;
-- [ ] vérifier accès réseau au registre Terraform et à Snowflake;
-- [ ] attribuer un préfixe unique à chaque apprenant;
-- [ ] définir quota, date d’expiration et procédure de cleanup;
-- [ ] tester le parcours complet avec un compte sans privilèges implicites.
+- [ ] confirmer les accès Snowflake, Azure et Azure DevOps de chaque participant;
+- [ ] attribuer un préfixe unique à chaque apprenant et publier la liste;
+- [ ] confirmer Windows/PowerShell et Linux/macOS/Bash pour chaque poste;
+- [ ] publier la [politique de versions](../docs/version-policy.md);
+- [ ] vérifier l’accès réseau au registre Terraform, à Snowflake et à Azure;
+- [ ] définir quotas, budgets, dates d’expiration et procédure de cleanup;
+- [ ] réaliser le bootstrap administratif Snowflake;
+- [ ] tester le parcours avec un compte sans privilèges implicites.
 
 ### J-2
 
 - [ ] exécuter le préflight sur une machine Windows propre;
 - [ ] exécuter le préflight sur une machine Unix propre;
-- [ ] tester au moins une identité sandbox et un compte Trial;
+- [ ] vérifier qu’un `terraform init` résout exactement les versions publiées;
+- [ ] tester le pool d’agents Azure DevOps et la connexion de service;
+- [ ] tester l’approbation du stage `Apply`;
+- [ ] exécuter `dbt deps` et `dbt build` sur le projet FinOps;
 - [ ] vérifier que les starters ne contiennent ni secret, state, plan, `.terraform/` ni provider binaire;
 - [ ] exécuter les validateurs de chaque module;
 - [ ] reproduire les incidents prévus dans `troubleshooting.md`;
@@ -45,44 +53,48 @@ Objectif de répartition :
 - [ ] préparer un snapshot de récupération séparé de la solution apprenant;
 - [ ] annoncer la durée, les pauses, les preuves attendues et le challenge.
 
-## 3. Deux scénarios d’accès
+## 3. Accès à provisionner
 
-### Scénario A — Sandbox préprovisionnée
+La formation s’exécute sur l’environnement d’entreprise : compte Snowflake Enterprise unique, Azure et Azure DevOps.
 
-Le formateur fournit hors Git :
+### Snowflake
 
-- organization/account Snowflake;
+Le formateur fournit hors Git, pour chaque participant :
+
+- organization et account;
 - utilisateur ou mécanisme d’identification individuel;
-- PAT temporaire;
-- préfixe unique de ressources;
-- rôle initial et limites;
-- date d’expiration;
-- canal de support et procédure de reset.
+- **préfixe apprenant unique** de 2 à 12 caractères;
+- PAT temporaire à expiration courte;
+- rôle initial suffisant pour DEV, sans droits sur PROD;
+- date d’expiration et procédure de reset.
 
-Le bootstrap administratif doit être réalisé avant la formation. `ACCOUNTADMIN` ne doit pas devenir le rôle quotidien de l’apprenant.
+Le bootstrap administratif est réalisé **avant** la formation. Aucun rôle d’administration ne devient le rôle quotidien de l’apprenant.
 
-### Scénario B — Trial personnel
+### Azure
 
-Le formateur vérifie que l’apprenant :
+- souscription ou groupe de ressources dédié à la formation;
+- droits de création : compte de stockage, Key Vault, intégration;
+- quota et budget avec alerte;
+- convention de nommage des ressources de formation.
 
-- a accès à son compte et connaît sa région;
-- peut ouvrir Snowsight et une worksheet;
-- peut créer une identité technique ou appliquer la procédure de secours;
-- active des garde-fous de consommation;
-- comprend ce qui restera après le cours et comment le supprimer.
+### Azure DevOps
 
-Le formateur ne collecte jamais le mot de passe, le PAT ou la clé privée d’un participant.
+- projet de formation avec dépôt;
+- variable groups préparés, valeurs saisies par le formateur;
+- connexion de service Azure par fédération d’identité;
+- pool d’agents disponible et testé;
+- environnement avec approbation configurée pour le stage `Apply`.
 
 ## 4. Politique d’authentification
 
-| Usage | Méthode | Règle |
+| Étape | Méthode | Règle |
 |---|---|---|
-| Démarrage sandbox | PAT temporaire | distribué hors Git, expiration courte |
-| Démarrage Trial | PAT | créé par l’apprenant et stocké localement |
-| Cible production | JWT key-pair | identité technique, rotation et stockage sécurisé |
-| Bootstrap exceptionnel | rôle élevé | durée minimale et action explicitement délimitée |
+| Day 0 à Jour 3 | PAT temporaire via profil Snowflake CLI | distribué hors Git, expiration courte |
+| Jour 4 | Identité technique et JWT key-pair | clé privée stockée dans Key Vault |
+| Pipeline | Fédération d’identité Azure | aucun secret client stocké |
+| Bootstrap exceptionnel | rôle élevé | durée minimale, action délimitée, tracée |
 
-Une valeur secrète n’est jamais affichée sur projection, collée dans un ticket ou incluse dans un rapport de validation.
+Une valeur secrète n’est jamais affichée sur projection, collée dans un ticket, ni incluse dans un rapport de validation. Le formateur ne collecte jamais le PAT ou la clé privée d’un participant.
 
 ## 5. Conduite d’un module
 
@@ -114,7 +126,7 @@ Une valeur secrète n’est jamais affichée sur projection, collée dans un tic
 |---:|---|
 | 0 h 45 | Contrat du cours, architecture, sécurité, coûts et cleanup |
 | 1 h 00 | Préflight accompagné Windows/Unix |
-| 1 h 00 | Séparation en pistes sandbox/Trial, puis checkpoint commun |
+| 1 h 00 | Distribution des accès, profil PAT et préfixe apprenant |
 | 2 h 15 | Live coding très court, puis création autonome fichier par fichier |
 | 0 h 45 | Lecture du plan, apply, preuve Snowflake et idempotence |
 | 0 h 15 | Quiz et cleanup |
@@ -124,12 +136,11 @@ Une valeur secrète n’est jamais affichée sur projection, collée dans un tic
 | Durée | Animation |
 |---:|---|
 | 0 h 45 | Inspection du state et limites de sécurité |
-| 1 h 00 | Variables, locals et conventions |
+| 1 h 15 | Backend Azure Blob : création, migration, verrouillage |
+| 1 h 00 | Variables, locals et conventions DEV/UAT/PROD |
 | 1 h 00 | `for_each`, dépendances et lifecycle |
-| 1 h 15 | Import brownfield et refactoring sûr |
-| 0 h 45 | Drift contrôlé et remédiation |
-| 0 h 45 | Contrat backend + pistes Cloud optionnelles |
-| 0 h 30 | Challenge et debrief |
+| 1 h 15 | Import brownfield et dérive contrôlée |
+| 0 h 45 | Challenge et debrief |
 
 ### Jour 3 — Modules et environnements
 
@@ -137,10 +148,10 @@ Une valeur secrète n’est jamais affichée sur projection, collée dans un tic
 |---:|---|
 | 0 h 45 | Atelier de définition du contrat |
 | 2 h 00 | Construction du module Landing Zone |
-| 0 h 45 | Collections et couches de données |
-| 1 h 00 | Isolation DEV/TEST |
+| 0 h 45 | Collections et couches RAW/CLEAN/CURATED |
+| 1 h 15 | Isolation DEV/UAT et promotion vers PROD |
 | 0 h 45 | Qualité, documentation et versioning |
-| 0 h 45 | Challenge d’extension |
+| 0 h 30 | Challenge d’extension |
 
 ### Jour 4 — Sécurité et RBAC
 
@@ -148,9 +159,9 @@ Une valeur secrète n’est jamais affichée sur projection, collée dans un tic
 |---:|---|
 | 0 h 45 | Modèle de privilèges |
 | 1 h 30 | RBAC as Code |
-| 1 h 00 | Grants et tests positifs/négatifs |
-| 0 h 45 | PAT/JWT et rotation |
-| 0 h 45 | Ingestion interne et variantes Cloud |
+| 0 h 45 | Grants et tests positifs/négatifs |
+| 1 h 00 | Identité technique, JWT et Key Vault |
+| 0 h 45 | Ingestion Azure Data Lake Storage |
 | 0 h 45 | Incidents contrôlés |
 | 0 h 30 | Challenge moindre privilège |
 
@@ -158,8 +169,8 @@ Une valeur secrète n’est jamais affichée sur projection, collée dans un tic
 
 | Durée | Animation |
 |---:|---|
-| 0 h 45 | Pipeline portable |
-| 0 h 45 | GitHub Actions et mapping Azure DevOps |
+| 1 h 00 | Pipeline Azure DevOps de bout en bout |
+| 0 h 30 | Policy as Code et quality gates |
 | 0 h 45 | FinOps/dbt |
 | 0 h 45 | Data Products |
 | 2 h 15 | Capstone autonome; aide graduée uniquement |
@@ -171,9 +182,9 @@ Une valeur secrète n’est jamais affichée sur projection, collée dans un tic
 |---|---|
 | Day 0 → J1 | rapport `Ready for Day 1`, connexion Snowflake valide |
 | J1 → J2 | premier projet appliqué, vérifié, puis second plan stable |
-| J2 → J3 | state cohérent, import et drift validés |
-| J3 → J4 | module Landing Zone et environnements isolés |
-| J4 → J5 | RBAC vérifié, secrets absents de Git |
+| J2 → J3 | state migré vers Azure Blob, import et dérive validés |
+| J3 → J4 | module Landing Zone et environnements DEV/UAT isolés |
+| J4 → J5 | RBAC vérifié, clé dans Key Vault, secrets absents de Git |
 | Fin | capstone ≥ 75 %, cleanup ou justification documentée |
 
 Un apprenant bloqué utilise le checkpoint de récupération; il ne copie pas le dossier `project/`.
@@ -205,42 +216,55 @@ Les preuves peuvent inclure : rapport du validateur, sortie `terraform plan`, re
 - ne pas demander un secret dans le chat ou par capture;
 - ne pas désactiver un contrôle de sécurité pour gagner du temps;
 - ne pas supprimer un state ou des ressources sans portée et confirmation;
-- ne pas donner `ACCOUNTADMIN` comme correction générique;
+- ne pas donner un rôle d’administration comme correction générique;
 - ne pas remplacer le workspace apprenant par la solution finale.
 
 ## 10. Coûts et cleanup
 
+### Snowflake
+
 - annoncer les ressources facturables avant création;
-- utiliser tailles minimales et auto-suspend;
+- imposer `X-SMALL`, `auto_suspend` court et `initially_suspended`;
 - vérifier les préfixes individuels;
-- effectuer un cleanup quotidien des ressources non réutilisées;
-- conserver uniquement les ressources explicitement requises le lendemain;
-- confirmer le résultat avec Terraform et Snowflake;
-- pour les pistes Azure/AWS/GCP, vérifier également le fournisseur Cloud.
+- suspendre les warehouses en fin de journée;
+- supprimer les objets non réutilisés le lendemain.
+
+### Azure
+
+- vérifier le groupe de ressources de formation;
+- arrêter ou désallouer les agents hors session;
+- contrôler la croissance du compte de stockage de state;
+- conserver Key Vault jusqu’à la fin de la formation, puis suivre la procédure de suppression;
+- confirmer le budget et les alertes après chaque journée.
+
+Le cleanup est confirmé dans les **deux** environnements avant de clore une journée.
 
 ## 11. Matériel formateur
 
-- programme maître et catalogue;
-- slides et diagrammes rendus;
+- programme maître, catalogue et architecture de référence;
+- politique de versions;
+- runbook d’animation minuté;
 - solution de référence testée;
 - snapshots de récupération par checkpoint;
 - matrice objectifs/activités/preuves;
-- liste des versions testées;
+- pipeline Azure DevOps et variable groups documentés;
 - incidents connus et procédures de reprise;
 - rubric du capstone;
-- procédure de cleanup sandbox/Trial;
-- attribution et droits des logos officiels utilisés.
+- procédures de cleanup Snowflake et Azure.
 
 ## 12. Definition of Done avant publication
 
 - [ ] 30 heures chronométrées en dry run;
-- [ ] sandbox et Trial testés;
+- [ ] accès Snowflake, Azure et Azure DevOps testés;
 - [ ] PowerShell et Bash testés;
+- [ ] versions conformes à la politique de versions;
+- [ ] DEV, UAT et PROD cohérents dans le code et les supports;
+- [ ] pipeline Azure DevOps exécuté au moins une fois;
+- [ ] `dbt deps` et `dbt build` réussis;
 - [ ] chaque lab part d’un workspace propre;
 - [ ] chaque objectif a une preuve;
 - [ ] chaque panne documentée a été reproduite et corrigée;
 - [ ] liens et diagrammes valides;
 - [ ] starters sans secrets ni artefacts Terraform téléchargés;
-- [ ] solutions formatées, validées, appliquées, idempotentes et nettoyables;
-- [ ] capstone réalisable sans lire la solution;
-- [ ] licences des logos vérifiées.
+- [ ] aucun identifiant de compte réel dans les supports;
+- [ ] capstone réalisable sans lire la solution.

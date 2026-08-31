@@ -1,90 +1,95 @@
 ﻿# Jour 0 — Préparer votre environnement
 
-**Durée totale : 1 h 45**
+**Durée totale : 1 h 30**
 
 **Résultat final : `Ready for Day 1`**
 
-Bienvenue dans le point de départ unique de la formation. Suivez les étapes dans l’ordre. Ne consultez pas les anciens dossiers directement : tous les liens utiles sont rassemblés ici.
+Bienvenue dans le point de départ de la formation. Le Jour 0 est **automatisé** : vous clonez le projet type, exécutez les scripts qu'il contient, puis comprenez ce qu'ils ont fait. Aucune ressource Cloud n'est créée.
 
 ## Votre mission
 
 À la fin du Jour 0, vous devez disposer de :
 
-- Git, Terraform et Snowflake CLI disponibles dans le terminal;
-- un dépôt de formation ouvert au bon emplacement;
-- un scénario d’accès choisi : Sandbox ou Trial;
-- une configuration locale protégée par `.gitignore`;
-- une connexion Snowflake `terraform_svc` testée;
-- un workspace apprenant isolé dans `$HOME/Data2AI-Labs`;
-- un rapport de validation sans erreur.
+- le **projet type** cloné sous `$HOME/Data2AI-Labs/data-platform` — c'est votre racine de travail pour toute la formation;
+- Git, Terraform, Snowflake CLI, Azure CLI et dbt disponibles dans le terminal;
+- une connexion Snowflake `training` testée via PAT saisi de façon sécurisée;
+- un rapport de validation sans erreur ni secret.
 
-Aucune ressource Terraform, Azure, AWS ou GCP n’est créée pendant le Jour 0.
+## Le projet type est votre racine
 
-## Parcours en un coup d’œil
+Le projet type `data-platform-starter` contient :
+
+- les **scripts** d'installation, de connexion et de validation;
+- la **structure** de dossiers (`environments/`, `modules/`, `docs/`);
+- la **gouvernance** (`.gitignore`, `.tflint.hcl`, `azure-pipelines.yml`, `CODEOWNERS`).
+
+Il **ne contient pas** de fichiers `.tf` de ressource. Vous les créerez au fil des modules.
 
 ```mermaid
 flowchart TD
-    START[Commencer ici] --> OS{Quel système ?}
-    OS -->|Windows| TOOLS_W[Installer/vérifier avec PowerShell]
-    OS -->|Linux ou macOS| TOOLS_U[Installer/vérifier avec Bash]
-    TOOLS_W --> ACCESS{Quel accès Snowflake ?}
-    TOOLS_U --> ACCESS
-    ACCESS -->|Sandbox fournie| SANDBOX[PAT et identifiants du formateur]
-    ACCESS -->|Trial personnel| TRIAL[Compte et PAT personnels]
-    SANDBOX --> CONFIG[Protéger .env et secrets]
-    TRIAL --> CONFIG
-    CONFIG --> CONNECTION[Configurer et tester Snow CLI]
-    CONNECTION --> PREFLIGHT[Exécuter le préflight]
-    PREFLIGHT --> WORKSPACE[Créer le workspace M00]
-    WORKSPACE --> REPORT[Valider et produire le rapport]
-    REPORT --> READY[Ready for Day 1]
+    CLONE[Cloner le projet type] --> DIAG[Diagnostic initial]
+    DIAG --> INSTALL[Exécuter le script d'installation]
+    INSTALL --> REPORT[Lire le rapport]
+    REPORT --> FIX{Erreurs ?}
+    FIX -->|Oui| MANUAL[Suivre la procédure manuelle]
+    MANUAL --> REPORT
+    FIX -->|Non| SNOW[Configurer la connexion Snowflake]
+    SNOW --> VALIDATE[Validation finale]
+    VALIDATE --> READY[Ready for Day 1]
 ```
 
 ## Progression obligatoire
 
 | Étape | Temps | Action | Preuve pour continuer |
 |---:|---:|---|---|
-| 1 | 5 min | Lire objectifs et règles de sécurité | Vous savez ce qui sera créé — et ce qui ne le sera pas |
-| 2 | 30 min | [Installer ou vérifier les outils](module-00-tools-setup/lab.md) | Git, Terraform et `snow` répondent |
-| 3 | 10 min | [Comprendre configuration, PAT et profil](module-00-day0-setup/course.md) | Vous distinguez identifiant et secret |
-| 4 | 30 min | [Configurer Sandbox ou Trial pas à pas](module-00-day0-setup/lab.md) | `snow connection test` retourne OK |
-| 5 | 10 min | Exécuter le préflight | `Ready for Day 1` |
-| 6 | 10 min | Créer et valider le workspace M00 | Rapport PASS sans secret |
-| 7 | 10 min | Corriger ou faire le challenge final | Checklist complète |
-| **Total** | **1 h 45** | | |
+| 1 | 5 min | Lire objectifs et règles de sécurité | Vous savez ce qui sera installé |
+| 2 | 5 min | [Cloner le projet type et diagnostic initial](module-00-tools-setup/lab.md) | Clone présent, rapport généré |
+| 3 | 20 min | [Exécuter le script d'installation](module-00-tools-setup/lab.md) | Outils installés ou procédure manuelle affichée |
+| 4 | 10 min | Lire le rapport et corriger les échecs | Tous les outils Core en PASS |
+| 5 | 20 min | [Configurer la connexion Snowflake](module-00-day0-setup/lab.md) | `snow sql -q 'SELECT 1' -c training` retourne un résultat |
+| 6 | 10 min | [Inspecter la structure du projet type](module-00-day0-setup/lab.md) | Dossiers `environments/`, `modules/`, `docs/` présents |
+| 7 | 10 min | Validation finale | `Toolchain status: READY` |
+| 8 | 10 min | Explication : ce que le script a fait | Vous savez où sont installés les outils et pourquoi |
+| **Total** | **1 h 30** | | |
 
 ## Avant de commencer
-
-Choisissez vos options et conservez-les pendant tout le module.
 
 ### 1. Votre système
 
 - [ ] **Windows 10/11** avec PowerShell 5.1 ou 7;
 - [ ] **Linux** avec Bash;
-- [ ] **macOS** avec Bash ou Zsh pour lancer les commandes Bash.
+- [ ] **macOS** avec Bash ou Zsh.
 
-### 2. Votre scénario Snowflake
+### 2. Votre URL de projet type
 
-- [ ] **Sandbox** : le formateur fournit account, user, PAT temporaire et préfixe;
-- [ ] **Trial** : vous utilisez votre propre compte Snowflake Trial et créez votre PAT.
+Le formateur vous fournit l'URL du dépôt template `data-platform-starter`. Si elle n'est pas indiquée, demandez-la avant de commencer l'étape 2.
 
-Si vous n’avez pas encore reçu les accès, réalisez l’installation et le préflight avec l’option `SkipSnowflake`, puis reprenez à l’étape connexion.
+### 3. Vos identifiants Snowflake
+
+Le formateur vous fournit :
+
+- l'identifiant d'organisation Snowflake;
+- l'identifiant de compte Snowflake;
+- votre nom d'utilisateur Snowflake;
+- votre rôle (généralement `SYSADMIN` pour la formation);
+- un PAT temporaire;
+- votre préfixe apprenant unique (3 à 5 lettres).
 
 ## Règles de sécurité
 
-1. Ne collez jamais un PAT dans une commande : l’historique du shell pourrait le conserver.
-2. Ne placez jamais un PAT, mot de passe ou clé privée dans `.env`.
-3. Ne partagez ni `.env`, ni `config.toml`, ni le contenu de `secrets/`.
-4. N’ajoutez pas `ACCOUNTADMIN` pour résoudre une erreur de privilège.
+1. Le PAT est saisi via une invite masquée — jamais affiché, jamais collé dans une commande.
+2. Aucun PAT, mot de passe ou clé privée n'est placé dans un fichier du dépôt.
+3. Le script de connexion efface le token de l'environnement dès que possible.
+4. N'ajoutez pas `ACCOUNTADMIN` pour résoudre une erreur de privilège.
 5. Ne créez pas de network policy, utilisateur global ou ressource Cloud pendant ce module.
 6. Arrêtez-vous si `git check-ignore .env` ne retourne pas `.env`.
 
-## Besoin d’aide ?
+## Besoin d'aide ?
 
 Utilisez cette séquence, sans recommencer tout le module :
 
 1. relisez le dernier résultat attendu;
-2. confirmez votre répertoire courant;
+2. confirmez votre répertoire courant (`pwd`);
 3. ouvrez le [guide de troubleshooting](module-00-day0-setup/troubleshooting.md);
 4. exécutez uniquement le diagnostic non destructif indiqué;
 5. corrigez puis rejouez le dernier checkpoint.
@@ -94,15 +99,11 @@ Utilisez cette séquence, sans recommencer tout le module :
 Le Jour 0 est terminé uniquement lorsque :
 
 ```text
-Ready for Day 1
+Toolchain status: READY
 ```
 
-et que le validateur du workspace M00 ne contient aucun `FAIL`.
+et que la connexion Snowflake répond à `snow sql -q 'SELECT 1' -c training`.
 
 ## Suite
 
-Passez à [M1 — Premier déploiement Terraform Snowflake](../day-01/module-01-iac-workflow/lab.md). M1 vous fera créer chaque fichier Terraform depuis un workspace presque vide.
-
-## Archives
-
-`module-00-environment-pre-setup/` contient l’ancienne version du parcours. Elle n’est plus maintenue et ne doit pas être suivie par les apprenants. Chaque page de ce dossier redirige vers ce README ou le lab principal.
+Passez à [M1 — Premier déploiement Terraform Snowflake](../day-01/module-01-iac-workflow/lab.md). M1 vous fera créer chaque fichier Terraform depuis le projet type cloné, en mode manuel pas à pas. **Tous les fichiers `.tf` que vous créerez iront dans le clone** sous `environments/dev/`.

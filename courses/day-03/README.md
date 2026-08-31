@@ -1,19 +1,22 @@
-﻿# Jour 3 — Snowflake avancé, RBAC, Capstone
+﻿# Jour 4 — Sécurité, RBAC et identité technique
 
-**Objectif :** Plateforme Data gouvernée et auditable.
+> Ce dossier historique porte le nom `day-03`. Dans le parcours officiel de 5 jours, son contenu correspond au **Jour 4**.
+
+**Objectif :** appliquer le moindre privilège avec une identité vérifiable et une ingestion sécurisée.
+
+**Références :** [catalogue](../README.md) · [programme](../../PROGRAMME_FORMATION.md) · [architecture](../../docs/reference-architecture.md)
 
 ```mermaid
 flowchart LR
-    M9[M9 Snowflake] --> M10[M10 Security]
+    M9[M9 Ressources Snowflake] --> M10[M10 Identité et Key Vault]
     M10 --> M11[M11 RBAC]
-    M11 --> M12[M12 Capstone]
-    M12 --> P[project/05-capstone]
+    M11 --> J5[Jour 5 CI/CD et capstone]
 ```
 
-| Module | Durée | Code |
-|--------|-------|------|
-| [M9 Advanced](module-09-snowflake-advanced/) | 2h | stages, formats |
-| [M10 Security](module-10-security-auth/) | 1h30 | Key pair rotation |
-| [M11 RBAC](module-11-rbac/) | 1h30 | `modules/rbac` |
-| [M12 Capstone](module-12-capstone/) | 2h | `project/05-capstone` |
+| Module | Durée | Contenu |
+|---|---:|---|
+| [M9 — Ingestion et ressources avancées](module-09-snowflake-advanced/lab.md) | 0 h 45 | File formats, stages, storage integration Azure |
+| [M10 — Identité technique et Key Vault](module-10-security-auth/lab.md) | 1 h 00 | JWT key-pair, stockage et rotation |
+| [M11 — RBAC as Code](../day-04/module-11-rbac/lab.md) | 2 h 15 | Rôles, hiérarchie, grants actuels et futurs |
 
+Les modules M11 et M12 se trouvent physiquement dans `courses/day-04/`. Le capstone est traité au **Jour 5**.
