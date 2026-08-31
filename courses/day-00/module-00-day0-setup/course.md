@@ -1,6 +1,6 @@
 # Cours M0 — Préparation de l’environnement
 
-**Durée :** 15 minutes de concepts + 90 minutes de pratique
+**Durée : 10 minutes**
 
 ## Pourquoi cette capacité existe
 

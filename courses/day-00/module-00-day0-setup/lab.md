@@ -2,12 +2,32 @@
 
 | Élément | Valeur |
 |---|---|
-| **Durée** | 1 h 45 |
+| **Durée** | 1 h 00, après installation des outils |
 | **Piste** | `[CORE]` |
 | **OS** | Windows/PowerShell ou Linux/macOS/Bash |
 | **Scénarios** | Sandbox préprovisionnée ou Snowflake Trial personnel |
 | **Résultat** | `Ready for Day 1` |
 | **Action distante** | Test de connexion uniquement |
+
+## Navigation
+
+**Point de départ :** [Jour 0 — Commencer ici](../README.md)
+
+**Étape précédente :** [Installer et vérifier les outils](../module-00-tools-setup/lab.md)
+
+**Aide :** [Troubleshooting](troubleshooting.md) · [Résultats attendus](expected-output.md)
+
+### Votre progression
+
+- [ ] Partie 1 — choisir Sandbox ou Trial;
+- [ ] Partie 2 — confirmer le dépôt;
+- [ ] Partie 3 — confirmer les outils;
+- [ ] Partie 4 — créer `.env` sans secret;
+- [ ] Partie 5 — configurer et tester Snowflake CLI;
+- [ ] Partie 6 — obtenir `Ready for Day 1`;
+- [ ] Partie 7 — créer et valider le workspace M00.
+
+> Ne sautez pas un checkpoint. En cas d’erreur, corrigez uniquement l’étape courante puis reprenez ici.
 
 ## Mission
 
@@ -182,9 +202,37 @@ Dans Snowsight, créez un PAT pour votre utilisateur selon la procédure disponi
 
 > N’écrivez pas une commande contenant directement le token : elle pourrait rester dans l’historique du shell.
 
-Ajoutez ensuite la connexion avec Snowflake CLI en utilisant les options de votre version installée. Consultez `snow connection add --help`; fournissez le token via son fichier lorsqu’une option dédiée est disponible.
+Ajoutez ensuite la connexion. Remplacez les valeurs `<...>` par celles de `.env`; ne remplacez jamais le chemin `-t` par le token lui-même.
 
-### Validation
+**[WINDOWS]**
+
+```powershell
+snow connection add -n terraform_svc `
+  -a "<account>" `
+  -h "<organization>-<account>.snowflakecomputing.com" `
+  -u "<user>" `
+  -r "<role>" `
+  -A "PROGRAMMATIC_ACCESS_TOKEN" `
+  -t "$PWD\secrets\snowflake_terraform_pat.txt" `
+  --no-interactive
+```
+
+**[UNIX]**
+
+```bash
+snow connection add -n terraform_svc \
+  -a "<account>" \
+  -h "<organization>-<account>.snowflakecomputing.com" \
+  -u "<user>" \
+  -r "<role>" \
+  -A "PROGRAMMATIC_ACCESS_TOKEN" \
+  -t "$PWD/secrets/snowflake_terraform_pat.txt" \
+  --no-interactive
+```
+
+Si votre version de Snowflake CLI refuse une option, exécutez `snow connection add --help` et comparez les noms `--authenticator` et `--token-file-path`. Ne basculez pas vers un mot de passe.
+
+### Checkpoint — Connexion
 
 ```text
 snow connection test -c terraform_svc

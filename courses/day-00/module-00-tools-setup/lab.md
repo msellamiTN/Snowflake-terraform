@@ -1,515 +1,296 @@
-﻿> ⚠️ **Module déprécié** — ce contenu est conservé à titre de référence. Utilisez le nouveau lab fusionné : [M0 — Day 0](../module-00-day0-setup/lab.md).
+﻿# Étape 1 — Installer et vérifier les outils
 
-# Atelier 0 — Installation des outils (prérequis)
+**Durée cible : 30 minutes**
 
-**Durée :** 45 min
-**Objectif :** Disposer de tous les outils installés et vérifiés sur le poste Windows avant d'aborder la configuration Snowflake et Terraform.
+**Retour au parcours :** [Jour 0 — Commencer ici](../README.md)
 
-> Ce module est le **prérequis** du module [M0 — Préparation de l'environnement](../module-00-environment-pre-setup/lab.md) qui couvre la génération de clés RSA, l'authentification Snowflake JWT et la configuration Terraform.
+## Résultat attendu
 
----
-
-## Objectifs
-
-À la fin de cet atelier, vous serez capable de :
-
-- Installer Git for Windows et OpenSSL
-- Cloner le repository du cours
-- Configurer PowerShell pour exécuter les scripts du lab
-- Installer automatiquement tous les outils nécessaires via `Install-Tools.ps1`
-- Vérifier l'installation de chaque outil
-- Diagnostiquer les problèmes de PATH
-
-## Architecture de l'environnement
+À la fin de cette étape, ces trois commandes obligatoires fonctionnent :
 
 ```text
-Windows
-│
-├── Git for Windows
-│   ├── Git
-│   └── OpenSSL
-│
-├── Terraform 1.14.5
-│
-├── Python 3.12
-│   └── Snowflake CLI
-│
-├── Azure CLI
-│
-├── TFLint 0.50.0
-│
-└── Visual Studio Code
-    │
-    └── snowflake-terraform
+git --version
+terraform version
+snow --version
 ```
+
+VS Code est recommandé mais facultatif. OpenSSL, Azure CLI, AWS CLI, Google Cloud CLI, TFLint et dbt ne sont pas requis pour terminer le Jour 0.
+
+## 1. Choisir votre piste
+
+- [Windows et PowerShell](#piste-windows)
+- [Linux et Bash](#piste-linux)
+- [macOS](#piste-macos)
+
+Suivez une seule piste. Rejoignez ensuite [la vérification commune](#5-vérification-commune).
 
 ---
 
-## 1. Préparer PowerShell
+## Piste Windows
 
-### 1.1 Ouvrir PowerShell
+### 2W.1 — Ouvrir PowerShell sans privilège administrateur
 
-Ouvrez : **Start → Windows PowerShell → Run as Administrator**
-
-### 1.2 Vérifier PowerShell
+Ouvrez PowerShell puis vérifiez :
 
 ```powershell
 $PSVersionTable.PSVersion
+[Environment]::Is64BitOperatingSystem
 ```
 
-Résultat attendu :
+Attendu : PowerShell 5.1 ou 7 et `True` pour un poste 64 bits.
 
-```text
-Major  Minor  Build  Revision
------  -----  -----  --------
-5      1      ...
-```
+> N’utilisez une session administrateur que si la politique de votre poste l’exige pour une installation précise.
 
-> Le lab cible Windows PowerShell 5.1.
-
----
-
-## 2. Vérifier l'architecture Windows
-
-Terraform et TFLint utilisent les binaires Windows AMD64.
+### 2W.2 — Vérifier les outils avant d’installer
 
 ```powershell
-[Environment]::Is64BitOperatingSystem
-# Attendu : True
-
-$env:PROCESSOR_ARCHITECTURE
-# Attendu : AMD64
+Get-Command git -ErrorAction SilentlyContinue
+Get-Command terraform -ErrorAction SilentlyContinue
+Get-Command snow -ErrorAction SilentlyContinue
+Get-Command code -ErrorAction SilentlyContinue
 ```
 
----
+Pour chaque commande qui retourne un chemin, l’outil est déjà présent. Ne le réinstallez pas.
 
-## 3. Vérifier WinGet
+### 2W.3 — Installer Git si nécessaire
+
+Si `winget` est disponible :
 
 ```powershell
 winget --version
-# Attendu : v1.x.x
-```
-
-> Si winget est disponible, nous l'utiliserons pour installer Git.
-
----
-
-## 4. Installer Git for Windows
-
-Git for Windows fournit également les composants OpenSSL utilisés dans l'environnement du lab.
-
-```powershell
 winget install --id Git.Git -e --source winget
 ```
 
-Attendez la fin de l'installation. Vous devez obtenir :
-
-```text
-Successfully installed
-```
-
----
-
-## 5. Redémarrer PowerShell
-
-> **Important :** Fermez complètement PowerShell et ouvrez une nouvelle fenêtre.
-> Les nouveaux programmes et modifications du PATH ne sont pas automatiquement disponibles dans les anciennes sessions.
-
----
-
-## 6. Vérifier Git et OpenSSL
+Fermez complètement PowerShell, ouvrez une nouvelle fenêtre, puis exécutez :
 
 ```powershell
 git --version
-# Exemple : git version 2.55.0.windows.3
-
-where.exe git
-# Exemple : C:\Program Files\Git\cmd\git.exe
-
-openssl version
-# Exemple : OpenSSL 3.5.7 ...
-
-where.exe openssl
-# Exemple : C:\Program Files\Git\mingw64\bin\openssl.exe
 ```
 
-### Dépannage OpenSSL
+### 2W.4 — Installer Terraform si nécessaire
 
-Si `openssl version` retourne `openssl : The term 'openssl' is not recognized` :
+Utilisez l’une des méthodes suivantes :
+
+1. le package approuvé par votre entreprise;
+2. l’installation HashiCorp officielle;
+3. le script `scripts/Install-LabEnvironment.ps1` uniquement sur un poste de formation Windows autorisé.
+
+Après installation, ouvrez un nouveau terminal :
 
 ```powershell
-Test-Path "C:\Program Files\Git\mingw64\bin\openssl.exe"
-# Attendu : True
-
-# Ajoutez temporairement le chemin à la session
-$env:PATH = "C:\Program Files\Git\mingw64\bin;$env:PATH"
-openssl version
-```
-
----
-
-## 7. Configurer Git
-
-```powershell
-git config --global user.name "Votre Nom"
-git config --global user.email "votre.email@example.com"
-
-# Vérifiez
-git config --global user.name
-git config --global user.email
-```
-
----
-
-## 8. Cloner le repository
-
-```powershell
-# Créer le répertoire de formation
-cd $HOME
-New-Item -ItemType Directory -Path "$HOME\training" -Force
-cd "$HOME\training"
-
-# Cloner
-git clone https://github.com/msellamitn/snowflake-terraform.git
-
-# Entrer dans le projet
-cd snowflake-terraform
-
-# Vérifier
-git status
-git remote -v
-# Attendu : origin  https://github.com/msellamitn/snowflake-terraform.git
-```
-
----
-
-## 9. Autoriser les scripts PowerShell
-
-Nous ne modifions pas la politique globale de Windows. Autorisez uniquement les scripts dans la session courante :
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-
-Get-ExecutionPolicy
-# Attendu : Bypass
-```
-
----
-
-## 10. Installer l'environnement complet
-
-Le script `Install-Tools.ps1` installe et vérifie les 8 outils requis (ordre du script) :
-
-```powershell
-# Vérifiez que le script existe
-Test-Path .\scripts\Install-Tools.ps1
-# Attendu : True
-
-# Lancez l'installation
-.\scripts\Install-Tools.ps1
-```
-
-Le script est **idempotent** : les outils déjà conformes sont conservés. Il installe ou vérifie :
-
-| # | Outil | Version | Méthode |
-|---|---|---|---|
-| 1 | Terraform | 1.14.5 | ZIP → `C:\tools\tf-bin` |
-| 2 | Python | 3.12 | winget ou installer |
-| 3 | Snowflake CLI | latest | `pip install snowflake-cli` |
-| 4 | Git | latest | winget ou installer |
-| 5 | OpenSSL | (via Git) | détection Git\mingw64\bin |
-| 6 | VS Code | latest | winget ou installer + extensions |
-| 7 | Azure CLI | latest | winget ou MSI |
-| 8 | TFLint | 0.50.0 | ZIP → `C:\tools\tflint-bin` |
-
-> 📌 Le script installe automatiquement les extensions VS Code : `HashiCorp.terraform`, `ms-azuretools.vscode-azureterraform`, `ms-python.python`, `redhat.vscode-yaml`, `shd101wyy.markdown-preview-enhanced`.
-
-À la fin, recherchez :
-
-```text
-[OK] Terraform
-[OK] Python
-[OK] Snowflake CLI
-[OK] Git
-[OK] OpenSSL
-[OK] VS Code
-[OK] Azure CLI
-[OK] TFLint
-```
-
-Vous devez obtenir :
-
-```text
-INSTALLATION TERMINEE AVEC SUCCES
-```
-
----
-
-## 11. Redémarrer PowerShell
-
-> **Très important :** Fermez PowerShell, ouvrez une nouvelle fenêtre, puis revenez dans le projet :
-
-```powershell
-cd $HOME\training\snowflake-terraform
-```
-
----
-
-## 12. Vérification manuelle des outils
-
-Même si le script automatique passe, effectuons une validation manuelle :
-
-```powershell
-# Terraform
 terraform version
-# Attendu : Terraform v1.14.5
-
-# Python
-python --version
-# Attendu : Python 3.12.x
-
-# Snowflake CLI
-snow --version
-# Attendu : Snowflake CLI 3.x.x
-
-# Git
-git --version
-
-# OpenSSL
-openssl version
-
-# VS Code
-code --version
-
-# Azure CLI
-az version
-
-# TFLint
-tflint --version
-# Attendu : TFLint version 0.50.0
+where.exe terraform
 ```
 
-### Vérification globale en une commande
+Attendu : Terraform 1.14.x et un chemin unique compréhensible.
+
+### 2W.5 — Installer Snowflake CLI si nécessaire
+
+Utilisez l’installateur ou la procédure officielle Snowflake adaptée à Windows. N’exécutez pas un `pip install` global sur un poste partagé ou d’entreprise.
+
+Vérifiez dans un nouveau terminal :
 
 ```powershell
-$tools = @("git", "openssl", "terraform", "python", "snow", "az", "tflint", "code")
-foreach ($tool in $tools) {
+snow --version
+where.exe snow
+```
+
+### 2W.6 — Installer un éditeur
+
+VS Code est recommandé :
+
+```powershell
+code --version
+```
+
+Si `code` n’est pas disponible mais que votre éditeur peut créer des fichiers texte UTF-8, vous pouvez continuer.
+
+---
+
+## Piste Linux
+
+### 2L.1 — Identifier votre distribution
+
+```bash
+uname -a
+cat /etc/os-release
+```
+
+### 2L.2 — Vérifier les outils existants
+
+```bash
+command -v git || true
+command -v terraform || true
+command -v snow || true
+command -v code || true
+```
+
+### 2L.3 — Installer Git
+
+Utilisez le gestionnaire de paquets de votre distribution. Exemple Debian/Ubuntu :
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git
+```
+
+Si vous n’avez pas les droits `sudo`, demandez le package approuvé à votre administrateur. Ne contournez pas la politique du poste.
+
+### 2L.4 — Installer Terraform
+
+Utilisez le dépôt HashiCorp officiel ou le gestionnaire de versions approuvé par votre entreprise. Vérifiez ensuite :
+
+```bash
+terraform version
+command -v terraform
+```
+
+### 2L.5 — Installer Snowflake CLI
+
+Utilisez la procédure officielle Snowflake. Si votre organisation utilise Python pour cette installation, créez un environnement isolé ou utilisez l’outil de packaging approuvé; n’installez pas dans le Python système global.
+
+```bash
+snow --version
+command -v snow
+```
+
+---
+
+## Piste macOS
+
+### 2M.1 — Vérifier les outils
+
+```bash
+uname -m
+command -v git || true
+command -v terraform || true
+command -v snow || true
+```
+
+### 2M.2 — Installer les outils manquants
+
+Utilisez Homebrew si son usage est autorisé sur votre poste :
+
+```bash
+brew --version
+brew install git
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+```
+
+Installez Snowflake CLI avec la procédure officielle Snowflake, dans un environnement isolé si elle s’appuie sur Python.
+
+Ouvrez un nouveau terminal puis vérifiez :
+
+```bash
+git --version
+terraform version
+snow --version
+```
+
+---
+
+## 3. Obtenir le dépôt de formation
+
+### Si le dépôt est déjà ouvert
+
+Ne le clonez pas une deuxième fois. Depuis le terminal intégré :
+
+```text
+git rev-parse --show-toplevel
+git status --short
+```
+
+Le premier résultat doit se terminer par `Snowflake-terraform`. Ne supprimez pas les modifications affichées.
+
+### Si le dépôt n’est pas encore présent
+
+Demandez au formateur l’URL exacte et le dossier de destination. Ensuite :
+
+```text
+git clone <URL_FOURNIE_PAR_LE_FORMATEUR>
+cd Snowflake-terraform
+```
+
+Le support ne force pas une URL personnelle ou une branche particulière.
+
+## 4. Vérifier la protection locale
+
+Depuis la racine du dépôt :
+
+```text
+git check-ignore .env
+git check-ignore secrets/probe.token
+```
+
+Attendu :
+
+```text
+.env
+secrets/probe.token
+```
+
+Si une ligne manque, ne créez encore aucun credential. Ouvrez le troubleshooting du lab principal.
+
+## 5. Vérification commune
+
+### Windows
+
+```powershell
+$required = @('git', 'terraform', 'snow')
+foreach ($tool in $required) {
     if (Get-Command $tool -ErrorAction SilentlyContinue) {
-        Write-Host "[OK] $tool" -ForegroundColor Green
+        Write-Host "[PASS] $tool"
     } else {
-        Write-Host "[FAIL] $tool" -ForegroundColor Red
+        Write-Host "[FAIL] $tool"
     }
 }
 ```
 
-Résultat attendu :
+### Linux/macOS
 
-```text
-[OK] git
-[OK] openssl
-[OK] terraform
-[OK] python
-[OK] snow
-[OK] az
-[OK] tflint
-[OK] code
+```bash
+for tool in git terraform snow; do
+  if command -v "$tool" >/dev/null 2>&1; then
+    printf '[PASS] %s\n' "$tool"
+  else
+    printf '[FAIL] %s\n' "$tool"
+  fi
+done
 ```
 
----
+Critère : trois lignes `PASS`.
 
-## 13. Vérifier Azure CLI
+## 6. Préflight local
+
+Cette commande ne se connecte pas à Snowflake et ne modifie rien.
+
+### Windows
 
 ```powershell
-az account show
+.\scripts\Setup-Day0.ps1 -AccessScenario SANDBOX -SkipSnowflake
 ```
 
-Si aucune session n'est disponible :
+### Linux/macOS
 
-```powershell
-az login
-az account show
-az account list -o table
+```bash
+bash ./scripts/setup-day0.sh --scenario SANDBOX --skip-snowflake
 ```
 
-Identifiez l'abonnement fourni pour la formation, puis :
+À ce stade, `.env local` peut encore être en `FAIL`; il sera créé dans l’étape suivante. Git, Terraform, Snowflake CLI, `.env.example` et `.gitignore` doivent être en `PASS`.
 
-```powershell
-az account set --subscription "<SUBSCRIPTION_NAME_OR_ID>"
-az account show -o table
-```
+## Checkpoint
 
----
+- [ ] Git répond;
+- [ ] Terraform 1.14.x répond;
+- [ ] Snowflake CLI répond;
+- [ ] vous êtes à la racine du bon dépôt;
+- [ ] `.env` et `secrets/` sont ignorés;
+- [ ] vous savez quel éditeur utiliser.
 
-## 14. Initialiser et valider Terraform
+## Étape suivante
 
-```powershell
-terraform init
-# Attendu : Terraform has been successfully initialized!
+1. Lisez le [cours court : configuration et secrets](../module-00-day0-setup/course.md).
+2. Continuez avec le [lab principal Day 0](../module-00-day0-setup/lab.md).
 
-terraform validate
-# Attendu : Success! The configuration is valid.
-
-terraform fmt -recursive
-terraform fmt -recursive -check
-```
-
----
-
-## 15. Vérifier TFLint
-
-```powershell
-# Si .tflint.hcl existe
-tflint --init
-tflint
-```
-
----
-
-## 16. Ouvrir le projet dans VS Code
-
-```powershell
-code .
-```
-
-Extensions recommandées :
-
-```powershell
-code --list-extensions
-```
-
-- `HashiCorp.terraform`
-- `ms-azuretools.vscode-azureterraform`
-- `ms-python.python`
-- `redhat.vscode-yaml`
-- `shd101wyy.markdown-preview-enhanced`
-
----
-
-## 17. Diagnostic PATH
-
-Si une commande fonctionne dans le script mais pas directement après l'installation :
-
-```powershell
-$env:PATH -split ";"
-```
-
-Cherchez notamment :
-
-```text
-C:\tools\tf-bin
-C:\tools\tflint-bin
-```
-
-Pour le PATH utilisateur permanent :
-
-```powershell
-[Environment]::GetEnvironmentVariable("PATH","User") -split ";"
-```
-
-### Diagnostic direct
-
-```powershell
-# Terraform
-C:\tools\tf-bin\terraform.exe version
-
-# TFLint
-C:\tools\tflint-bin\tflint.exe --version
-```
-
-Si l'exécutable fonctionne directement mais pas `terraform` / `tflint`, le problème est uniquement le PATH.
-
----
-
-## 18. Procédure de récupération après installation
-
-Si un outil affiche `The term 'terraform' is not recognized` :
-
-1. Fermez PowerShell
-2. Ouvrez une nouvelle session
-3. Testez : `terraform version`
-4. Si le problème persiste : `where.exe terraform`
-5. Vérifiez le fichier : `Test-Path C:\tools\tf-bin\terraform.exe`
-6. Refaites la même procédure avec : `where.exe python`, `where.exe snow`, `where.exe openssl`, `where.exe az`, `where.exe tflint`
-
----
-
-## ✅ Critères de réussite
-
-L'atelier est terminé lorsque vous obtenez :
-
-```text
-[OK] Terraform
-[OK] Python
-[OK] Snowflake CLI
-[OK] Git
-[OK] OpenSSL
-[OK] VS Code
-[OK] Azure CLI
-[OK] TFLint
-```
-
-Et :
-
-```text
-Success! The configuration is valid.
-```
-
----
-
-## Quick Start
-
-Pour une nouvelle machine Windows, la procédure minimale est :
-
-```powershell
-# 1. Installer Git + OpenSSL
-winget install --id Git.Git -e --source winget
-
-# 2. Fermer et rouvrir PowerShell
-
-# 3. Vérifier Git
-git --version
-openssl version
-
-# 4. Cloner le projet
-cd $HOME
-New-Item -ItemType Directory -Path "$HOME\training" -Force
-cd "$HOME\training"
-git clone https://github.com/msellamitn/snowflake-terraform.git
-cd snowflake-terraform
-
-# 5. Autoriser les scripts pour cette session
-Set-ExecutionPolicy -Scope Process Bypass
-
-# 6. Installer l'environnement
-.\scripts\Install-Tools.ps1
-
-# 7. Fermer et rouvrir PowerShell
-cd $HOME\training\snowflake-terraform
-
-# 8. Initialiser et valider Terraform
-terraform init
-terraform validate
-
-# 9. Ouvrir VS Code
-code .
-```
-
----
-
-## Livrable de l'atelier
-
-À la fin de l'atelier, votre poste doit être dans cet état :
-
-```text
-snowflake-terraform/
-│
-├── scripts/
-│   └── Install-Tools.ps1
-│
-├── Terraform configuration
-├── Snowflake configuration
-├── Documentation
-└── Git repository
-```
-
-> ✅ **Votre environnement est prêt.** Passez au module [M0 — Préparation de l'environnement](../module-00-environment-pre-setup/lab.md) pour configurer l'authentification Snowflake JWT et Terraform.
+En cas d’échec, utilisez le [troubleshooting Day 0](../module-00-day0-setup/troubleshooting.md) et rejouez uniquement la vérification concernée.

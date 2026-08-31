@@ -15,7 +15,7 @@ Progression des dossiers :
 
 ## Quick start
 
-Avant tout, suivez le [Lab M0 — Préparation de l'environnement](../courses/day-00/module-00-environment-pre-setup/lab.md) pour installer les outils, générer les clés et configurer l'authentification.
+Avant tout, commencez par le [Jour 0 — Préparer votre environnement](../courses/day-00/README.md). Le parcours vérifie les outils, protège les secrets et configure une connexion Sandbox ou Trial sans déployer d’infrastructure.
 
 ```powershell
 cd 01-day1-basics

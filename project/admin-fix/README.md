@@ -8,7 +8,7 @@ Ce dossier est un *root module* Terraform autonome qui :
 - gère la ressource `snowflake_user.terraform_svc` ;
 - lit la clé publique dans `../../secrets/snowflake_key.oneline`.
 
-Il n'est pas destiné aux participants. Les opérations de base (`CREATE USER`, `GRANT ROLE`) sont documentées dans le [Lab M0 — Préparation de l'environnement](../../courses/day-00/module-00-environment-pre-setup/lab.md).
+Il n'est pas destiné aux participants. Le [Jour 0 apprenant](../../courses/day-00/README.md) n’exécute aucune opération administrative; les réparations `CREATE USER` et `GRANT ROLE` restent sous la responsabilité du formateur ou de l’administrateur.
 
 ---
 
