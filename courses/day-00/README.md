@@ -46,10 +46,11 @@ flowchart TD
 | 2 | 5 min | [Cloner le projet type et diagnostic initial](module-00-tools-setup/lab.md) | Clone présent, rapport généré |
 | 3 | 20 min | [Exécuter le script d'installation](module-00-tools-setup/lab.md) | Outils installés ou procédure manuelle affichée |
 | 4 | 10 min | Lire le rapport et corriger les échecs | Tous les outils Core en PASS |
-| 5 | 20 min | [Configurer la connexion Snowflake](module-00-day0-setup/lab.md) | `snow sql -q 'SELECT 1' -c training` retourne un résultat |
-| 6 | 10 min | [Inspecter la structure du projet type](module-00-day0-setup/lab.md) | Dossiers `environments/`, `modules/`, `docs/` présents |
-| 7 | 10 min | Validation finale | `Toolchain status: READY` |
-| 8 | 10 min | Explication : ce que le script a fait | Vous savez où sont installés les outils et pourquoi |
+| 5 | 10 min | [Authentifier Azure avec le SP partagé](module-00-day0-setup/lab.md) | `az account show` affiche la souscription |
+| 6 | 20 min | [Configurer la connexion Snowflake](module-00-day0-setup/lab.md) | `snow sql -q 'SELECT 1' -c training` retourne un résultat |
+| 7 | 10 min | [Inspecter la structure du projet type](module-00-day0-setup/lab.md) | Dossiers `environments/`, `modules/`, `docs/` présents |
+| 8 | 10 min | Validation finale | `Toolchain status: READY` |
+| 9 | 10 min | Explication : ce que le script a fait | Vous savez où sont installés les outils et pourquoi |
 | **Total** | **1 h 30** | | |
 
 ## Avant de commencer
@@ -78,6 +79,20 @@ Vous copiez `.env.example` en `.env`, puis vous ajoutez uniquement :
 
 - votre **préfixe apprenant** unique (3 à 5 lettres);
 - votre **PAT** temporaire.
+
+### 4. Vos identifiants Azure (service principal partagé)
+
+Le formateur vous fournit un fichier `secrets/shared-sp.txt` contenant les identifiants
+d'un **service principal partagé** (app ID, secret, tenant, subscription).
+
+> `[SECURITY]` Ce fichier est gitignored. Ne le commitez jamais.
+> Ne le partagez pas en dehors de la formation.
+
+Ce service principal **contourne l'authentification MFA** d'Azure.
+Vous l'utilisez via le script `Learner-Login` (voir Étape 5).
+
+L'isolation entre apprenants se fait via votre `LEARNER_PREFIX` :
+vos ressources Snowflake et votre state Terraform sont uniques.
 
 ## Règles de sécurité
 

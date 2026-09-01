@@ -52,6 +52,45 @@ Warnings: 0
 | Code de sortie | 0 |
 | Secret | Aucune valeur secrète dans le rapport |
 
+## Authentification Azure (service principal partagé)
+
+### Sortie attendue du script Learner-Login
+
+Avec `secrets/shared-sp.txt` fourni par le formateur :
+
+```text
+============================================================
+ Learner Login: APP01
+============================================================
+
+[INFO] Logging in with shared service principal...
+[PASS] Logged in to Azure
+       Subscription: Azure subscription 1 (8c42d5b2-...)
+       Tenant: 55fca982-...
+       Learner prefix: APP01
+
+[PASS] Environment variables set:
+       ARM_CLIENT_ID
+       ARM_CLIENT_SECRET (hidden)
+       ARM_TENANT_ID
+       ARM_SUBSCRIPTION_ID
+       LEARNER_PREFIX = APP01
+
+============================================================
+ Ready for labs
+============================================================
+```
+
+### Vérification
+
+```bash
+az account show --query 'name' -o tsv
+```
+
+**Attendu :** `Azure subscription 1`
+
+> `[IMPORTANT]` Relancez `Learner-Login` au début de chaque nouvelle session.
+
 ## Connexion Snowflake
 
 ### Sortie attendue du script de connexion
@@ -135,8 +174,12 @@ $HOME/Data2AI-Labs/data-platform/
 └── scripts/
     ├── Install-Tools.ps1
     ├── install-tools.sh
+    ├── Learner-Login.ps1
+    ├── learner-login.sh
     ├── New-SnowflakeConnection.ps1
     ├── new-snowflake-connection.sh
+    ├── Test-LabConnectivity.ps1
+    ├── test-lab-connectivity.sh
     ├── validate.ps1
     └── validate.sh
 ```
@@ -155,6 +198,9 @@ find $HOME/Data2AI-Labs/data-platform -name '*.tf' -type f
 - [ ] Tous les outils Core en `PASS`
 - [ ] `.env` copié depuis `.env.example` et complété avec `LEARNER_PREFIX` et `SNOWFLAKE_PAT`
 - [ ] `git check-ignore .env` retourne `.env`
+- [ ] `secrets/shared-sp.txt` présent et gitignored
+- [ ] `Learner-Login` exécuté avec votre préfixe (`APP01`, `APP02`...)
+- [ ] `az account show --query 'name' -o tsv` affiche la souscription
 - [ ] `snow sql -q 'SELECT 1' -c training` retourne un résultat
 - [ ] Projet type cloné sous `$HOME/Data2AI-Labs/data-platform`
 - [ ] Scripts présents dans `scripts/` du clone

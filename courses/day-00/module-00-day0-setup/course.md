@@ -64,13 +64,31 @@ Le PAT est un jeton temporaire utilisé pour la formation. Le flux est :
 4. le PAT est jamais affiché, jamais stocké dans un fichier commité;
 5. le script efface le token de l'environnement dès que possible.
 
+## Authentification Azure
+
+### Service principal partagé
+
+Azure enforce MFA depuis septembre 2025, ce qui bloque `az login -u -p` en CLI.
+Pour contourner ce blocage en formation, un **service principal partagé** est utilisé.
+
+Le flux est :
+
+1. le **formateur** crée un SP `sp-data2ai-learners` avec rôle `Contributor`;
+2. le **formateur** génère un secret et le sauvegarde dans `secrets/shared-sp.txt`;
+3. l'**apprenant** exécute `Learner-Login.ps1 -LearnerPrefix APP01` (ou `learner-login.sh APP01`);
+4. le script se connecte à Azure avec le SP (pas de MFA);
+5. les variables `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID` sont définies;
+6. `LEARNER_PREFIX` est défini pour l'isolation des ressources.
+
+> `[IMPORTANT]` Relancer `Learner-Login` au début de chaque nouvelle session (nouveau terminal, redémarrage VM).
+
 ### Progression d'authentification
 
 | Étape | Méthode | Raison |
 |---|---|---|
-| Jour 0 à Jour 3 | PAT temporaire | Démarrer sans friction |
+| Jour 0 à Jour 3 | PAT temporaire (Snowflake) + SP partagé (Azure) | Démarrer sans friction, contourner MFA |
 | Jour 4 et au-delà | JWT key-pair avec Key Vault | Pratique de production |
-| CI/CD | Fédération d'identité Azure | Aucun secret en clair |
+| CI/CD | Fédération d'identité Azure (WIF) | Aucun secret en clair |
 
 ## Règles de sécurité
 

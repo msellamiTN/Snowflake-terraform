@@ -6,13 +6,13 @@ Ce document est la **source de vérité** des versions utilisées par la formati
 
 ## Terraform et providers
 
-| Composant | Version | Contrainte HCL | Rôle |
-|---|---|---|---|
-| Terraform CLI | 1.14.5 | `= 1.14.5` | Moteur Infrastructure as Code |
-| `snowflakedb/snowflake` | 2.14.0 | `= 2.14.0` | Objets Snowflake |
-| `hashicorp/azurerm` | 4.59.0 | `= 4.59.0` | Backend state et Key Vault |
-| `microsoft/azuredevops` | 1.14.0 | `= 1.14.0` | Pipelines CI/CD as Code |
-| `hashicorp/tls` | >= 4.0 | `>= 4.0` | Génération de clés RSA |
+| Composant | Version | Contrainte HCL | Rôle | Installé par |
+|---|---|---|---|---|
+| Terraform CLI | 1.14.5 | `= 1.14.5` | Moteur Infrastructure as Code | `Install-Tools.ps1` / `install-tools.sh` |
+| `snowflakedb/snowflake` | 2.14.0 | `= 2.14.0` | Objets Snowflake | `terraform init` |
+| `hashicorp/azurerm` | 4.59.0 | `= 4.59.0` | Backend state et Key Vault | `terraform init` |
+| `microsoft/azuredevops` | 1.14.0 | `= 1.14.0` | Pipelines CI/CD as Code | `terraform init` |
+| `hashicorp/tls` | >= 4.0 | `>= 4.0` | Génération de clés RSA | `terraform init` |
 
 ### Pourquoi un épinglage strict
 
@@ -20,20 +20,20 @@ Une contrainte souple comme `~> 2.14.0` autorise la résolution automatique d'un
 
 ## Outils complémentaires
 
-| Outil | Version | Usage |
-|---|---|---|
-| Python | 3.12 | Exécution de Snow CLI et dbt |
-| Snowflake CLI (`snow`) | Dernière version stable | Connexions, SQL et publication d'objets |
-| Azure CLI | 2.83.0 | Authentification et interactions Azure |
-| dbt-core | `< 3.0.0` | Transformations et FinOps |
-| dbt-snowflake | `< 3.0.0` | Adaptateur Snowflake |
+| Outil | Version | Usage | Installé par |
+|---|---|---|---|
+| Python | 3.12 | Exécution de Snow CLI et dbt | `Install-Tools.ps1` / `install-tools.sh` |
+| Snowflake CLI (`snow`) | Dernière version stable | Connexions, SQL et publication d'objets | `Install-Tools.ps1` / `install-tools.sh` |
+| Azure CLI | 2.83.0 | Authentification et interactions Azure | `Install-Tools.ps1` / `install-tools.sh` |
+| dbt-core | `< 3.0.0` | Transformations et FinOps | `Install-Tools.ps1` / `install-tools.sh` |
+| dbt-snowflake | `< 3.0.0` | Adaptateur Snowflake | `Install-Tools.ps1` / `install-tools.sh` |
 
 ## Packages dbt
 
-| Package | Version | Source |
-|---|---|---|
-| `get-select/dbt_snowflake_monitoring` | 4.6.0 | dbt Hub |
-| `dbt-labs/dbt_utils` | 1.3.3 | dbt Hub |
+| Package | Version | Source | Installé par |
+|---|---|---|---|
+| `get-select/dbt_snowflake_monitoring` | 4.6.0 | dbt Hub | `dbt deps` |
+| `dbt-labs/dbt_utils` | 1.3.3 | dbt Hub | `dbt deps` |
 
 > Le package de monitoring s'appelle bien `get-select/dbt_snowflake_monitoring`. Tout autre identifiant fait échouer `dbt deps`.
 

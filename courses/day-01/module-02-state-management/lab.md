@@ -36,9 +36,18 @@ flowchart LR
 
 - [ ] M1 terminé : database, schema et warehouse existent dans Snowflake;
 - [ ] `terraform state list` affiche 3 ressources dans `environments/dev/`;
-- [ ] Azure CLI installé et connecté (`az login`);
-- [ ] vous avez une souscription Azure avec permission de créer Resource Group et Storage Account;
-- [ ] les variables Azure sont dans votre `.env` (`ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`).
+- [ ] Azure CLI installé;
+- [ ] vous avez exécuté `Learner-Login` (le SP partagé a le rôle `Contributor` sur la souscription);
+- [ ] `az account show --query 'name' -o tsv` affiche la souscription Azure;
+- [ ] les variables Azure sont dans votre `.env` (`ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_RESOURCE_GROUP`, `ARM_STORAGE_ACCOUNT`, `ARM_CONTAINER`).
+
+> `[IMPORTANT]` Si vous avez ouvert un nouveau terminal, relancez `Learner-Login` avant de continuer :
+> ```powershell
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+> ```bash
+> ./scripts/learner-login.sh APP01
+> ```
 
 ## Partie 1 — Créer le backend Azure (bootstrap)
 
