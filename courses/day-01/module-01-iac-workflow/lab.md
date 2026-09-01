@@ -102,11 +102,19 @@ terraform {
 
 ```hcl
 provider "snowflake" {
-  connection_name = var.snowflake_connection
+  organization_name = var.snowflake_organization
+  account_name      = var.snowflake_account
+  user              = var.snowflake_user
+  authenticator     = "PROGRAMMATIC_ACCESS_TOKEN"
+  token             = var.snowflake_token
 }
 ```
 
-La connexion `training` a été créée au Jour 0 par le script `New-SnowflakeConnection`. Aucun password, token ou private key n'est écrit dans ce projet.
+- `organization_name` et `account_name` identifient le compte Snowflake (lus depuis `.env`) ;
+- `authenticator = "PROGRAMMATIC_ACCESS_TOKEN"` indique au provider d'utiliser le PAT ;
+- `token` reçoit la valeur du PAT, passée via la variable `snowflake_token` (jamais en clair dans le code).
+
+> **Sécurité** — Le PAT est lu depuis le fichier `secrets/snowflake_pat.txt` créé au Jour 0 et passé via `TF_VAR_snowflake_token`. Aucun secret n'est écrit dans un fichier `.tf`.
 
 ### Étape 2.3 — Formater et valider
 
@@ -123,10 +131,25 @@ terraform validate
 ### Étape 3.1 — Créer `variables.tf`
 
 ```hcl
-variable "snowflake_connection" {
+variable "snowflake_organization" {
   type        = string
-  description = "Snowflake CLI connection name created during Day 0"
-  default     = "training"
+  description = "Snowflake organization name (from .env)"
+}
+
+variable "snowflake_account" {
+  type        = string
+  description = "Snowflake account name (from .env)"
+}
+
+variable "snowflake_user" {
+  type        = string
+  description = "Snowflake user name (from .env)"
+}
+
+variable "snowflake_token" {
+  type        = string
+  description = "Snowflake PAT (read from secrets/snowflake_pat.txt)"
+  sensitive   = true
 }
 
 variable "learner_prefix" {
@@ -178,13 +201,17 @@ locals {
 ### Étape 3.3 — Créer `terraform.tfvars`
 
 ```hcl
-snowflake_connection = "training"
-learner_prefix       = "ABC"
-environment          = "DEV"
-warehouse_size       = "X-SMALL"
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"
+learner_prefix         = "ABC"
+environment            = "DEV"
+warehouse_size         = "X-SMALL"
 ```
 
-Remplacez `ABC` par votre préfixe (celui de votre `.env`). Le fichier est ignoré par Git.
+Remplacez `ABC` par votre préfixe (celui de votre `.env`). Adaptez les valeurs Snowflake à votre `.env` si nécessaire. Le fichier est ignoré par Git.
+
+> **Note** — La variable `snowflake_token` (le PAT) n'est **pas** dans `terraform.tfvars`. Elle est passée via une variable d'environnement pour éviter de la stocker en clair (voir Étape 5.1).
 
 ### Étape 3.4 — Formater et valider
 
@@ -253,6 +280,26 @@ terraform validate
 **Attendu :** `The configuration is valid.`
 
 ## Partie 5 — Planifier sans modifier
+
+### Étape 5.1 — Charger le PAT dans l'environnement
+
+Le PAT ne doit pas être dans `terraform.tfvars`. On le charge depuis le fichier créé au Jour 0 :
+
+**[WINDOWS]**
+
+```powershell
+$env:TF_VAR_snowflake_token = (Get-Content ..\..\secrets\snowflake_pat.txt -Raw).Trim()
+```
+
+**[UNIX]**
+
+```bash
+export TF_VAR_snowflake_token=$(cat ../../secrets/snowflake_pat.txt | tr -d '[:space:]')
+```
+
+> `[SECURITY]` La variable d'environnement `TF_VAR_snowflake_token` est automatiquement lue par Terraform. Elle n'apparaît ni dans le code, ni dans les logs, ni dans le state.
+
+### Étape 5.2 — Planifier
 
 ```bash
 terraform plan -out=m01.tfplan
