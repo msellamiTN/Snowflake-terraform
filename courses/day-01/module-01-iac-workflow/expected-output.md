@@ -72,9 +72,21 @@ warehouse_name = "ABC_ETL_DEV"
 
 ## Preuve Snowflake
 
+### Via CLI
+
 - database `<PREFIX>_RAW_DEV` présente;
 - schema `INGESTION` présent dans cette database;
 - warehouse `<PREFIX>_ETL_DEV` présent, taille X-SMALL et suspendable automatiquement.
+
+### Via interface web (https://app.snowflake.com)
+
+Vérifiez visuellement dans Snowflake :
+
+| Ressource | Section Snowflake | Screenshot |
+|---|---|---|
+| Database `<PREFIX>_RAW_DEV` | **Data > Databases** | ![Database](assets/lab_check_snowflake_db.png) |
+| Schema `INGESTION` | **Data > Databases > <PREFIX>_RAW_DEV** | ![Schema](assets/lab_check_snowflake_schema.png) |
+| Warehouse `WH_<PREFIX>_ETL_DEV` | **Admin > Warehouses** | ![Warehouse](assets/lab_check_snowflake_wh.png) |
 
 ## Idempotence
 

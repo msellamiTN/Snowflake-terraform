@@ -351,7 +351,7 @@ terraform output
 terraform state list
 ```
 
-### Preuve Snowflake
+### Preuve Snowflake (CLI)
 
 La connexion `training` lit le PAT depuis le fichier automatiquement (configuré au Jour 0). Remplacez `ABC` par votre préfixe :
 
@@ -360,6 +360,31 @@ snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_DEV'"
 snow sql -c training -q "SHOW SCHEMAS LIKE 'INGESTION' IN DATABASE ABC_RAW_DEV"
 snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_DEV'"
 ```
+
+### Preuve Snowflake (interface web)
+
+Connectez-vous à l'interface Snowflake (https://app.snowflake.com) avec vos identifiants.
+Vérifiez que vos ressources apparaissent dans chaque section :
+
+**1. Database** — Allez dans **Data > Databases** et cherchez votre database :
+
+![Database dans Snowflake](assets/lab_check_snowflake_db.png)
+
+> La database `APP01_RAW_DEV` doit apparaître avec le schema `INGESTION`.
+
+**2. Schema** — Cliquez sur votre database, puis vérifiez le schema :
+
+![Schema dans Snowflake](assets/lab_check_snowflake_schema.png)
+
+> Le schema `INGESTION` doit exister sous votre database.
+
+**3. Warehouse** — Allez dans **Admin > Warehouses** :
+
+![Warehouse dans Snowflake](assets/lab_check_snowflake_wh.png)
+
+> Le warehouse `WH_APP01_ETL_DEV` doit apparaître avec le statut `Suspended` (initialement suspendu).
+
+> `[NOTE]` Remplacez `APP01` par votre `LEARNER_PREFIX`. Si les ressources n'apparaissent pas, vérifiez que vous êtes sur le bon compte Snowflake (organisation + account).
 
 ### Preuve d'idempotence
 
