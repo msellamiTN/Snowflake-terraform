@@ -28,7 +28,7 @@ flowchart LR
     DB --> SCHEMA[Schema INGESTION]
     SF --> WH[Warehouse ETL suspendu]
 ```
-
+![alt text](lab-architecture.png)
 ## Objectifs
 
 - créer une configuration Terraform depuis le clone du projet type;
