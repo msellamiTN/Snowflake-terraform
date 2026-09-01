@@ -29,6 +29,13 @@ Modifiez `LEARNER_PREFIX` dans votre `.env` et `terraform.tfvars` :
 LEARNER_PREFIX=APP01B   # au lieu de APP01
 ```
 
+> `[IMPORTANT]` Vous devez **aussi** mettre a jour `terraform.tfvars` dans `environments/dev/` :
+> ```hcl
+> learner_prefix = "APP01B"   # meme valeur que LEARNER_PREFIX dans .env
+> ```
+> Terraform lit les variables depuis `terraform.tfvars`, pas depuis `.env`.
+> Si le plan affiche encore l'ancien prefixe, c'est que `terraform.tfvars` n'a pas ete mis a jour.
+
 Relancez `terraform plan -out "m01.tfplan"` puis `terraform apply "m01.tfplan"`.
 
 Vous créez ainsi vos propres ressources avec un préfixe unique.

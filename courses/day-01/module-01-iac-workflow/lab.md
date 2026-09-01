@@ -214,6 +214,10 @@ warehouse_size         = "X-SMALL"
 
 Remplacez `ABC` par votre préfixe (celui de votre `.env`). Adaptez les valeurs Snowflake à votre `.env` si nécessaire. Le fichier est ignoré par Git.
 
+> `[IMPORTANT]` Terraform lit les variables depuis `terraform.tfvars`, **pas** depuis `.env`.
+> Si vous changez votre `LEARNER_PREFIX` dans `.env`, vous devez **aussi** le changer dans
+> `terraform.tfvars`. Sinon le plan utilisera l'ancien préfixe.
+
 > **Note** — La variable `snowflake_token` (le PAT) n'est **pas** dans `terraform.tfvars`. Elle est passée via une variable d'environnement pour éviter de la stocker en clair (voir Étape 5.1).
 
 ### Étape 3.4 — Formater et valider
