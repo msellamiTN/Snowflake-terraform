@@ -48,7 +48,7 @@ param(
     [string]$Account,
     [string]$User,
     [string]$Role,
-    [string]$Host
+    [string]$SnowflakeHost
 )
 
 $ErrorActionPreference = 'Stop'
@@ -142,7 +142,7 @@ $Organization   = Get-ConfigValue 'SNOWFLAKE_ORGANIZATION' $Organization
 $Account        = Get-ConfigValue 'SNOWFLAKE_ACCOUNT' $Account
 $User           = Get-ConfigValue 'SNOWFLAKE_USER' $User
 $Role           = Get-ConfigValue 'SNOWFLAKE_ROLE' $Role 'SYSADMIN'
-$Host           = Get-ConfigValue 'SNOWFLAKE_HOST' $Host
+$SnowflakeHost  = Get-ConfigValue 'SNOWFLAKE_HOST' $SnowflakeHost
 
 if (-not $Organization) { $Organization = Read-Required 'Snowflake organization name' }
 if (-not $Account)      { $Account      = Read-Required 'Snowflake account name' }
@@ -174,8 +174,8 @@ $snowArgs = @(
     '--no-interactive'
 )
 
-if ($Host) {
-    $snowArgs += @('-h', $Host)
+if ($SnowflakeHost) {
+    $snowArgs += @('-h', $SnowflakeHost)
 }
 
 # Export the token only for the snow subprocess.
