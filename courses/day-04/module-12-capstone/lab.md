@@ -153,6 +153,14 @@ terraform validate
 
 ### Étape 2.1 — Planifier
 
+**Windows (PowerShell) :**
+
+```powershell
+terraform plan -out "capstone.tfplan"
+```
+
+**Linux/macOS :**
+
 ```bash
 terraform plan -out=capstone.tfplan
 ```

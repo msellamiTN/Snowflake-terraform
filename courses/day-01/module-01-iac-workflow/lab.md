@@ -304,9 +304,19 @@ export TF_VAR_snowflake_token=$(cat ../../secrets/snowflake_pat.txt | tr -d '[:s
 
 ### Étape 5.2 — Planifier
 
+**Windows (PowerShell) :**
+
+```powershell
+terraform plan -out "m01.tfplan"
+```
+
+**Linux/macOS :**
+
 ```bash
 terraform plan -out=m01.tfplan
 ```
+
+> `[NOTE]` Sur PowerShell, utilisez `-out "m01.tfplan"` (espace + guillemets) au lieu de `-out=m01.tfplan` pour éviter une erreur de parsing.
 
 Le plan attendu contient exactement :
 
