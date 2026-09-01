@@ -18,9 +18,12 @@ Vous êtes Data Platform Engineer. Votre équipe vous demande une zone RAW minim
 ```mermaid
 flowchart LR
     DEV[Apprenant] --> TF[Terraform CLI]
-    TF --> PROFILE[Connexion Snowflake CLI training]
-    PROFILE --> SF[(Snowflake)]
+    DEV --> PAT[secrets/snowflake_pat.txt]
+    PAT -->|TF_VAR_snowflake_token| TF
+    TF -->|PAT auth| SF[(Snowflake)]
     TF --> STATE[(State local)]
+    DEV --> CLI[snow CLI -c training]
+    CLI -->|PAT auth| SF
     SF --> DB[Database RAW]
     DB --> SCHEMA[Schema INGESTION]
     SF --> WH[Warehouse ETL suspendu]
@@ -29,7 +32,7 @@ flowchart LR
 ## Objectifs
 
 - créer une configuration Terraform depuis le clone du projet type;
-- utiliser la connexion Snowflake CLI `training` sans placer de secret dans le code;
+- authentifier le provider Snowflake avec un PAT sans placer de secret dans le code;
 - expliquer les blocs `terraform`, `required_providers`, `provider` et `resource`;
 - lire un plan avant application;
 - prouver la création des trois ressources;
@@ -340,7 +343,7 @@ terraform state list
 
 ### Preuve Snowflake
 
-Remplacez `ABC` par votre préfixe :
+La connexion `training` lit le PAT depuis le fichier automatiquement (configuré au Jour 0). Remplacez `ABC` par votre préfixe :
 
 ```bash
 snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_DEV'"
@@ -397,9 +400,25 @@ Conservez le workspace et les ressources jusqu'au module State du Jour 2. Pour r
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/environments/dev
-snow sql -q 'SELECT 1' -c training
+
+# Windows
+$env:TF_VAR_snowflake_token = (Get-Content ..\..\secrets\snowflake_pat.txt -Raw).Trim()
+
+# Linux/macOS
+export TF_VAR_snowflake_token=$(cat ../../secrets/snowflake_pat.txt | tr -d '[:space:]')
+
 terraform init
 terraform plan
 ```
 
 N'exécutez pas encore `terraform destroy` : le module suivant réutilise ces ressources pour expliquer le state, le drift et l'import.
+
+## Troubleshooting
+
+| Symptôme | Cause | Solution |
+|---|---|---|
+| `Unsupported argument: connection_name` | Le provider 2.14.0 n'a pas d'argument `connection_name` | Utilisez `organization_name`, `account_name`, `user`, `authenticator`, `token` (voir Étape 2.2) |
+| `Password is empty` | Le PAT n'est pas chargé dans l'environnement | Exécutez `TF_VAR_snowflake_token=...` (voir Étape 5.1) |
+| `Invalid account identifier` | L'identifiant de compte est mal formé | Vérifiez `snowflake_organization` et `snowflake_account` dans `terraform.tfvars` |
+| `Insufficient privileges` | Le rôle n'a pas les droits de création | Vérifiez que `SNOWFLAKE_ROLE=SYSADMIN` dans `.env` |
+| `snow sql` échoue hors du script | La connexion `training` n'existe pas | Relancez `New-SnowflakeConnection.ps1` |

@@ -91,9 +91,26 @@ provider "snowflake" {
 Créez `variables.tf` (identique à DEV) :
 
 ```hcl
-variable "snowflake_connection" {
+variable "snowflake_organization" {
   type        = string
-  default     = "training"
+  description = "Snowflake organization name (from .env)"
+}
+
+variable "snowflake_account" {
+  type        = string
+  description = "Snowflake account name (from .env)"
+}
+
+variable "snowflake_user" {
+  type        = string
+  description = "Snowflake user name (from .env)"
+}
+
+variable "snowflake_token" {
+  type        = string
+  description = "Snowflake PAT (passed via TF_VAR_snowflake_token)"
+  sensitive   = true
+}
 }
 
 variable "learner_prefix" {
@@ -151,8 +168,10 @@ output "warehouse_names" {
 Créez `terraform.tfvars` :
 
 ```hcl
-snowflake_connection = "training"
-learner_prefix       = "ABC"
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"
+learner_prefix         = "ABC"
 ```
 
 Remplacez `ABC` par votre préfixe.

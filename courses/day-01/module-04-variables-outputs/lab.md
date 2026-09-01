@@ -143,8 +143,10 @@ output "resource_summary" {
 
 output "connection_info" {
   value = {
-    connection = var.snowflake_connection
-    role       = "SYSADMIN"
+    organization = var.snowflake_organization
+    account      = var.snowflake_account
+    user         = var.snowflake_user
+    role         = "SYSADMIN"
   }
   description = "Snowflake connection used for this deployment"
   sensitive   = false
@@ -168,7 +170,9 @@ terraform output
 Dans `environments/uat/`, créez `terraform.tfvars` :
 
 ```hcl
-snowflake_connection    = "training"
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"
 learner_prefix          = "ABC"
 environment             = "UAT"
 warehouse_size          = "X-SMALL"
@@ -183,7 +187,9 @@ Remplacez `ABC` par votre préfixe.
 Dans `environments/prod/`, créez `terraform.tfvars` :
 
 ```hcl
-snowflake_connection    = "training"
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"
 learner_prefix          = "ABC"
 environment             = "PROD"
 warehouse_size          = "SMALL"
