@@ -164,7 +164,9 @@ az storage account create \
 
 ✅ **Checkpoint** : `provisioningState : Succeeded`.
 
-> 💰 **COST** : `Standard_LRS` est le SKU le moins coûteux. Le state est petit; ce n'est pas une charge significative.
+> � **Note** : Si le storage account existe déjà d'une session précédente, Azure affiche `A storage account with the provided name is found. Will continue to update the existing account.` C'est normal — la commande est idempotente.
+
+> �💰 **COST** : `Standard_LRS` est le SKU le moins coûteux. Le state est petit; ce n'est pas une charge significative.
 
 ### 📝 Étape 1.4 — Créer le conteneur
 
