@@ -34,6 +34,7 @@ $ErrorActionPreference = 'Stop'
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDir
+$envValues = @{} 
 
 # ------------------------------------------------------------------
 # Ensure local toolchain (Terraform, Snow CLI, dbt, tflint) wins over
@@ -58,6 +59,29 @@ if (-not (Test-Path $SecretsFile)) {
     Write-Host "[FAIL] Shared SP file not found: $SecretsFile" -ForegroundColor Red
     Write-Host "       Ask your instructor for the shared-sp.txt file" -ForegroundColor DarkGray
     exit 1
+}
+
+# ------------------------------------------------------------------
+# Load .env if it exists (for ARM_RESOURCE_GROUP, ARM_STORAGE_ACCOUNT, etc.)
+# ------------------------------------------------------------------
+
+$envFile = Join-Path $projectRoot '.env'
+if (Test-Path $envFile) {
+    Write-Host "[INFO] Loading .env from $envFile" -ForegroundColor DarkGray
+    Get-Content $envFile -Encoding UTF8 | ForEach-Object {
+        $line = $_.Trim()
+        if ($line -and $line -notmatch '^#') {
+            $sep = $line.IndexOf('=')
+            if ($sep -gt 0) {
+                $key = $line.Substring(0, $sep).Trim()
+                $value = $line.Substring($sep + 1).Trim().Trim('"').Trim("'")
+                if ($key -and $value -and -not $envValues.ContainsKey($key)) {
+                    $envValues[$key] = $value
+                    Set-Item -Path "env:$key" -Value $value
+                }
+            }
+        }
+    }
 }
 
 # ------------------------------------------------------------------
@@ -157,4 +181,11 @@ Write-Host 'Next steps:' -ForegroundColor DarkGray
 Write-Host '  .\scripts\Test-LabConnectivity.ps1 -SkipDevOps' -ForegroundColor DarkGray
 Write-Host ''
 Write-Host '[INFO] PATH updated for this session. Local tools in .data2ai\bin and .data2ai\venv\Scripts take priority.' -ForegroundColor DarkGray
-Write-Host "       terraform version -> $(& (Join-Path $HOME '.data2ai\bin\terraform.exe') version 2>&1 | Select-Object -First 1)" -ForegroundColor DarkGray
+
+$localTerraform = Join-Path $HOME '.data2ai\bin\terraform.exe'
+if (Test-Path $localTerraform) {
+    $tfVersion = & $localTerraform version 2>&1 | Select-Object -First 1
+    Write-Host "       terraform version -> $tfVersion" -ForegroundColor DarkGray
+} else {
+    Write-Host '       terraform.exe not found in .data2ai\bin - run Install-Tools.ps1 if needed' -ForegroundColor DarkGray
+}
