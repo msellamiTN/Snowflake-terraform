@@ -380,7 +380,7 @@ if ($SkipAzure) {
                 Test-Step 'Azure Storage Account' 'PASS' "$armStorageAccount (SKU: $saSku)"
 
                 # Check container
-                $containerCheck = & az storage container exists --name $armContainer --account-name $armStorageAccount --query 'exists' -o tsv 2>&1
+                $containerCheck = & az storage container exists --name $armContainer --account-name $armStorageAccount --auth-mode login --query 'exists' -o tsv 2>&1
                 if ($LASTEXITCODE -eq 0 -and $containerCheck -eq 'True') {
                     Test-Step 'Azure Blob Container' 'PASS' $armContainer
                 } else {
@@ -391,10 +391,10 @@ if ($SkipAzure) {
                 $probeName = 'connectivity-probe-' + (Get-Date -Format 'yyyyMMddHHmmss') + '.txt'
                 $probeTemp = Join-Path $env:TEMP $probeName
                 'connectivity-test' | Set-Content $probeTemp -Encoding utf8
-                $uploadResult = & az storage blob upload --account-name $armStorageAccount --container-name $armContainer --name $probeName --file $probeTemp --overwrite true 2>&1
+                $uploadResult = & az storage blob upload --account-name $armStorageAccount --container-name $armContainer --name $probeName --file $probeTemp --overwrite true --auth-mode login 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     Test-Step 'Blob write access' 'PASS' 'Probe uploaded and deleted'
-                    & az storage blob delete --account-name $armStorageAccount --container-name $armContainer --name $probeName 2>&1 | Out-Null
+                    & az storage blob delete --account-name $armStorageAccount --container-name $armContainer --name $probeName --auth-mode login 2>&1 | Out-Null
                     Remove-Item $probeTemp -Force -ErrorAction SilentlyContinue
                 } else {
                     Test-Step 'Blob write access' 'FAIL' 'Cannot write to container - check RBAC or access keys'

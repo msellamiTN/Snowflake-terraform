@@ -1,11 +1,9 @@
-﻿# Copy to terraform.tfvars and set <SNOWFLAKE_PASSWORD> from the secure value supplied outside Git
-# Training mode uses password fallback. For production, set deployment_mode = "production".
+﻿# Copy this file to terraform.tfvars and replace the non-secret Snowflake identifiers.
+# Supply the PAT only through TF_VAR_snowflake_token; never write it in this file.
 
-deployment_mode        = "training"
 snowflake_organization = "<snowflake-organization>"
 snowflake_account      = "<snowflake-account>"
-snowflake_user         = "DATA2AI"
-snowflake_password     = "<SNOWFLAKE_PASSWORD>"
-snowflake_role         = "ACCOUNTADMIN"
+snowflake_user         = "<snowflake-user>"
+learner_prefix         = "APP01"
 environment            = "DEV"
 warehouse_size         = "X-SMALL"

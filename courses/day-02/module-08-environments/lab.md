@@ -23,9 +23,9 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    DEV[environments/dev] -->|state key: dev/terraform.tfstate| AZURE[(Azure Blob)]
-    UAT[environments/uat] -->|state key: uat/terraform.tfstate| AZURE
-    PROD[environments/prod] -->|state key: prod/terraform.tfstate| AZURE
+    DEV[environments/dev] -->|training/APP01/dev/terraform.tfstate| AZURE[(Azure Blob)]
+    UAT[environments/uat] -->|training/APP01/uat/terraform.tfstate| AZURE
+    PROD[environments/prod] -->|training/APP01/prod/terraform.tfstate| AZURE
     DEV --> MOD[modules/landing-zone]
     UAT --> MOD
     PROD --> MOD
@@ -69,12 +69,13 @@ terraform {
     resource_group_name  = "rg-data-platform-tfstate"
     storage_account_name = "stdataplatformtfstate"
     container_name       = "tfstate"
-    key                  = "data-platform/uat/terraform.tfstate"
+    key                  = "training/APP01/uat/terraform.tfstate"
+    use_azuread_auth     = true
   }
 }
 ```
 
-> 💡 **Note** : La clé `data-platform/uat/terraform.tfstate` isole le state UAT du state DEV.
+> 💡 **Note** : La clé `training/APP01/uat/terraform.tfstate` isole le state UAT du state DEV.
 
 Créez `provider.tf` :
 
@@ -171,10 +172,10 @@ Créez `terraform.tfvars` :
 snowflake_organization = "ZVFXOZW"
 snowflake_account      = "PM71247"
 snowflake_user         = "DATA2AI"
-learner_prefix         = "ABC"
+learner_prefix         = "APP01"
 ```
 
-Remplacez `ABC` par votre préfixe.
+Remplacez `APP01` par votre préfixe apprenant.
 
 ### 📝 Étape 1.2 — Initialiser et planifier
 
@@ -196,7 +197,7 @@ terraform apply
 ### 📝 Étape 1.4 — Vérifier dans Snowflake
 
 ```bash
-snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_UAT'"
+snow sql -c training -q "SHOW DATABASES LIKE 'APP01_RAW_UAT'"
 ```
 
 ## 📝 Partie 2 — Configurer PROD
@@ -205,7 +206,7 @@ snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_UAT'"
 
 Répétez les mêmes étapes que UAT avec ces différences :
 
-- `backend` key : `data-platform/prod/terraform.tfstate`
+- `backend` key : `training/APP01/prod/terraform.tfstate`
 - `environment` : `PROD`
 - `warehouse_size` : `SMALL`
 - `data_retention_days` : `30`
@@ -225,8 +226,8 @@ terraform apply
 ### 📝 Étape 2.3 — Vérifier
 
 ```bash
-snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_PROD'"
-snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_PROD'"
+snow sql -c training -q "SHOW DATABASES LIKE 'APP01_RAW_PROD'"
+snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_APP01_ETL_PROD'"
 ```
 
 ## 📝 Partie 3 — Matrice de paramètres
@@ -238,7 +239,7 @@ snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_PROD'"
 | Warehouse size | X-SMALL | X-SMALL | SMALL |
 | Data retention | 1 jour | 7 jours | 30 jours |
 | Auto-suspend | 60s | 120s | 300s |
-| State key | dev/ | uat/ | prod/ |
+| State key | `training/APP01/dev/terraform.tfstate` | `training/APP01/uat/terraform.tfstate` | `training/APP01/prod/terraform.tfstate` |
 | Schemas | INGESTION, STAGING | INGESTION, STAGING | INGESTION, STAGING |
 
 ### 📝 Étape 3.2 — Vérifier l'isolation du state
@@ -247,15 +248,16 @@ snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_PROD'"
 az storage blob list \
     --account-name "$ARM_STORAGE_ACCOUNT" \
     --container-name "$ARM_CONTAINER" \
+    --auth-mode login \
     --query "[].name" -o tsv
 ```
 
 ✅ **Checkpoint** :
 
 ```text
-data-platform/dev/terraform.tfstate
-data-platform/uat/terraform.tfstate
-data-platform/prod/terraform.tfstate
+training/APP01/dev/terraform.tfstate
+training/APP01/uat/terraform.tfstate
+training/APP01/prod/terraform.tfstate
 ```
 
 ## 📝 Partie 4 — Workspaces vs directories
@@ -280,14 +282,14 @@ L'approche par directories (utilisée dans ce lab) est préférée pour la produ
 
 ## 🏆 Challenge
 
-Ajoutez un environnement `DR` (Disaster Recovery) avec un warehouse `MEDIUM` et une rétention de 60 jours.
+Auditez l'isolation des trois environnements et prouvez qu'aucune quatrième clé de state n'est créée.
 
 Critères :
 
-- [ ] `terraform init` réussit dans `environments/dr/`;
-- [ ] `terraform plan` crée les ressources DR;
-- [ ] le state est isolé avec la clé `data-platform/dr/terraform.tfstate`;
-- [ ] la database s'appelle `ABC_RAW_DR`.
+- [ ] `terraform init` réussit dans `environments/dev/`, `environments/uat/` et `environments/prod/`;
+- [ ] chaque backend contient `use_azuread_auth = true`;
+- [ ] la liste Azure Blob, obtenue avec `--auth-mode login`, contient uniquement les clés `training/APP01/dev|uat|prod/terraform.tfstate` attendues;
+- [ ] les databases s'appellent `APP01_RAW_DEV`, `APP01_RAW_UAT` et `APP01_RAW_PROD`.
 
 ## 🧹 Cleanup
 

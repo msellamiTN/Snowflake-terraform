@@ -1,75 +1,52 @@
 variable "snowflake_organization" {
   type        = string
-  description = "Snowflake organization name"
+  description = "Snowflake organization name (from .env)"
 }
 
 variable "snowflake_account" {
   type        = string
-  description = "Snowflake account name (not locator)"
+  description = "Snowflake account name (from .env)"
 }
 
 variable "snowflake_user" {
   type        = string
-  description = "Service user for Terraform"
-  default     = "TERRAFORM_SVC"
+  description = "Snowflake user name (from .env)"
 }
 
-variable "snowflake_role" {
+variable "snowflake_token" {
   type        = string
-  description = "Role used by Terraform"
-  default     = "ACCOUNTADMIN"
+  description = "Snowflake programmatic access token supplied through TF_VAR_snowflake_token"
+  sensitive   = true
 }
 
-variable "deployment_mode" {
+variable "learner_prefix" {
   type        = string
-  description = "Authentication mode: training (password fallback) or production (JWT key-pair)."
-  default     = "training"
+  description = "Unique uppercase prefix assigned to the learner"
 
   validation {
-    condition     = contains(["training", "production"], var.deployment_mode)
-    error_message = "deployment_mode must be 'training' or 'production'."
+    condition     = can(regex("^[A-Z][A-Z0-9]{2,4}$", var.learner_prefix))
+    error_message = "learner_prefix must contain 3-5 uppercase letters or digits."
   }
-}
-
-variable "private_key_path" {
-  type        = string
-  description = "Path to PKCS#8 private key for JWT auth (required when deployment_mode=production)."
-  sensitive   = true
-  default     = ""
-}
-
-variable "snowflake_password" {
-  type        = string
-  description = "Snowflake password (used when deployment_mode=training). Must be empty in production."
-  sensitive   = true
-  default     = ""
 }
 
 variable "environment" {
   type        = string
-  description = "Environment suffix (DEV, TEST, PROD)"
+  description = "Deployment environment"
   default     = "DEV"
 
   validation {
-    condition     = contains(["DEV", "TEST", "PROD"], var.environment)
-    error_message = "environment must be DEV, TEST, or PROD."
+    condition     = contains(["DEV", "UAT", "PROD"], var.environment)
+    error_message = "environment must be DEV, UAT or PROD."
   }
-}
-
-variable "project" {
-  type        = string
-  description = "Project prefix for naming"
-  default     = "DATAPLATFORM"
 }
 
 variable "warehouse_size" {
   type        = string
-  description = "Default warehouse size"
+  description = "Training warehouse size"
   default     = "X-SMALL"
-}
 
-variable "schemas" {
-  type        = list(string)
-  description = "Business schemas to create in RAW database"
-  default     = ["SALES", "FINANCE"]
+  validation {
+    condition     = contains(["X-SMALL", "SMALL"], var.warehouse_size)
+    error_message = "Training warehouses must be X-SMALL or SMALL."
+  }
 }

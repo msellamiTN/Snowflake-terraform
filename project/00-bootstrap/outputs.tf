@@ -20,17 +20,18 @@ output "storage_account_id" {
 
 output "backend_config_snippet" {
   value       = <<-EOT
-    # Paste into backend.tf and replace <team> and <environment>
+    # Paste into backend.tf, replace APP01 with your learner prefix, and choose dev, uat, or prod.
     terraform {
       backend "azurerm" {
         resource_group_name  = "${azurerm_resource_group.state.name}"
         storage_account_name = "${azurerm_storage_account.state.name}"
         container_name       = "${azurerm_storage_container.state.name}"
-        key                  = "training/<team>/<environment>/<module>.tfstate"
+        key                  = "training/APP01/dev/terraform.tfstate"
+        use_azuread_auth     = true
       }
     }
   EOT
-  description = "Backend configuration template. Replace <team>, <environment>, and <module> with your values."
+  description = "Backend configuration template for the learner state contract. Replace APP01 and select dev, uat, or prod."
 }
 
 output "backend_hcl_snippet" {
@@ -39,7 +40,8 @@ output "backend_hcl_snippet" {
     resource_group_name  = "${azurerm_resource_group.state.name}"
     storage_account_name = "${azurerm_storage_account.state.name}"
     container_name       = "${azurerm_storage_container.state.name}"
-    key                  = "training/<team>/<environment>/<module>.tfstate"
+    key                  = "training/APP01/dev/terraform.tfstate"
+    use_azuread_auth     = true
   EOT
   description = "Partial backend configuration for terraform init -backend-config=backend.hcl"
 }

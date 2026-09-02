@@ -1,40 +1,47 @@
 ﻿# Résultat attendu — M8 : Stratégies d'environnements
 
-## Environnement DEV
+## Environnements DEV, UAT et PROD
+
+Depuis chaque répertoire `environments/dev`, `environments/uat` et `environments/prod` :
+
 ```bash
-cd project/03-day2-modules/environments/dev
 terraform init
 terraform plan
 ```
-**Attendu :** Ressources avec le suffixe `_DEV`. Clé de state : `training/<team>/dev/03-day2-modules.tfstate`
 
-## Environnement TEST
-```bash
-cd project/03-day2-modules/environments/test
-terraform init
-terraform plan
-```
-**Attendu :** Ressources avec le suffixe `_TEST`. Clé de state : `training/<team>/test/03-day2-modules.tfstate`
+**Attendu :** les ressources portent respectivement les suffixes `_DEV`, `_UAT` et `_PROD`. Les backends utilisent Microsoft Entra ID (`use_azuread_auth = true`) et les clés suivantes :
 
-## PROD (plan uniquement)
-```bash
-cd project/05-capstone/environments/dev
-terraform plan -var-file=terraform.tfvars -var="deployment_mode=production"
-```
-**Attendu :** Le plan réussit en montrant les ressources en mode production. Pas d'apply en formation.
+- `training/APP01/dev/terraform.tfstate`
+- `training/APP01/uat/terraform.tfstate`
+- `training/APP01/prod/terraform.tfstate`
+
+Remplacez `APP01` par votre préfixe apprenant. Un identifiant `TEAMxx` est réservé à la piste collaborative et ne sert pas de frontière de state pour ces environnements.
 
 ## Isolation des clés de state
+
 ```bash
-az storage blob list --container-name tfstate --account-name <account> --prefix training/<team>/
+az storage blob list \
+  --container-name "$ARM_CONTAINER" \
+  --account-name "$ARM_STORAGE_ACCOUNT" \
+  --prefix "training/APP01/" \
+  --auth-mode login \
+  --query "[].name" -o tsv
 ```
-**Attendu :** Fichiers de state séparés pour dev et test :
-- `training/<team>/dev/03-day2-modules.tfstate`
-- `training/<team>/test/03-day2-modules.tfstate`
+
+**Attendu :** trois fichiers de state séparés :
+
+```text
+training/APP01/dev/terraform.tfstate
+training/APP01/uat/terraform.tfstate
+training/APP01/prod/terraform.tfstate
+```
 
 ## Aucune ressource cross-environnement
-```sql
-SHOW DATABASES LIKE 'DB_RAW_DEV';
-SHOW DATABASES LIKE 'DB_RAW_TEST';
-```
-**Attendu :** Les deux existent mais sont des bases séparées sans grants partagés.
 
+```sql
+SHOW DATABASES LIKE 'APP01_RAW_DEV';
+SHOW DATABASES LIKE 'APP01_RAW_UAT';
+SHOW DATABASES LIKE 'APP01_RAW_PROD';
+```
+
+**Attendu :** les trois bases existent séparément, sans partage involontaire de ressources ou de grants entre environnements.

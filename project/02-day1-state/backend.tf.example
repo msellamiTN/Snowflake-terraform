@@ -1,11 +1,12 @@
 # Uncomment and configure after running 00-bootstrap
-# Replace <team> with your team name (e.g. team-alpha)
+# Replace APP01 with your learner prefix.
 # terraform {
 #   backend "azurerm" {
 #     resource_group_name  = "rg-wevops-tf-state"
 #     storage_account_name = "sawevopstfstate"
 #     container_name       = "tfstate"
-#     key                  = "training/<team>/dev/02-day1-state.tfstate"
+#     key                  = "training/APP01/dev/terraform.tfstate"
+#     use_azuread_auth     = true
 #   }
 # }
 #

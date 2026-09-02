@@ -94,7 +94,7 @@ if (Test-Path $envFile) {
     }
 
     # Warn if important Azure variables are still empty.
-    $azureVars = @('ARM_RESOURCE_GROUP', 'ARM_STORAGE_ACCOUNT', 'ARM_CONTAINER')
+    $azureVars = @('ARM_RESOURCE_GROUP', 'ARM_STORAGE_ACCOUNT', 'ARM_CONTAINER', 'ARM_LOCATION')
     foreach ($var in $azureVars) {
         if (-not [Environment]::GetEnvironmentVariable($var) -and -not $envValues[$var]) {
             Write-Host "[WARN] $var is empty or not set. Add it to .env if needed for Azure labs." -ForegroundColor Yellow
@@ -191,6 +191,8 @@ Write-Host 'Verify (PowerShell):' -ForegroundColor Cyan
 Write-Host '  $env:ARM_SUBSCRIPTION_ID' -ForegroundColor DarkGray
 Write-Host '  $env:ARM_RESOURCE_GROUP' -ForegroundColor DarkGray
 Write-Host '  $env:ARM_STORAGE_ACCOUNT' -ForegroundColor DarkGray
+Write-Host '  $env:ARM_CONTAINER' -ForegroundColor DarkGray
+Write-Host '  $env:ARM_LOCATION' -ForegroundColor DarkGray
 Write-Host '  $env:LEARNER_PREFIX' -ForegroundColor DarkGray
 Write-Host ''
 

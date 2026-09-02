@@ -44,10 +44,47 @@ Choisissez une région Azure disponible pour votre abonnement. `westeurope` peut
 
 ```powershell
 $location = "northeurope"
-az group create --name rg-data2ai-tf-state --location $location
-az storage account create --name sadata2aitfstatemsn --resource-group rg-data2ai-tf-state --location $location --sku Standard_LRS
-az storage container create --name tfstate --account-name sadata2aitfstatemsn
+$resourceGroup = "rg-data2ai-tf-state"
+$storageAccount = "sadata2aitfstatemsn"
+$container = "tfstate"
+
+az group create --name $resourceGroup --location $location
+az storage account create `
+  --name $storageAccount `
+  --resource-group $resourceGroup `
+  --location $location `
+  --sku Standard_LRS `
+  --min-tls-version TLS1_2 `
+  --allow-blob-public-access false
+
+# Protection du state : versioning et soft-delete des blobs pendant 7 jours.
+az storage account blob-service-properties update `
+  --account-name $storageAccount `
+  --resource-group $resourceGroup `
+  --enable-versioning true `
+  --enable-delete-retention true `
+  --delete-retention-days 7
+
+# Les opérations data-plane utilisent l'identité Microsoft Entra connectée.
+az storage container create `
+  --name $container `
+  --account-name $storageAccount `
+  --auth-mode login
+
+# Autoriser le SP à lire et écrire le state sans clé de compte ni SAS.
+$spObjectId = az ad sp show --id $spName --query id -o tsv
+$storageAccountId = az storage account show `
+  --name $storageAccount `
+  --resource-group $resourceGroup `
+  --query id -o tsv
+az role assignment create `
+  --assignee-object-id $spObjectId `
+  --assignee-principal-type ServicePrincipal `
+  --role "Storage Blob Data Contributor" `
+  --scope $storageAccountId
 ```
+
+Le scope **Storage Account** couvre le conteneur `tfstate`. Pour appliquer le moindre privilège à un conteneur déjà créé, remplacez le scope de la dernière commande par `"$storageAccountId/blobServices/default/containers/$container"`. La propagation RBAC peut prendre quelques minutes.
 
 ### 1.3 — Créer les utilisateurs Azure AD (pour Azure DevOps)
 
@@ -178,8 +215,10 @@ Pour chaque apprenant, préparer :
 - [ ] SP `sp-data2ai-learners` créé avec rôle `Contributor`
 - [ ] `secrets/shared-sp.txt` généré
 - [ ] Resource Group `rg-data2ai-tf-state` créé
-- [ ] Storage Account `sadata2aitfstatemsn` créé
-- [ ] Conteneur `tfstate` créé
+- [ ] Storage Account `sadata2aitfstatemsn` créé avec TLS 1.2 minimum et accès public aux blobs désactivé
+- [ ] Versioning activé et soft-delete des blobs configuré à 7 jours
+- [ ] Conteneur `tfstate` créé avec `--auth-mode login`
+- [ ] Rôle `Storage Blob Data Contributor` attribué au SP au scope du Storage Account ou du conteneur
 - [ ] 10 utilisateurs Azure AD créés (`apprenant01` à `apprenant10`)
 - [ ] 10 utilisateurs ajoutés à Azure DevOps
 - [ ] 10 utilisateurs Snowflake créés (`Add-SnowflakeLearners.ps1`)
@@ -196,8 +235,9 @@ flowchart TD
     subgraph "Azure"
         SP[SP partagé<br/>sp-data2ai-learners] -->|Contributor| SUB[Subscription]
         SUB --> RG[rg-data2ai-tf-state]
-        RG --> SA[sadata2aitfstatemsn]
-        SA --> CONT[tfstate container]
+        RG --> SA[sadata2aitfstatemsn<br/>TLS 1.2, public blob access off<br/>versioning + soft-delete 7 j]
+        SP -->|Storage Blob Data Contributor<br/>scope compte ou conteneur| CONT[tfstate container]
+        SA --> CONT
     end
 
     subgraph "Snowflake"
