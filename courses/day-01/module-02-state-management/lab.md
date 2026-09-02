@@ -266,7 +266,17 @@ terraform {
 
 ### 📝 Étape 2.2 — Alternative : `backend.hcl` séparé
 
-Au lieu de mettre les valeurs dans `backend.tf`, vous pouvez utiliser un fichier `backend.hcl` (gitignored) :
+> 💡 **Note** : Cette méthode nécessite le fichier `backend.hcl.example` dans `environments/dev/`.
+> Si le fichier n'existe pas dans votre clone, utilisez la méthode `backend.tf` complète (Étape 2.1). Vous pouvez aussi la créer à la main :
+
+```hcl
+resource_group_name  = "rg-data2ai-tf-state"
+storage_account_name = "sadata2aitfstatemsn"
+container_name       = "tfstate"
+key                  = "data-platform/dev/terraform.tfstate"
+```
+
+Si `backend.hcl.example` existe, copiez-le :
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -295,7 +305,7 @@ terraform {
 et initialisez avec :
 
 ```powershell
-terraform init -backend-config=backend.hcl
+terraform init -backend-config=backend.hcl -migrate-state
 ```
 
 > 🔒 **SECURITY** : `backend.hcl` est gitignored. Ne le commitez jamais.

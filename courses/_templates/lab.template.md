@@ -1,4 +1,4 @@
-﻿# Lab Mx — <Tâche professionnelle>
+﻿# 🧪 Lab Mx — <Tâche professionnelle>
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | <gratuit, crédit sandbox ou estimation> |
 | **Cleanup** | <obligatoire / conservation jusqu’au module X> |
 
-## Mission
+## 🎯 Mission
 
 <Acteur, contexte, résultat professionnel et raison de le construire.>
 
-## Résultat final
+## 🎁 Résultat final
 
 À la fin du lab, vous aurez créé :
 
@@ -21,7 +21,7 @@
 <arborescence finale, avec annotation des nouveaux fichiers>
 ```
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -30,37 +30,41 @@ flowchart LR
     CURRENT --> PROOF[Preuve]
 ```
 
-## Objectifs pédagogiques
+## 🎯 Objectifs pédagogiques
 
-- <verbe observable>;
-- <verbe observable>;
-- <preuve mesurable>.
+- ✅ <verbe observable>;
+- ✅ <verbe observable>;
+- ✅ <preuve mesurable>.
 
-## Prérequis vérifiables
+## 📋 Prérequis vérifiables
 
 - [ ] <checkpoint du module précédent>;
 - [ ] `<commande de version>` retourne <contrainte>;
 - [ ] <connexion/rôle testé sans afficher de secret>.
 
-## Préflight
+## 🚀 Préflight
 
-**[WINDOWS] PowerShell**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 Get-Location
 # autres contrôles non destructifs
 ```
+</details>
 
-**[UNIX] Bash**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 pwd
 # contrôles équivalents
 ```
+</details>
 
-**[CHECK] Attendu :** <répertoire, versions et connexion>.
+✅ **Checkpoint** : <répertoire, versions et connexion>.
 
-## Vue d’ensemble
+## 🗺️ Vue d’ensemble
 
 ```mermaid
 flowchart TD
@@ -72,51 +76,59 @@ flowchart TD
     F --> G[Nettoyer]
 ```
 
-## Partie 1 — <capacité incrémentale>
+## 📝 Partie 1 — <capacité incrémentale>
 
-### Étape 1.1 — Créer le dossier
+### 📝 Étape 1.1 — Créer le dossier
 
 **Objectif :** <pourquoi ce dossier existe>.
 
-**[WINDOWS]**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 New-Item -ItemType Directory -Path <path> -Force
 Set-Location <path>
 ```
+</details>
 
-**[UNIX]**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 mkdir -p <path>
 cd <path>
 ```
+</details>
 
-**[CHECK]**
+✅ **Checkpoint** :
 
 ```text
 <structure attendue>
 ```
 
-### Étape 1.2 — Créer `<file>`
+### 📝 Étape 1.2 — Créer `<file>`
 
 **Objectif :** <responsabilité unique du fichier>.
 
 Créez le fichier vide :
 
-**[WINDOWS]**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 New-Item -ItemType File -Path <file>
 code <file>
 ```
+</details>
 
-**[UNIX]**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 touch <file>
 code <file>
 ```
+</details>
 
 Ajoutez ce contenu complet :
 
@@ -130,21 +142,25 @@ Ajoutez ce contenu complet :
 2. `<élément>` — <rôle>;
 3. `<élément>` — <conséquence>.
 
-### Checkpoint 1 — Structure et syntaxe
+### 📝 Checkpoint 1 — Structure et syntaxe
 
-**[WINDOWS]**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 .\validate.ps1 -Checkpoint 1
 ```
+</details>
 
-**[UNIX]**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 ./validate.sh --checkpoint 1
 ```
+</details>
 
-**Attendu :**
+✅ **Checkpoint** :
 
 ```text
 [PASS] <contrôle 1>
@@ -152,24 +168,24 @@ Ajoutez ce contenu complet :
 Checkpoint 1: PASS
 ```
 
-> **Si votre résultat diffère :** vérifiez d’abord le répertoire courant, le nom exact du fichier et les placeholders. Consultez ensuite `troubleshooting.md#checkpoint-1`.
+> 🔍 **Si votre résultat diffère :** vérifiez d’abord le répertoire courant, le nom exact du fichier et les placeholders. Consultez ensuite `troubleshooting.md#checkpoint-1`.
 
-## Partie 2 — Formater, initialiser et valider
+## 📝 Partie 2 — Formater, initialiser et valider
 
 Présenter chaque commande séparément, expliquer son rôle, montrer une sortie courte et stable, puis exécuter un checkpoint.
 
-## Partie 3 — Planifier et lire le changement
+## 📝 Partie 3 — Planifier et lire le changement
 
 - enregistrer le plan lorsque pertinent;
 - expliquer `+`, `~`, `-`, `-/+`;
 - comparer types, adresses et quantité aux critères;
 - arrêter si une destruction inattendue apparaît.
 
-## Partie 4 — Exécuter et prouver
+## 📝 Partie 4 — Exécuter et prouver
 
 Avant `apply`, rappeler la portée exacte. Après exécution, produire une preuve Terraform et une preuve fonctionnelle Snowflake/CLI/dbt.
 
-## Erreur contrôlée
+## 🐛 Erreur contrôlée
 
 ### Symptôme attendu
 
@@ -189,7 +205,7 @@ Avant `apply`, rappeler la portée exacte. Après exécution, produire une preuv
 
 <Contrôle automatisé ou pratique réutilisable.>
 
-## Validation finale
+## ✅ Validation finale
 
 - [ ] structure conforme;
 - [ ] formatage et syntaxe valides;
@@ -198,7 +214,7 @@ Avant `apply`, rappeler la portée exacte. Après exécution, produire une preuv
 - [ ] second plan sans modification inattendue;
 - [ ] aucun secret ou artefact interdit dans Git.
 
-## Challenge
+## 🏆 Challenge
 
 ### Scénario
 
@@ -218,27 +234,31 @@ Avant `apply`, rappeler la portée exacte. Après exécution, produire une preuv
 | <qualité> | <points> |
 | <sécurité/idempotence> | <points> |
 
-## Cleanup contrôlé
+## 🧹 Cleanup contrôlé
 
-> Confirmez le workspace, le préfixe apprenant et la liste des ressources avant toute destruction.
+> ⚠️ Confirmez le workspace, le préfixe apprenant et la liste des ressources avant toute destruction.
 
-**[WINDOWS]**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 <commande de preview>
 <commande de cleanup avec confirmation>
 ```
+</details>
 
-**[UNIX]**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 <commande de preview>
 <commande de cleanup avec confirmation>
 ```
+</details>
 
-**[CHECK] Preuve :** <requête/commande confirmant le nettoyage>.
+✅ **Checkpoint** : <requête/commande confirmant le nettoyage>.
 
-## Point de reprise
+## 🎯 Point de reprise
 
 Si vous devez interrompre le lab, conservez <fichiers autorisés> et reprenez avec :
 
@@ -246,7 +266,7 @@ Si vous devez interrompre le lab, conservez <fichiers autorisés> et reprenez av
 <commande de vérification/reprise>
 ```
 
-## Réflexion
+## 🤔 Réflexion
 
 1. Quel risque le pattern réduit-il ?
 2. Quel compromis de formation ne faut-il pas reproduire en production ?
