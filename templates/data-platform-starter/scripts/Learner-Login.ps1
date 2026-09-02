@@ -68,7 +68,17 @@ if (-not (Test-Path $SecretsFile)) {
 $envFile = Join-Path $projectRoot '.env'
 if (Test-Path $envFile) {
     Write-Host "[INFO] Loading .env from $envFile" -ForegroundColor DarkGray
-    Get-Content $envFile -Encoding UTF8 | ForEach-Object {
+
+    # Detect BOM to avoid garbled content if .env was saved as UTF-16 or with BOM.
+    $bytes = [System.IO.File]::ReadAllBytes($envFile)
+    $encoding = 'UTF8'
+    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+        $encoding = 'Unicode'
+    } elseif ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+        $encoding = 'UTF8'
+    }
+
+    Get-Content $envFile -Encoding $encoding | ForEach-Object {
         $line = $_.Trim()
         if ($line -and $line -notmatch '^#') {
             $sep = $line.IndexOf('=')
@@ -82,6 +92,17 @@ if (Test-Path $envFile) {
             }
         }
     }
+
+    # Warn if important Azure variables are still empty.
+    $azureVars = @('ARM_RESOURCE_GROUP', 'ARM_STORAGE_ACCOUNT', 'ARM_CONTAINER')
+    foreach ($var in $azureVars) {
+        if (-not [Environment]::GetEnvironmentVariable($var) -and -not $envValues[$var]) {
+            Write-Host "[WARN] $var is empty or not set. Add it to .env if needed for Azure labs." -ForegroundColor Yellow
+        }
+    }
+} else {
+    Write-Host "[WARN] No .env file found at $envFile" -ForegroundColor Yellow
+    Write-Host "       Copy .env.example to .env and fill in learner-specific values." -ForegroundColor DarkGray
 }
 
 # ------------------------------------------------------------------
