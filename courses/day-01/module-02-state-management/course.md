@@ -1,9 +1,9 @@
 ﻿# Cours M2 — Sécuriser et partager le state Terraform
 
-**Durée du module :** 2 h — 20 min de slides, 25 min d’explication/démonstration, 70 min de lab et 5 min de synthèse  
-**Durée de lecture :** 25 min  
-**Version Terraform :** `1.14.5` exactement  
-**Piste :** `[CORE]`  
+**Durée du module :** 2 h — 20 min de slides, 25 min d’explication/démonstration, 70 min de lab et 5 min de synthèse
+**Durée de lecture :** 25 min
+**Version Terraform :** `1.14.5` exactement
+**Piste :** `[CORE]`
 **Prérequis :** M1 terminé et `terraform state list` affiche les ressources Snowflake de `environments/dev/`
 
 ## Scénario professionnel
