@@ -10,4 +10,9 @@
 | `terraform plan` montre toutes les ressources "to create" après migration | State perdu pendant la migration | Vérifier si l'ancien `terraform.tfstate` existe encore ; relancer la migration |
 | `Lease already present` sans processus actif | Lease périmé d'un processus planté | `az storage blob lease break --blob-name <key> --container-name tfstate --account-name <account>` |
 | `backend.tf.example` introuvable | Fichier non renommé | Copier `backend.tf.example` vers `backend.tf` et remplir les valeurs issues de `00-bootstrap` |
+| `ARM_RESOURCE_GROUP` ou `ARM_STORAGE_ACCOUNT` vides | `.env` non chargé ou script `Learner-Login.ps1` non mis à jour | Vérifier que `.env` contient ces variables et relancer `Learner-Login.ps1` |
+| `The selected region is currently not accepting new customers` | `westeurope` ou autre région saturée | Changer `ARM_LOCATION` dans `.env` vers `northeurope`, `francecentral` ou une autre région disponible |
+| `argument --name/--resource-group expected one argument` | Variable `$env:ARM_RESOURCE_GROUP` vide sous PowerShell | Vérifier avec `Write-Host "RG: $env:ARM_RESOURCE_GROUP"` et relancer `Learner-Login.ps1` |
+| `az storage container create` demande des credentials | Pas de `--auth-mode login` | Ajouter `--auth-mode login` à la commande ou utiliser `Learner-Login.ps1` qui connecte le SP |
+| Terraform refuse `required_version = 1.14.5` | Terraform 1.15.1 dans le PATH avant 1.14.5 | Relancer `Install-Tools.ps1 -Force`, fermer/rouvrir le terminal, ou utiliser `$HOME\.data2ai\bin\terraform.exe` |
 

@@ -6,8 +6,8 @@
 # Usage:
 #   terraform init -backend-config=backend.hcl
 
-resource_group_name  = "rg-data-platform-tfstate"
-storage_account_name = "stdataplatformtfstate"
+resource_group_name  = "rg-data2ai-tf-state"
+storage_account_name = "sadata2aitfstatemsn"
 container_name       = "tfstate"
 key                  = "data-platform/uat/terraform.tfstate"
 
