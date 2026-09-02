@@ -1,4 +1,4 @@
-﻿# Lab M10 — Sécurité et authentification : Key Pair, rotation, moindre privilège
+﻿# 🧪 Lab M10 — Sécurité et authentification : Key Pair, rotation, moindre privilège
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Aucun |
 | **Cleanup** | Conserver jusqu'au Jour 5 |
 
-## Mission
+## 🎯 Mission
 
 Une identité partagée avec un PAT empêche l'attribution des actions. Vous allez générer une paire de clés RSA, configurer l'authentification JWT pour un utilisateur technique Terraform et préparer la rotation.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -30,37 +30,37 @@ flowchart TD
     SF -->|JWT auth| TF[Terraform provider]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - générer une paire de clés RSA avec le provider TLS;
 - configurer un utilisateur Snowflake avec authentification key-pair;
 - marquer les secrets comme `sensitive`;
 - comprendre la rotation sans interruption.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M9 terminé;
 - [ ] OpenSSL installé (vérifié au Jour 0);
 - [ ] le dossier `secrets/` existe dans le clone.
 
-## Partie 1 — Générer la paire de clés avec OpenSSL
+## 📝 Partie 1 — Générer la paire de clés avec OpenSSL
 
-### Étape 1.1 — Générer la clé privée
+### 📝 Étape 1.1 — Générer la clé privée
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
 openssl genrsa -out secrets/snowflake_key.p8 2048
 ```
 
-> `[SECURITY]` `secrets/` est gitignored. Vérifiez : `git check-ignore secrets/snowflake_key.p8` doit retourner le chemin.
+> 🔒 **SECURITY** : `secrets/` est gitignored. Vérifiez : `git check-ignore secrets/snowflake_key.p8` doit retourner le chemin.
 
-### Étape 1.2 — Générer la clé publique
+### 📝 Étape 1.2 — Générer la clé publique
 
 ```bash
 openssl rsa -in secrets/snowflake_key.p8 -pubout -out secrets/snowflake_key.pub
 ```
 
-### Étape 1.3 — Vérifier
+### 📝 Étape 1.3 — Vérifier
 
 ```bash
 ls -la secrets/
@@ -68,17 +68,17 @@ git check-ignore secrets/snowflake_key.p8
 git check-ignore secrets/snowflake_key.pub
 ```
 
-**Attendu :** les deux fichiers sont ignorés par Git.
+✅ **Checkpoint** : les deux fichiers sont ignorés par Git.
 
-## Partie 2 — Créer le module security
+## 📝 Partie 2 — Créer le module security
 
-### Étape 2.1 — Créer la structure
+### 📝 Étape 2.1 — Créer la structure
 
 ```bash
 mkdir -p modules/security
 ```
 
-### Étape 2.2 — Créer `modules/security/variables.tf`
+### 📝 Étape 2.2 — Créer `modules/security/variables.tf`
 
 ```hcl
 variable "user_name" {
@@ -104,7 +104,7 @@ variable "rsa_public_key" {
 }
 ```
 
-### Étape 2.3 — Créer `modules/security/main.tf`
+### 📝 Étape 2.3 — Créer `modules/security/main.tf`
 
 ```hcl
 resource "snowflake_user" "technical" {
@@ -120,7 +120,7 @@ resource "snowflake_user" "technical" {
 
 > `rsa_public_key_2` est laissé à `null`. Il sera utilisé lors de la rotation pour éviter une interruption.
 
-### Étape 2.4 — Créer `modules/security/outputs.tf`
+### 📝 Étape 2.4 — Créer `modules/security/outputs.tf`
 
 ```hcl
 output "user_name" {
@@ -135,7 +135,7 @@ output "user_arn" {
 }
 ```
 
-### Étape 2.5 — Créer `modules/security/versions.tf`
+### 📝 Étape 2.5 — Créer `modules/security/versions.tf`
 
 ```hcl
 terraform {
@@ -154,7 +154,7 @@ terraform {
 }
 ```
 
-### Étape 2.6 — Formater et valider
+### 📝 Étape 2.6 — Formater et valider
 
 ```bash
 cd modules/security
@@ -162,16 +162,16 @@ terraform fmt
 terraform validate
 ```
 
-## Partie 3 — Appeler le module depuis DEV
+## 📝 Partie 3 — Appeler le module depuis DEV
 
-### Étape 3.1 — Lire la clé publique
+### 📝 Étape 3.1 — Lire la clé publique
 
 ```bash
 cd environments/dev
 export TF_VAR_rsa_public_key=$(cat ../secrets/snowflake_key.pub | grep -v 'BEGIN\|END' | tr -d '\n')
 ```
 
-### Étape 3.2 — Ajouter l'appel dans `main.tf`
+### 📝 Étape 3.2 — Ajouter l'appel dans `main.tf`
 
 ```hcl
 module "security" {
@@ -183,7 +183,7 @@ module "security" {
 }
 ```
 
-### Étape 3.3 — Ajouter la variable
+### 📝 Étape 3.3 — Ajouter la variable
 
 Dans `variables.tf` :
 
@@ -195,7 +195,7 @@ variable "rsa_public_key" {
 }
 ```
 
-### Étape 3.4 — Ajouter l'output
+### 📝 Étape 3.4 — Ajouter l'output
 
 ```hcl
 output "technical_user" {
@@ -204,7 +204,7 @@ output "technical_user" {
 }
 ```
 
-### Étape 3.5 — Planifier et appliquer
+### 📝 Étape 3.5 — Planifier et appliquer
 
 ```bash
 terraform fmt
@@ -214,9 +214,9 @@ terraform plan
 terraform apply
 ```
 
-**Attendu :** `1 to add` — l'utilisateur technique avec la clé RSA.
+✅ **Checkpoint** : `1 to add` — l'utilisateur technique avec la clé RSA.
 
-### Étape 3.6 — Vérifier
+### 📝 Étape 3.6 — Vérifier
 
 ```bash
 snow sql -c training -q "DESC USER TF_ABC_SVC"
@@ -224,11 +224,11 @@ snow sql -c training -q "DESC USER TF_ABC_SVC"
 
 Remplacez `ABC` par votre préfixe.
 
-**Attendu :** la ligne `RSA_PUBLIC_KEY_FP` contient une empreinte.
+✅ **Checkpoint** : la ligne `RSA_PUBLIC_KEY_FP` contient une empreinte.
 
-## Partie 4 — Rotation sans interruption
+## 📝 Partie 4 — Rotation sans interruption
 
-### Étape 4.1 — Principe
+### 📝 Étape 4.1 — Principe
 
 La rotation sans interruption utilise `rsa_public_key_2` :
 
@@ -237,7 +237,7 @@ La rotation sans interruption utilise `rsa_public_key_2` :
 3. tester l'authentification avec la nouvelle clé;
 4. déplacer la nouvelle clé vers `rsa_public_key` et retirer l'ancienne.
 
-### Étape 4.2 — Simuler la rotation (concept)
+### 📝 Étape 4.2 — Simuler la rotation (concept)
 
 Ajoutez une variable `rsa_public_key_new` et utilisez-la dans `rsa_public_key_2` :
 
@@ -263,7 +263,7 @@ resource "snowflake_user" "technical" {
 
 > Pendant la transition, les deux clés sont valides. Une fois la nouvelle clé testée, vous inversez les rôles et retirez l'ancienne.
 
-## Challenge
+## 🏆 Challenge
 
 Configurez une network policy qui restreint l'accès à une plage IP spécifique (votre IP publique).
 
@@ -273,6 +273,6 @@ Critères :
 - [ ] `terraform apply` réussit;
 - [ ] l'utilisateur technique est associé à la policy.
 
-## Cleanup
+## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 4 et 5.

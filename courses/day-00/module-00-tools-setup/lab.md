@@ -1,4 +1,4 @@
-﻿# Étape 1 — Installer et vérifier les outils (scripts d'abord)
+﻿# 🧪 Étape 1 — Installer et vérifier les outils (scripts d'abord)
 
 **Durée cible : 40 minutes**
 
@@ -33,28 +33,32 @@ Le projet type est le dépôt `data-platform-starter`. Il contient les scripts d
 
 Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
 
-**Windows :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 New-Item -ItemType Directory -Path "$HOME\Data2AI-Labs" -Force | Out-Null
 git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
 cd "$HOME\Data2AI-Labs\data-platform"
 ```
+</details>
 
-> `[IMPORTANT]` Sous Windows, ne pas utiliser `~` (tilde) dans le chemin de clone.
+> ⚠️ **IMPORTANT** Sous Windows, ne pas utiliser `~` (tilde) dans le chemin de clone.
 > PowerShell ne l'interprète pas comme le dossier personnel. Utilisez `$HOME` entre guillemets.
 > Si le répertoire contient des espaces (ex. `Formation Terraform`), encadrez le chemin :
 > ```powershell
 > git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
 > ```
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 mkdir -p "$HOME/Data2AI-Labs"
 git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME/Data2AI-Labs/data-platform"
 cd "$HOME/Data2AI-Labs/data-platform"
 ```
+</details>
 
 ### 1.3 — Vérifier que les scripts sont présents
 
@@ -62,7 +66,7 @@ cd "$HOME/Data2AI-Labs/data-platform"
 ls scripts/
 ```
 
-**Attendu :**
+✅ **Checkpoint** :
 
 ```text
 Install-Tools.ps1
@@ -91,7 +95,7 @@ Exécutez le script en mode `Check` pour voir l'état actuel sans rien installer
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check -ReportPath .\preflight
 ```
 
-**Attendu :** un rapport s'affiche et deux fichiers sont créés (`preflight.md` et `preflight.json`). Les outils déjà installés sont en `PASS`, les autres en `FAIL` ou `WARN`.
+✅ **Checkpoint** : un rapport s'affiche et deux fichiers sont créés (`preflight.md` et `preflight.json`). Les outils déjà installés sont en `PASS`, les autres en `FAIL` ou `WARN`.
 
 ### 2W.3 — Installation
 
@@ -101,7 +105,7 @@ Exécutez le script en mode installation :
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -ReportPath .\preflight
 ```
 
-**Attendu :** le script installe les outils manquants sous `$HOME\.data2ai`. Les outils Python (Snow CLI, dbt) sont installés dans un environnement virtuel isolé. Le rapport final indique `Toolchain status: READY`.
+✅ **Checkpoint** : le script installe les outils manquants sous `$HOME\.data2ai`. Les outils Python (Snow CLI, dbt) sont installés dans un environnement virtuel isolé. Le rapport final indique `Toolchain status: READY`.
 
 ### 2W.4 — Corriger les échecs
 
@@ -130,7 +134,7 @@ chmod +x scripts/install-tools.sh
 ./scripts/install-tools.sh --check --report-path ./preflight
 ```
 
-**Attendu :** un rapport s'affiche et deux fichiers sont créés (`preflight.md` et `preflight.json`).
+✅ **Checkpoint** : un rapport s'affiche et deux fichiers sont créés (`preflight.md` et `preflight.json`).
 
 ### 2U.3 — Installation
 
@@ -138,7 +142,7 @@ chmod +x scripts/install-tools.sh
 ./scripts/install-tools.sh --report-path ./preflight
 ```
 
-**Attendu :** le script installe les outils manquants. Terraform et tflint sont téléchargés sous `$HOME/.data2ai/bin`. Les outils Python sont installés dans un environnement virtuel isolé sous `$HOME/.data2ai/venv`.
+✅ **Checkpoint** : le script installe les outils manquants. Terraform et tflint sont téléchargés sous `$HOME/.data2ai/bin`. Les outils Python sont installés dans un environnement virtuel isolé sous `$HOME/.data2ai/venv`.
 
 ### 2U.4 — Corriger les échecs
 
@@ -162,7 +166,8 @@ export PATH="$HOME/.data2ai/bin:$HOME/.data2ai/venv/bin:$PATH"
 
 ### 3.1 — Vérifier les versions
 
-**Windows :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform version
@@ -171,8 +176,10 @@ az version
 python --version
 dbt --version
 ```
+</details>
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 terraform version
@@ -181,8 +188,9 @@ az version
 python3 --version
 dbt --version
 ```
+</details>
 
-**Attendu :** chaque commande retourne une version. Les versions doivent correspondre à la [politique de versions](../../docs/version-policy.md).
+✅ **Checkpoint** : chaque commande retourne une version. Les versions doivent correspondre à la [politique de versions](../../docs/version-policy.md).
 
 ### 3.2 — Lire le rapport
 
@@ -218,6 +226,6 @@ Répondez à ces questions pour valider votre compréhension :
 
 ## Checkpoint
 
-[CHECK] Le rapport affiche `Toolchain status: READY` et tous les outils Core sont en `PASS`.
+✅ **Checkpoint** : Le rapport affiche `Toolchain status: READY` et tous les outils Core sont en `PASS`.
 
 Si ce checkpoint passe, passez à l'[étape suivante](../module-00-day0-setup/lab.md) : configurer la connexion Snowflake.

@@ -1,4 +1,4 @@
-﻿# Lab M12 — Capstone : Plateforme de données complète
+﻿# 🧪 Lab M12 — Capstone : Plateforme de données complète
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Warehouses X-SMALL |
 | **Cleanup** | Détruire à la fin |
 
-## Mission
+## 🎯 Mission
 
 Le comité d'architecture attend une plateforme gouvernée, exploitable et auditable. Vous allez assembler tous les modules créés (landing-zone, ingestion, security, RBAC) dans une configuration complète et prouver le zero-drift.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
@@ -32,21 +32,21 @@ flowchart TD
     RBAC --> GRANTS[Future Grants]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - composer tous les modules dans une configuration unique;
 - déployer la plateforme complète en une seule commande;
 - prouver le zero-drift avec `terraform plan -detailed-exitcode`;
 - documenter l'architecture avec les outputs.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M5 à M11 terminés : tous les modules existent;
 - [ ] `terraform plan` affiche `No changes` dans `environments/dev/`.
 
-## Partie 1 — Composez la configuration finale
+## 📝 Partie 1 — Composez la configuration finale
 
-### Étape 1.1 — Vérifier `environments/dev/main.tf`
+### 📝 Étape 1.1 — Vérifier `environments/dev/main.tf`
 
 Ouvrez `environments/dev/main.tf` et vérifiez qu'il contient les 4 modules :
 
@@ -99,7 +99,7 @@ resource "snowflake_grant_account_role" "tech_raw" {
 }
 ```
 
-### Étape 1.2 — Vérifier les outputs
+### 📝 Étape 1.2 — Vérifier les outputs
 
 `environments/dev/outputs.tf` doit exposer :
 
@@ -139,7 +139,7 @@ output "platform_summary" {
 }
 ```
 
-### Étape 1.3 — Formater et valider
+### 📝 Étape 1.3 — Formater et valider
 
 ```bash
 cd environments/dev
@@ -147,45 +147,49 @@ terraform fmt
 terraform validate
 ```
 
-**Attendu :** `The configuration is valid.`
+✅ **Checkpoint** : `The configuration is valid.`
 
-## Partie 2 — Déployer la plateforme
+## 📝 Partie 2 — Déployer la plateforme
 
-### Étape 2.1 — Planifier
+### 📝 Étape 2.1 — Planifier
 
-**Windows (PowerShell) :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform plan -out "capstone.tfplan"
 ```
+</details>
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 terraform plan -out=capstone.tfplan
 ```
+</details>
 
-**Attendu :** `No changes.` si tous les modules sont déjà déployés.
+✅ **Checkpoint** : `No changes.` si tous les modules sont déjà déployés.
 
 Si des changements apparaissent, relisez le plan avant d'appliquer.
 
-### Étape 2.2 — Appliquer
+### 📝 Étape 2.2 — Appliquer
 
 ```bash
 terraform apply capstone.tfplan
 ```
 
-### Étape 2.3 — Vérifier les outputs
+### 📝 Étape 2.3 — Vérifier les outputs
 
 ```bash
 terraform output platform_summary
 ```
 
-**Attendu :** un objet avec la database, les schemas, les warehouses, l'utilisateur et les rôles.
+✅ **Checkpoint** : un objet avec la database, les schemas, les warehouses, l'utilisateur et les rôles.
 
-## Partie 3 — Prouver le zero-drift
+## 📝 Partie 3 — Prouver le zero-drift
 
-### Étape 3.1 — Plan avec detailed-exitcode
+### 📝 Étape 3.1 — Plan avec detailed-exitcode
 
 ```bash
 terraform plan -detailed-exitcode
@@ -197,9 +201,9 @@ terraform plan -detailed-exitcode
 | 1 | Error |
 | 2 | Changes detected — drift |
 
-**Attendu :** code 0 (no changes).
+✅ **Checkpoint** : code 0 (no changes).
 
-### Étape 3.2 — Simuler une dérive
+### 📝 Étape 3.2 — Simuler une dérive
 
 Modifiez une ressource hors Terraform :
 
@@ -207,31 +211,31 @@ Modifiez une ressource hors Terraform :
 snow sql -c training -q "ALTER DATABASE ABC_RAW_DEV SET COMMENT = 'Drift test'"
 ```
 
-### Étape 3.3 — Détecter la dérive
+### 📝 Étape 3.3 — Détecter la dérive
 
 ```bash
 terraform plan -detailed-exitcode
 ```
 
-**Attendu :** code 2 (changes detected).
+✅ **Checkpoint** : code 2 (changes detected).
 
-### Étape 3.4 — Corriger la dérive
+### 📝 Étape 3.4 — Corriger la dérive
 
 ```bash
 terraform apply
 ```
 
-### Étape 3.5 — Vérifier le retour à zero-drift
+### 📝 Étape 3.5 — Vérifier le retour à zero-drift
 
 ```bash
 terraform plan -detailed-exitcode
 ```
 
-**Attendu :** code 0.
+✅ **Checkpoint** : code 0.
 
-## Partie 4 — Documenter l'architecture
+## 📝 Partie 4 — Documenter l'architecture
 
-### Étape 4.1 — Générer un diagramme
+### 📝 Étape 4.1 — Générer un diagramme
 
 Dans `docs/architecture.md`, ajoutez un diagramme Mermaid qui reflète votre déploiement réel :
 
@@ -260,15 +264,15 @@ flowchart TD
     TF --> Snowflake
 ```
 
-### Étape 4.2 — Capturer les outputs
+### 📝 Étape 4.2 — Capturer les outputs
 
 ```bash
 terraform output -json > docs/dev-outputs.json
 ```
 
-> `[SECURITY]` Vérifiez qu'aucun secret n'apparaît dans le JSON avant de commiter.
+> 🔒 **SECURITY** Vérifiez qu'aucun secret n'apparaît dans le JSON avant de commiter.
 
-## Challenge
+## 🏆 Challenge
 
 Ajoutez un module `monitoring` qui crée une database `ABC_MONITORING_DEV` avec un schema `METRICS` et une table `WAREHOUSE_USAGE`. Configurez un Future Grant pour que le rôle `ROLE_ABC_RDR_DEV` puisse lire cette table.
 
@@ -279,7 +283,7 @@ Critères :
 - [ ] `terraform plan -detailed-exitcode` retourne 0;
 - [ ] le Future Grant est visible avec `SHOW FUTURE GRANTS`.
 
-## Cleanup
+## 🧹 Cleanup
 
 À la fin de la formation, détruisez toutes les ressources :
 

@@ -1,4 +1,4 @@
-﻿# Lab M11 — Modèle RBAC scalable avec Future Grants
+﻿# 🧪 Lab M11 — Modèle RBAC scalable avec Future Grants
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Aucun |
 | **Cleanup** | Conserver jusqu'au Jour 5 |
 
-## Mission
+## 🎯 Mission
 
 L'accès aux données doit suivre les fonctions métier sans tickets manuels. Vous allez créer une hiérarchie de rôles, appliquer le moindre privilège avec des grants ciblés et configurer des Future Grants pour les nouvelles tables.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -31,28 +31,28 @@ flowchart TD
     ROLE_RAW --> FUTURE[FUTURE GRANT on tables]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - créer une hiérarchie de rôles Snowflake avec Terraform;
 - accorder des privilèges ciblés par rôle;
 - configurer des Future Grants pour les nouvelles tables;
 - auditer les grants avec une requête SQL.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M10 terminé : l'utilisateur technique existe;
 - [ ] `terraform plan` affiche `No changes` dans `environments/dev/`.
 
-## Partie 1 — Créer le module RBAC
+## 📝 Partie 1 — Créer le module RBAC
 
-### Étape 1.1 — Créer la structure
+### 📝 Étape 1.1 — Créer la structure
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
 mkdir -p modules/rbac
 ```
 
-### Étape 1.2 — Créer `modules/rbac/variables.tf`
+### 📝 Étape 1.2 — Créer `modules/rbac/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -78,7 +78,7 @@ variable "schema_name" {
 }
 ```
 
-### Étape 1.3 — Créer `modules/rbac/main.tf`
+### 📝 Étape 1.3 — Créer `modules/rbac/main.tf`
 
 ```hcl
 locals {
@@ -163,7 +163,7 @@ resource "snowflake_grant_privileges_to_account_role" "reader_future" {
 }
 ```
 
-### Étape 1.4 — Créer `modules/rbac/outputs.tf`
+### 📝 Étape 1.4 — Créer `modules/rbac/outputs.tf`
 
 ```hcl
 output "role_raw" {
@@ -179,7 +179,7 @@ output "role_reader" {
 }
 ```
 
-### Étape 1.5 — Créer `modules/rbac/versions.tf`
+### 📝 Étape 1.5 — Créer `modules/rbac/versions.tf`
 
 ```hcl
 terraform {
@@ -194,7 +194,7 @@ terraform {
 }
 ```
 
-### Étape 1.6 — Formater et valider
+### 📝 Étape 1.6 — Formater et valider
 
 ```bash
 cd modules/rbac
@@ -202,9 +202,9 @@ terraform fmt
 terraform validate
 ```
 
-## Partie 2 — Appeler le module depuis DEV
+## 📝 Partie 2 — Appeler le module depuis DEV
 
-### Étape 2.1 — Ajouter l'appel dans `environments/dev/main.tf`
+### 📝 Étape 2.1 — Ajouter l'appel dans `environments/dev/main.tf`
 
 ```hcl
 module "rbac" {
@@ -216,7 +216,7 @@ module "rbac" {
 }
 ```
 
-### Étape 2.2 — Ajouter les outputs
+### 📝 Étape 2.2 — Ajouter les outputs
 
 ```hcl
 output "rbac_roles" {
@@ -229,7 +229,7 @@ output "rbac_roles" {
 }
 ```
 
-### Étape 2.3 — Planifier et appliquer
+### 📝 Étape 2.3 — Planifier et appliquer
 
 ```bash
 cd environments/dev
@@ -240,11 +240,11 @@ terraform plan
 terraform apply
 ```
 
-**Attendu :** 3 rôles créés + grants.
+✅ **Checkpoint** : 3 rôles créés + grants.
 
-## Partie 3 — Auditer les grants
+## 📝 Partie 3 — Auditer les grants
 
-### Étape 3.1 — Lister les rôles
+### 📝 Étape 3.1 — Lister les rôles
 
 ```bash
 snow sql -c training -q "SHOW ROLES LIKE 'ROLE_ABC_%'"
@@ -252,15 +252,15 @@ snow sql -c training -q "SHOW ROLES LIKE 'ROLE_ABC_%'"
 
 Remplacez `ABC` par votre préfixe.
 
-### Étape 3.2 — Vérifier les Future Grants
+### 📝 Étape 3.2 — Vérifier les Future Grants
 
 ```bash
 snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA ABC_RAW_DEV.INGESTION"
 ```
 
-**Attendu :** des lignes avec `GRANT SELECT` et `GRANT INSERT` pour les futures tables.
+✅ **Checkpoint** : des lignes avec `GRANT SELECT` et `GRANT INSERT` pour les futures tables.
 
-### Étape 3.3 — Tester le Future Grant
+### 📝 Étape 3.3 — Tester le Future Grant
 
 Créez une table manuellement et vérifiez que les grants s'appliquent automatiquement :
 
@@ -269,17 +269,17 @@ snow sql -c training -q "CREATE TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE (ID INT)
 snow sql -c training -q "SHOW GRANTS ON TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE"
 ```
 
-**Attendu :** les grants SELECT et INSERT sont déjà présents grâce au Future Grant.
+✅ **Checkpoint** : les grants SELECT et INSERT sont déjà présents grâce au Future Grant.
 
-### Étape 3.4 — Nettoyer la table de test
+### 📝 Étape 3.4 — Nettoyer la table de test
 
 ```bash
 snow sql -c training -q "DROP TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE"
 ```
 
-## Partie 4 — Principe du moindre privilège
+## 📝 Partie 4 — Principe du moindre privilège
 
-### Étape 4.1 — Vérifier la séparation des rôles
+### 📝 Étape 4.1 — Vérifier la séparation des rôles
 
 | Rôle | Privilèges | Usage |
 |---|---|---|
@@ -287,7 +287,7 @@ snow sql -c training -q "DROP TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE"
 | `ROLE_ABC_CUR_DEV` | USAGE schema, SELECT | Transformation dbt |
 | `ROLE_ABC_RDR_DEV` | USAGE schema, SELECT | Lecture BI |
 
-### Étape 4.2 — Attribuer le rôle à l'utilisateur technique
+### 📝 Étape 4.2 — Attribuer le rôle à l'utilisateur technique
 
 Ajoutez dans `environments/dev/main.tf` :
 
@@ -298,22 +298,22 @@ resource "snowflake_grant_account_role" "tech_raw" {
 }
 ```
 
-### Étape 4.3 — Planifier et appliquer
+### 📝 Étape 4.3 — Planifier et appliquer
 
 ```bash
 terraform plan
 terraform apply
 ```
 
-### Étape 4.4 — Vérifier
+### 📝 Étape 4.4 — Vérifier
 
 ```bash
 snow sql -c training -q "SHOW GRANTS TO USER TF_ABC_SVC"
 ```
 
-**Attendu :** le rôle `ROLE_ABC_RAW_DEV` est attribué à l'utilisateur technique.
+✅ **Checkpoint** : le rôle `ROLE_ABC_RAW_DEV` est attribué à l'utilisateur technique.
 
-## Challenge
+## 🏆 Challenge
 
 Ajoutez un rôle `ROLE_ABC_ADMIN_DEV` qui a le droit de créer des schemas dans la database, et attribuez-le à un utilisateur `ADMIN_ABC`.
 
@@ -323,6 +323,6 @@ Critères :
 - [ ] `SHOW GRANTS TO USER ADMIN_ABC` affiche le rôle;
 - [ ] le rôle peut créer un schema de test.
 
-## Cleanup
+## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 5.

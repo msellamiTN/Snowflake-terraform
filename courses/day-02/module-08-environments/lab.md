@@ -1,4 +1,4 @@
-﻿# Lab M8 — Gestion multi-environnements : DEV, UAT, PROD
+﻿# 🧪 Lab M8 — Gestion multi-environnements : DEV, UAT, PROD
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Warehouses X-SMALL en UAT, SMALL en PROD |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
-## Mission
+## 🎯 Mission
 
 DEV, UAT et PROD ont des risques, coûts et rythmes différents. Vous allez déployer le module `landing-zone` dans les trois environnements avec une isolation de state et de nommage.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -31,22 +31,22 @@ flowchart TD
     PROD --> MOD
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - déployer le module dans DEV, UAT et PROD;
 - isoler le state par environnement avec des clés distinctes;
 - définir une matrice de paramètres par environnement;
 - comprendre la différence entre workspaces et directories.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M5 et M6 terminés : le module `landing-zone` est piloté par métadonnées;
 - [ ] le backend Azure Blob Storage fonctionne pour DEV;
 - [ ] `terraform state list` affiche les ressources DEV.
 
-## Partie 1 — Configurer UAT
+## 📝 Partie 1 — Configurer UAT
 
-### Étape 1.1 — Créer les fichiers Terraform dans `environments/uat/`
+### 📝 Étape 1.1 — Créer les fichiers Terraform dans `environments/uat/`
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/environments/uat
@@ -74,7 +74,7 @@ terraform {
 }
 ```
 
-> La clé `data-platform/uat/terraform.tfstate` isole le state UAT du state DEV.
+> 💡 **Note** : La clé `data-platform/uat/terraform.tfstate` isole le state UAT du state DEV.
 
 Créez `provider.tf` :
 
@@ -176,7 +176,7 @@ learner_prefix         = "ABC"
 
 Remplacez `ABC` par votre préfixe.
 
-### Étape 1.2 — Initialiser et planifier
+### 📝 Étape 1.2 — Initialiser et planifier
 
 ```bash
 terraform fmt
@@ -185,23 +185,23 @@ terraform validate
 terraform plan
 ```
 
-**Attendu :** `3 to add` — database, schema et warehouse UAT.
+✅ **Checkpoint** : `3 to add` — database, schema et warehouse UAT.
 
-### Étape 1.3 — Appliquer
+### 📝 Étape 1.3 — Appliquer
 
 ```bash
 terraform apply
 ```
 
-### Étape 1.4 — Vérifier dans Snowflake
+### 📝 Étape 1.4 — Vérifier dans Snowflake
 
 ```bash
 snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_UAT'"
 ```
 
-## Partie 2 — Configurer PROD
+## 📝 Partie 2 — Configurer PROD
 
-### Étape 2.1 — Créer les fichiers dans `environments/prod/`
+### 📝 Étape 2.1 — Créer les fichiers dans `environments/prod/`
 
 Répétez les mêmes étapes que UAT avec ces différences :
 
@@ -211,7 +211,7 @@ Répétez les mêmes étapes que UAT avec ces différences :
 - `data_retention_days` : `30`
 - `auto_suspend_seconds` : `300`
 
-### Étape 2.2 — Initialiser, planifier, appliquer
+### 📝 Étape 2.2 — Initialiser, planifier, appliquer
 
 ```bash
 cd environments/prod
@@ -222,16 +222,16 @@ terraform plan
 terraform apply
 ```
 
-### Étape 2.3 — Vérifier
+### 📝 Étape 2.3 — Vérifier
 
 ```bash
 snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_PROD'"
 snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_PROD'"
 ```
 
-## Partie 3 — Matrice de paramètres
+## 📝 Partie 3 — Matrice de paramètres
 
-### Étape 3.1 — Comparer les environnements
+### 📝 Étape 3.1 — Comparer les environnements
 
 | Paramètre | DEV | UAT | PROD |
 |---|---|---|---|
@@ -241,7 +241,7 @@ snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_PROD'"
 | State key | dev/ | uat/ | prod/ |
 | Schemas | INGESTION, STAGING | INGESTION, STAGING | INGESTION, STAGING |
 
-### Étape 3.2 — Vérifier l'isolation du state
+### 📝 Étape 3.2 — Vérifier l'isolation du state
 
 ```bash
 az storage blob list \
@@ -250,7 +250,7 @@ az storage blob list \
     --query "[].name" -o tsv
 ```
 
-**Attendu :**
+✅ **Checkpoint** :
 
 ```text
 data-platform/dev/terraform.tfstate
@@ -258,9 +258,9 @@ data-platform/uat/terraform.tfstate
 data-platform/prod/terraform.tfstate
 ```
 
-## Partie 4 — Workspaces vs directories
+## 📝 Partie 4 — Workspaces vs directories
 
-### Étape 4.1 — Comprendre les deux approches
+### 📝 Étape 4.1 — Comprendre les deux approches
 
 | Critère | Workspaces | Directories |
 |---|---|---|
@@ -269,7 +269,7 @@ data-platform/prod/terraform.tfstate
 | Variables | `terraform.workspace` | Fichiers `.tfvars` séparés |
 | Recommandé pour | Expérimentation | Production |
 
-### Étape 4.2 — Pourquoi directories ici
+### 📝 Étape 4.2 — Pourquoi directories ici
 
 L'approche par directories (utilisée dans ce lab) est préférée pour la production car :
 
@@ -278,7 +278,7 @@ L'approche par directories (utilisée dans ce lab) est préférée pour la produ
 - le code est auditable indépendamment;
 - pas de risque de workspace confusion.
 
-## Challenge
+## 🏆 Challenge
 
 Ajoutez un environnement `DR` (Disaster Recovery) avec un warehouse `MEDIUM` et une rétention de 60 jours.
 
@@ -289,7 +289,7 @@ Critères :
 - [ ] le state est isolé avec la clé `data-platform/dr/terraform.tfstate`;
 - [ ] la database s'appelle `ABC_RAW_DR`.
 
-## Cleanup
+## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 3. Pour nettoyer UAT et PROD :
 

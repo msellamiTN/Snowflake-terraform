@@ -1,4 +1,4 @@
-﻿# Lab M7 — Pipeline CI/CD Terraform avec Azure DevOps
+﻿# 🧪 Lab M7 — Pipeline CI/CD Terraform avec Azure DevOps
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Aucun (pipeline gratuit avec agent Microsoft) |
 | **Cleanup** | Conserver jusqu'au Jour 5 |
 
-## Mission
+## 🎯 Mission
 
 Les changements manuels ne fournissent ni séparation des responsabilités ni preuve d'approbation. Vous allez configurer un pipeline Azure DevOps qui produit un plan immuable, applique après revue et audite la dérive.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -30,7 +30,7 @@ flowchart TD
     APPLY --> AUDIT[Audit: drift detection]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - comprendre le pipeline `azure-pipelines.yml` du projet type;
 - configurer un service connection Azure DevOps;
@@ -38,22 +38,22 @@ flowchart TD
 - appliquer après approbation;
 - comprendre les gates d'environnement.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M5 et M6 terminés : les modules existent et fonctionnent;
 - [ ] un projet Azure DevOps avec accès au repository;
 - [ ] un service connection Azure DevOps pour Snowflake (ou PAT en variable group).
 
-## Partie 1 — Lire le pipeline existant
+## 📝 Partie 1 — Lire le pipeline existant
 
-### Étape 1.1 — Ouvrir `azure-pipelines.yml`
+### 📝 Étape 1.1 — Ouvrir `azure-pipelines.yml`
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
 code azure-pipelines.yml
 ```
 
-### Étape 1.2 — Comprendre les stages
+### 📝 Étape 1.2 — Comprendre les stages
 
 Le pipeline contient 5 stages :
 
@@ -65,7 +65,7 @@ Le pipeline contient 5 stages :
 | `Apply` | main only | `terraform apply tfplan` |
 | `Audit` | main only | `terraform plan -detailed-exitcode` pour détecter la dérive |
 
-### Étape 1.3 — Comprendre les variables
+### 📝 Étape 1.3 — Comprendre les variables
 
 Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps :
 
@@ -76,11 +76,11 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 | `SNOWFLAKE_CONNECTION` | Nom de connexion Snowflake CLI |
 | `SNOWFLAKE_PAT` | PAT (secret, masqué) |
 
-> `[SECURITY]` Les secrets sont stockés dans le Variable Group et jamais dans le code.
+> 🔒 **SECURITY** : Les secrets sont stockés dans le Variable Group et jamais dans le code.
 
-## Partie 2 — Configurer Azure DevOps
+## 📝 Partie 2 — Configurer Azure DevOps
 
-### Étape 2.1 — Créer un Variable Group
+### 📝 Étape 2.1 — Créer un Variable Group
 
 1. Dans Azure DevOps, allez dans **Pipelines > Library**;
 2. cliquez **+ Variable group**;
@@ -89,7 +89,7 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 5. marquez `SNOWFLAKE_PAT` comme secret;
 6. liez le variable group au pipeline.
 
-### Étape 2.2 — Connecter le repository
+### 📝 Étape 2.2 — Connecter le repository
 
 1. Dans **Pipelines > Pipelines**, cliquez **New Pipeline**;
 2. sélectionnez votre repository Git;
@@ -97,15 +97,15 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 4. sélectionnez `/azure-pipelines.yml`;
 5. exécutez le pipeline.
 
-## Partie 3 — Tester le pipeline sur une PR
+## 📝 Partie 3 — Tester le pipeline sur une PR
 
-### Étape 3.1 — Créer une branche
+### 📝 Étape 3.1 — Créer une branche
 
 ```bash
 git checkout -b feature/add-staging-schema
 ```
 
-### Étape 3.2 — Faire un changement mineur
+### 📝 Étape 3.2 — Faire un changement mineur
 
 Dans `environments/dev/main.tf`, ajoutez un schema supplémentaire :
 
@@ -117,7 +117,7 @@ Dans `environments/dev/main.tf`, ajoutez un schema supplémentaire :
   }
 ```
 
-### Étape 3.3 — Commit et push
+### 📝 Étape 3.3 — Commit et push
 
 ```bash
 git add environments/dev/main.tf
@@ -125,26 +125,26 @@ git commit -m "Add ARCHIVE schema to landing zone"
 git push origin feature/add-staging-schema
 ```
 
-### Étape 3.4 — Créer une PR
+### 📝 Étape 3.4 — Créer une PR
 
 Dans Azure DevOps, créez une Pull Request vers `main`.
 
-### Étape 3.5 — Observer le pipeline
+### 📝 Étape 3.5 — Observer le pipeline
 
 Le pipeline exécute les stages `Validate` et `Plan`.
 
-**Attendu :**
+✅ **Checkpoint** :
 
 - `Validate` : `terraform fmt -check` passe, `validate` passe, `tflint` passe;
 - `Plan` : `1 to add` — le nouveau schema ARCHIVE.
 
-### Étape 3.6 — Approuver et merger
+### 📝 Étape 3.6 — Approuver et merger
 
 1. Relisez le plan dans les logs du pipeline;
 2. approuvez la PR;
 3. mergez vers `main`.
 
-### Étape 3.7 — Observer le pipeline sur main
+### 📝 Étape 3.7 — Observer le pipeline sur main
 
 Le pipeline exécute tous les stages :
 
@@ -154,9 +154,9 @@ Le pipeline exécute tous les stages :
 - `Apply` : applique le changement;
 - `Audit` : `No changes` — zéro dérive.
 
-## Partie 4 — Comprendre les gates d'environnement
+## 📝 Partie 4 — Comprendre les gates d'environnement
 
-### Étape 4.1 — Gates par environnement
+### 📝 Étape 4.1 — Gates par environnement
 
 Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
 
@@ -166,7 +166,7 @@ Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
 | UAT | Approval manuel | Tech lead |
 | PROD | Approval manuel + fenêtre | Change advisory board |
 
-### Étape 4.2 — Ajouter un stage UAT (concept)
+### 📝 Étape 4.2 — Ajouter un stage UAT (concept)
 
 ```yaml
 - stage: PlanUAT
@@ -195,7 +195,7 @@ Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
               terraform apply tfplan
 ```
 
-## Challenge
+## 🏆 Challenge
 
 Ajoutez un stage `tflint` au pipeline qui échoue si `tflint` détecte des problèmes dans `modules/`.
 
@@ -205,6 +205,6 @@ Critères :
 - [ ] le pipeline échoue si `tflint` retourne des erreurs;
 - [ ] le pipeline passe après correction.
 
-## Cleanup
+## 🧹 Cleanup
 
 Conservez le pipeline pour le capstone.

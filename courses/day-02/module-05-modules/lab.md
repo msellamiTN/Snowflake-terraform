@@ -1,4 +1,4 @@
-﻿# Lab M5 — Module Landing Zone réutilisable
+﻿# 🧪 Lab M5 — Module Landing Zone réutilisable
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Aucune nouvelle ressource (réutilisation) |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
-## Mission
+## 🎯 Mission
 
 Les domaines Data ont besoin d'une plateforme cohérente sans copier des centaines de ressources. Vous allez extraire les ressources de M1 dans un module réutilisable `landing-zone`, puis l'appeler depuis `environments/dev/`.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -29,28 +29,28 @@ flowchart TD
     MOD --> WH[snowflake_warehouse]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - créer un module Terraform avec une interface typée;
 - déplacer les ressources de `environments/dev/` vers le module;
 - appeler le module depuis `environments/dev/`;
 - versionner le module avec un `README.md` et des `outputs`.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M4 terminé;
 - [ ] `terraform plan` affiche `No changes` dans `environments/dev/`.
 
-## Partie 1 — Créer la structure du module
+## 📝 Partie 1 — Créer la structure du module
 
-### Étape 1.1 — Créer les dossiers
+### 📝 Étape 1.1 — Créer les dossiers
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
 mkdir -p modules/landing-zone
 ```
 
-### Étape 1.2 — Créer `modules/landing-zone/variables.tf`
+### 📝 Étape 1.2 — Créer `modules/landing-zone/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -108,7 +108,7 @@ variable "auto_suspend_seconds" {
 }
 ```
 
-### Étape 1.3 — Créer `modules/landing-zone/main.tf`
+### 📝 Étape 1.3 — Créer `modules/landing-zone/main.tf`
 
 ```hcl
 locals {
@@ -140,7 +140,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### Étape 1.4 — Créer `modules/landing-zone/outputs.tf`
+### 📝 Étape 1.4 — Créer `modules/landing-zone/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -159,7 +159,7 @@ output "warehouse_name" {
 }
 ```
 
-### Étape 1.5 — Créer `modules/landing-zone/versions.tf`
+### 📝 Étape 1.5 — Créer `modules/landing-zone/versions.tf`
 
 ```hcl
 terraform {
@@ -174,7 +174,7 @@ terraform {
 }
 ```
 
-### Étape 1.6 — Créer `modules/landing-zone/README.md`
+### 📝 Étape 1.6 — Créer `modules/landing-zone/README.md`
 
 ```markdown
 # landing-zone
@@ -211,7 +211,7 @@ module "landing_zone" {
 | warehouse_name | ETL warehouse name |
 ```
 
-### Étape 1.7 — Formater et valider le module
+### 📝 Étape 1.7 — Formater et valider le module
 
 ```bash
 cd modules/landing-zone
@@ -219,13 +219,13 @@ terraform fmt
 terraform validate
 ```
 
-**Attendu :** `The configuration is valid.`
+✅ **Checkpoint** : `The configuration is valid.`
 
-> Un module n'a pas de `provider` block ni de `backend` block. Il déclare seulement les contraintes et les ressources.
+> 💡 **Note** : Un module n'a pas de `provider` block ni de `backend` block. Il déclare seulement les contraintes et les ressources.
 
-## Partie 2 — Appeler le module depuis environments/dev
+## 📝 Partie 2 — Appeler le module depuis environments/dev
 
-### Étape 2.1 — Réécrire `environments/dev/main.tf`
+### 📝 Étape 2.1 — Réécrire `environments/dev/main.tf`
 
 Remplacez tout le contenu de `environments/dev/main.tf` par :
 
@@ -240,7 +240,7 @@ module "landing_zone" {
 }
 ```
 
-### Étape 2.2 — Mettre à jour `environments/dev/outputs.tf`
+### 📝 Étape 2.2 — Mettre à jour `environments/dev/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -267,7 +267,7 @@ output "resource_summary" {
 }
 ```
 
-### Étape 2.3 — Formater et initialiser
+### 📝 Étape 2.3 — Formater et initialiser
 
 ```bash
 cd environments/dev
@@ -277,19 +277,19 @@ terraform init
 
 Terraform télécharge le module local.
 
-### Étape 2.4 — Planifier
+### 📝 Étape 2.4 — Planifier
 
 ```bash
 terraform plan
 ```
 
-**Attendu :** `No changes.` — les ressources existent déjà et le module produit la même configuration.
+✅ **Checkpoint** : `No changes.` — les ressources existent déjà et le module produit la même configuration.
 
-> Si Terraform propose de recréer les ressources, c'est que les noms ou attributs diffèrent. Vérifiez vos variables.
+> 💡 **Note** : Si Terraform propose de recréer les ressources, c'est que les noms ou attributs diffèrent. Vérifiez vos variables.
 
-## Partie 3 — Réutiliser le module pour un second domaine
+## 📝 Partie 3 — Réutiliser le module pour un second domaine
 
-### Étape 3.1 — Ajouter un second appel dans `main.tf`
+### 📝 Étape 3.1 — Ajouter un second appel dans `main.tf`
 
 ```hcl
 module "landing_zone_sales" {
@@ -302,7 +302,7 @@ module "landing_zone_sales" {
 }
 ```
 
-### Étape 3.2 — Ajouter les outputs
+### 📝 Étape 3.2 — Ajouter les outputs
 
 ```hcl
 output "sales_database_name" {
@@ -311,24 +311,24 @@ output "sales_database_name" {
 }
 ```
 
-### Étape 3.3 — Planifier
+### 📝 Étape 3.3 — Planifier
 
 ```bash
 terraform fmt
 terraform plan
 ```
 
-**Attendu :** `3 to add` — le second module crée une nouvelle database, un nouveau schema et un nouveau warehouse.
+✅ **Checkpoint** : `3 to add` — le second module crée une nouvelle database, un nouveau schema et un nouveau warehouse.
 
-### Étape 3.4 — Appliquer
+### 📝 Étape 3.4 — Appliquer
 
 ```bash
 terraform apply
 ```
 
-**Attendu :** `3 added, 0 changed, 0 destroyed.`
+✅ **Checkpoint** : `3 added, 0 changed, 0 destroyed.`
 
-## Challenge
+## 🏆 Challenge
 
 Ajoutez une variable `schemas` (list of strings) au module qui crée plusieurs schemas dans la même database avec `for_each`.
 
@@ -338,7 +338,7 @@ Critères :
 - [ ] `terraform plan` crée les schemas supplémentaires;
 - [ ] le module reste réutilisable sans modification de l'appelant existant.
 
-## Cleanup
+## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 3. Supprimez le second domaine si vous voulez :
 

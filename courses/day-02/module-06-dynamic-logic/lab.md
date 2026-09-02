@@ -1,4 +1,4 @@
-﻿# Lab M6 — Déploiement dynamique avec `for_each`, `for` et `dynamic`
+﻿# 🧪 Lab M6 — Déploiement dynamique avec `for_each`, `for` et `dynamic`
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Warehouses X-SMALL supplémentaires |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
-## Mission
+## 🎯 Mission
 
 La plateforme doit absorber de nouveaux schémas, warehouses et domaines sans dupliquer le code. Vous allez rendre le module `landing-zone` piloté par métadonnées avec `for_each`, `for` et `dynamic`.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -21,21 +21,21 @@ flowchart LR
     M6 --> M7[M7 — Pipeline GitOps]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - utiliser `for_each` pour créer plusieurs ressources à partir d'une map;
 - utiliser `for` pour transformer des collections;
 - utiliser `dynamic` pour générer des blocs répétitifs;
 - comprendre la différence entre `count` et `for_each`.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M5 terminé : le module `landing-zone` existe et fonctionne;
 - [ ] `terraform plan` affiche `No changes` dans `environments/dev/`.
 
-## Partie 1 — for_each pour les schemas
+## 📝 Partie 1 — for_each pour les schemas
 
-### Étape 1.1 — Ajouter une variable `schemas` au module
+### 📝 Étape 1.1 — Ajouter une variable `schemas` au module
 
 Dans `modules/landing-zone/variables.tf`, ajoutez :
 
@@ -55,7 +55,7 @@ variable "schemas" {
 }
 ```
 
-### Étape 1.2 — Remplacer la ressource schema par un for_each
+### 📝 Étape 1.2 — Remplacer la ressource schema par un for_each
 
 Dans `modules/landing-zone/main.tf`, remplacez le bloc `snowflake_schema.ingestion` par :
 
@@ -69,7 +69,7 @@ resource "snowflake_schema" "this" {
 }
 ```
 
-### Étape 1.3 — Mettre à jour les outputs
+### 📝 Étape 1.3 — Mettre à jour les outputs
 
 Dans `modules/landing-zone/outputs.tf`, remplacez l'output `schema_name` par :
 
@@ -80,7 +80,7 @@ output "schema_names" {
 }
 ```
 
-### Étape 1.4 — Mettre à jour l'appelant
+### 📝 Étape 1.4 — Mettre à jour l'appelant
 
 Dans `environments/dev/main.tf`, ajoutez le paramètre `schemas` :
 
@@ -106,7 +106,7 @@ module "landing_zone" {
 }
 ```
 
-### Étape 1.5 — Mettre à jour les outputs de l'appelant
+### 📝 Étape 1.5 — Mettre à jour les outputs de l'appelant
 
 Dans `environments/dev/outputs.tf` :
 
@@ -117,7 +117,7 @@ output "schema_names" {
 }
 ```
 
-### Étape 1.6 — Formater, valider, planifier
+### 📝 Étape 1.6 — Formater, valider, planifier
 
 ```bash
 cd environments/dev
@@ -127,17 +127,17 @@ terraform validate
 terraform plan
 ```
 
-**Attendu :** `1 to add` — le nouveau schema `STAGING`.
+✅ **Checkpoint** : `1 to add` — le nouveau schema `STAGING`.
 
-### Étape 1.7 — Appliquer
+### 📝 Étape 1.7 — Appliquer
 
 ```bash
 terraform apply
 ```
 
-## Partie 2 — for_each pour les warehouses
+## 📝 Partie 2 — for_each pour les warehouses
 
-### Étape 2.1 — Ajouter une variable `warehouses`
+### 📝 Étape 2.1 — Ajouter une variable `warehouses`
 
 Dans `modules/landing-zone/variables.tf` :
 
@@ -159,7 +159,7 @@ variable "warehouses" {
 }
 ```
 
-### Étape 2.2 — Remplacer la ressource warehouse par un for_each
+### 📝 Étape 2.2 — Remplacer la ressource warehouse par un for_each
 
 Dans `modules/landing-zone/main.tf` :
 
@@ -176,7 +176,7 @@ resource "snowflake_warehouse" "this" {
 }
 ```
 
-### Étape 2.3 — Mettre à jour les outputs
+### 📝 Étape 2.3 — Mettre à jour les outputs
 
 ```hcl
 output "warehouse_names" {
@@ -185,7 +185,7 @@ output "warehouse_names" {
 }
 ```
 
-### Étape 2.4 — Mettre à jour l'appelant
+### 📝 Étape 2.4 — Mettre à jour l'appelant
 
 ```hcl
 module "landing_zone" {
@@ -206,7 +206,7 @@ module "landing_zone" {
 }
 ```
 
-### Étape 2.5 — Planifier et appliquer
+### 📝 Étape 2.5 — Planifier et appliquer
 
 ```bash
 terraform fmt
@@ -215,11 +215,11 @@ terraform plan
 terraform apply
 ```
 
-**Attendu :** `1 to add` — le nouveau warehouse `WH_ABC_BI_DEV`.
+✅ **Checkpoint** : `1 to add` — le nouveau warehouse `WH_ABC_BI_DEV`.
 
-## Partie 3 — for expressions et dynamic
+## 📝 Partie 3 — for expressions et dynamic
 
-### Étape 3.1 — Utiliser for pour un output consolidé
+### 📝 Étape 3.1 — Utiliser for pour un output consolidé
 
 Dans `modules/landing-zone/outputs.tf` :
 
@@ -234,17 +234,17 @@ output "all_resources" {
 }
 ```
 
-### Étape 3.2 — Vérifier
+### 📝 Étape 3.2 — Vérifier
 
 ```bash
 terraform output all_resources
 ```
 
-**Attendu :** un objet avec la database, la liste des schemas et la liste des warehouses.
+✅ **Checkpoint** : un objet avec la database, la liste des schemas et la liste des warehouses.
 
-## Partie 4 — count vs for_each
+## 📝 Partie 4 — count vs for_each
 
-### Étape 4.1 — Comprendre la différence
+### 📝 Étape 4.1 — Comprendre la différence
 
 | Critère | `count` | `for_each` |
 |---|---|---|
@@ -253,7 +253,7 @@ terraform output all_resources
 | Suppression | décale tous les index | supprime uniquement la clé visée |
 | Recommandé pour | activer/désactiver | collections nommées |
 
-### Étape 4.2 — Exemple de count pour un feature flag
+### 📝 Étape 4.2 — Exemple de count pour un feature flag
 
 Ajoutez dans `modules/landing-zone/variables.tf` :
 
@@ -277,7 +277,7 @@ resource "snowflake_schema" "monitoring" {
 }
 ```
 
-### Étape 4.3 — Activer et tester
+### 📝 Étape 4.3 — Activer et tester
 
 Dans `environments/dev/main.tf` :
 
@@ -291,9 +291,9 @@ terraform plan
 terraform apply
 ```
 
-**Attendu :** `1 to add` — le schema `MONITORING`.
+✅ **Checkpoint** : `1 to add` — le schema `MONITORING`.
 
-## Challenge
+## 🏆 Challenge
 
 Ajoutez une variable `tags` (map de strings) au module et utilisez `dynamic` pour appliquer ces tags à chaque ressource qui supporte les tags.
 
@@ -303,6 +303,6 @@ Critères :
 - [ ] `terraform plan` n'affiche pas de changement si les tags sont vides;
 - [ ] les tags s'appliquent quand ils sont fournis.
 
-## Cleanup
+## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 3.

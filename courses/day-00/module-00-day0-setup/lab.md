@@ -1,4 +1,4 @@
-# Étape 2 — Configurer la connexion Snowflake et valider
+# 🧪 Étape 2 — Configurer la connexion Snowflake et valider
 
 **Durée cible : 30 minutes**
 
@@ -22,17 +22,21 @@ Le formateur a pré-rempli `.env.example` avec les paramètres d'accès Snowflak
 
 ### 1.1 — Copier `.env.example`
 
-**Windows :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 cp .env.example .env
 ```
+</details>
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 cp .env.example .env
 ```
+</details>
 
 ### 1.2 — Mettre à jour vos valeurs personnelles
 
@@ -45,7 +49,7 @@ Ouvrez `.env` dans votre éditeur. Mettez à jour uniquement :
 
 Les autres valeurs (organisation, compte, utilisateur, rôle, Azure, Azure DevOps) sont déjà remplies par le formateur.
 
-> `[NOTE]` Les identifiants Azure (service principal partagé) sont dans `secrets/shared-sp.txt`.
+> 💡 **Note** Les identifiants Azure (service principal partagé) sont dans `secrets/shared-sp.txt`.
 > Vous n'avez pas besoin de les copier dans `.env` — le script `Learner-Login` les lit automatiquement.
 
 > `.env` est gitignored. Il ne sera jamais commité.
@@ -56,7 +60,7 @@ Les autres valeurs (organisation, compte, utilisateur, rôle, Azure, Azure DevOp
 git check-ignore .env
 ```
 
-**Attendu :** `.env` — Git confirme qu'il ignore le fichier.
+✅ **Checkpoint** : `.env` — Git confirme qu'il ignore le fichier.
 
 ---
 
@@ -65,22 +69,26 @@ git check-ignore .env
 Le formateur vous a fourni un fichier `secrets/shared-sp.txt` contenant les identifiants
 d'un **service principal partagé**. Ce SP contourne l'authentification MFA d'Azure.
 
-> `[SECURITY]` `secrets/shared-sp.txt` est gitignored. Ne le commitez jamais.
+> 🔒 **SECURITY** `secrets/shared-sp.txt` est gitignored. Ne le commitez jamais.
 
 ### 2.1 — Lancer le script de login
 
-**Windows :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
 ```
+</details>
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 chmod +x scripts/learner-login.sh
 ./scripts/learner-login.sh APP01
 ```
+</details>
 
 > Remplacez `APP01` par votre préfixe apprenant fourni par le formateur.
 
@@ -90,7 +98,7 @@ Le script :
 - définit les variables `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`;
 - définit `LEARNER_PREFIX` pour l'isolation de vos ressources.
 
-**Attendu :**
+✅ **Checkpoint** :
 
 ```text
 ============================================================
@@ -121,7 +129,7 @@ Le script :
 az account show --query 'name' -o tsv
 ```
 
-**Attendu :** le nom de la souscription Azure.
+✅ **Checkpoint** : le nom de la souscription Azure.
 
 ### 2.3 — Vérifier le préfixe apprenant
 
@@ -130,9 +138,9 @@ echo $LEARNER_PREFIX    # Linux/macOS
 echo $env:LEARNER_PREFIX # Windows PowerShell
 ```
 
-**Attendu :** votre préfixe (ex. `APP01`).
+✅ **Checkpoint** : votre préfixe (ex. `APP01`).
 
-> `[IMPORTANT]` Vous devez relancer `Learner-Login` au début de chaque session
+> ⚠️ **IMPORTANT** Vous devez relancer `Learner-Login` au début de chaque session
 > (nouveau terminal, redémarrage VM). Les variables d'environnement ne persistent
 > pas entre les sessions.
 
@@ -144,22 +152,26 @@ Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide d
 
 ### 3.1 — Lancer le script
 
-**Windows :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\New-SnowflakeConnection.ps1
 ```
+</details>
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 chmod +x scripts/new-snowflake-connection.sh
 ./scripts/new-snowflake-connection.sh
 ```
+</details>
 
 Le script lit les paramètres depuis `.env` et crée la connexion `training`.
 
-**Attendu :**
+✅ **Checkpoint** :
 
 ```text
 [INFO] Loading .env from .../.env
@@ -181,7 +193,7 @@ Saisissez votre PAT. Il ne s'affiche pas à l'écran.
 snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
 ```
 
-**Attendu :** une ligne avec votre utilisateur, votre rôle et votre compte.
+✅ **Checkpoint** : une ligne avec votre utilisateur, votre rôle et votre compte.
 
 ### 3.3 — Accéder à l'interface web Snowflake (optionnel)
 
@@ -193,7 +205,7 @@ pour accéder à l'interface web.
    - **Username :** `apprenant01` (votre identifiant apprenant)
    - **Password :** fourni par le formateur (14+ caractères)
 
-> `[NOTE]` Le PAT (utilisé par CLI et Terraform) ne fonctionne pas pour l'interface web.
+> 💡 **Note** Le PAT (utilisé par CLI et Terraform) ne fonctionne pas pour l'interface web.
 > L'interface web nécessite un username + password.
 > Le formateur vous distribue votre password individuel de façon sécurisée.
 > Le password respecte la politique Snowflake : 14+ caractères, 1 chiffre, 1 majuscule, 1 minuscule.
@@ -213,7 +225,7 @@ ls docs/
 ls scripts/
 ```
 
-**Attendu :**
+✅ **Checkpoint** :
 
 ```text
 environments/
@@ -247,7 +259,7 @@ CODEOWNERS
 find . -name '*.tf' -type f
 ```
 
-**Attendu :** aucun résultat. Le squelette ne contient aucun fichier `.tf`. Vous les créerez à partir du Jour 1.
+✅ **Checkpoint** : aucun résultat. Le squelette ne contient aucun fichier `.tf`. Vous les créerez à partir du Jour 1.
 
 ### 4.3 — Comprendre le rôle du squelette
 
@@ -279,19 +291,23 @@ git remote add origin <VOTRE_REPO_APPRENANT>
 
 ### 5.1 — Relancer le diagnostic
 
-**Windows :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 ```
+</details>
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 ./scripts/install-tools.sh --check
 ```
+</details>
 
-**Attendu :** `Toolchain status: READY`.
+✅ **Checkpoint** : `Toolchain status: READY`.
 
 ### 5.2 — Vérifier la connexion
 
@@ -299,7 +315,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 snow sql -q 'SELECT 1' -c training
 ```
 
-**Attendu :** un résultat contenant `1`.
+✅ **Checkpoint** : un résultat contenant `1`.
 
 ### 5.3 — Vérifier le projet
 
@@ -307,13 +323,13 @@ snow sql -q 'SELECT 1' -c training
 git status
 ```
 
-**Attendu :** branche propre, aucun fichier modifié (sauf `preflight.md` et `preflight.json` qui sont ignorés).
+✅ **Checkpoint** : branche propre, aucun fichier modifié (sauf `preflight.md` et `preflight.json` qui sont ignorés).
 
 ---
 
 ## Checkpoint
 
-[CHECK] Les quatre conditions suivantes sont réunies :
+✅ **Checkpoint** : Les quatre conditions suivantes sont réunies :
 
 1. `Toolchain status: READY`
 2. `az account show --query 'name' -o tsv` affiche la souscription Azure

@@ -1,4 +1,4 @@
-﻿# Lab M14 — Data Products as Code avec Terraform et Snow CLI
+﻿# 🧪 Lab M14 — Data Products as Code avec Terraform et Snow CLI
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Warehouses X-SMALL |
 | **Cleanup** | Détruire à la fin |
 
-## Mission
+## 🎯 Mission
 
 Les domaines SALES et FINANCE doivent livrer des données avec autonomie sans contourner sécurité, coûts et standards. Vous allez créer un module `data-product` qui déploie la structure (database, schemas RAW/SILVER/GOLD, rôles, stage) et publier le contenu SQL avec Snow CLI.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -25,7 +25,7 @@ flowchart LR
     SQL --> FINOPS[M13 FinOps]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
 - créer un module `data-product` réutilisable;
 - déployer deux domaines (SALES et FINANCE) avec `for_each`;
@@ -33,22 +33,22 @@ flowchart LR
 - publier le contenu SQL avec Snow CLI, pas avec `local-exec`;
 - vérifier ownership, rôles, Future Grants et zero-drift.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M12 terminé : la plateforme est déployée;
 - [ ] M13 terminé (recommandé) : FinOps est configuré;
 - [ ] `snow sql -c training` fonctionne.
 
-## Partie 1 — Créer le module data-product
+## 📝 Partie 1 — Créer le module data-product
 
-### Étape 1.1 — Créer la structure
+### 📝 Étape 1.1 — Créer la structure
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
 mkdir -p modules/data-product
 ```
 
-### Étape 1.2 — Créer `modules/data-product/variables.tf`
+### 📝 Étape 1.2 — Créer `modules/data-product/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -78,7 +78,7 @@ variable "warehouse_size" {
 }
 ```
 
-### Étape 1.3 — Créer `modules/data-product/main.tf`
+### 📝 Étape 1.3 — Créer `modules/data-product/main.tf`
 
 ```hcl
 locals {
@@ -180,7 +180,7 @@ resource "snowflake_stage" "raw" {
 }
 ```
 
-### Étape 1.4 — Créer `modules/data-product/outputs.tf`
+### 📝 Étape 1.4 — Créer `modules/data-product/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -204,7 +204,7 @@ output "stage_name" {
 }
 ```
 
-### Étape 1.5 — Créer `modules/data-product/versions.tf`
+### 📝 Étape 1.5 — Créer `modules/data-product/versions.tf`
 
 ```hcl
 terraform {
@@ -219,7 +219,7 @@ terraform {
 }
 ```
 
-### Étape 1.6 — Formater et valider
+### 📝 Étape 1.6 — Formater et valider
 
 ```bash
 cd modules/data-product
@@ -227,9 +227,9 @@ terraform fmt
 terraform validate
 ```
 
-## Partie 2 — Déployer deux domaines avec for_each
+## 📝 Partie 2 — Déployer deux domaines avec for_each
 
-### Étape 2.1 — Ajouter l'appel dans `environments/dev/main.tf`
+### 📝 Étape 2.1 — Ajouter l'appel dans `environments/dev/main.tf`
 
 ```hcl
 locals {
@@ -255,7 +255,7 @@ module "data_product" {
 }
 ```
 
-### Étape 2.2 — Ajouter les outputs
+### 📝 Étape 2.2 — Ajouter les outputs
 
 ```hcl
 output "data_products" {
@@ -271,7 +271,7 @@ output "data_products" {
 }
 ```
 
-### Étape 2.3 — Planifier et appliquer
+### 📝 Étape 2.3 — Planifier et appliquer
 
 ```bash
 cd environments/dev
@@ -282,9 +282,9 @@ terraform plan
 terraform apply
 ```
 
-**Attendu :** 2 databases, 6 schemas, 2 warehouses, 4 rôles, 2 stages, grants.
+✅ **Checkpoint** : 2 databases, 6 schemas, 2 warehouses, 4 rôles, 2 stages, grants.
 
-### Étape 2.4 — Vérifier
+### 📝 Étape 2.4 — Vérifier
 
 ```bash
 snow sql -c training -q "SHOW DATABASES LIKE 'ABC_SALES_DEV'"
@@ -292,9 +292,9 @@ snow sql -c training -q "SHOW DATABASES LIKE 'ABC_FINANCE_DEV'"
 snow sql -c training -q "SHOW SCHEMAS IN DATABASE ABC_SALES_DEV"
 ```
 
-## Partie 3 — Publier le contenu SQL avec Snow CLI
+## 📝 Partie 3 — Publier le contenu SQL avec Snow CLI
 
-### Étape 3.1 — Créer les fichiers SQL
+### 📝 Étape 3.1 — Créer les fichiers SQL
 
 ```bash
 mkdir -p sql/sales sql/finance
@@ -330,41 +330,41 @@ SELECT
   300.00 AS AMOUNT;
 ```
 
-### Étape 3.2 — Exécuter le SQL avec Snow CLI
+### 📝 Étape 3.2 — Exécuter le SQL avec Snow CLI
 
 ```bash
 snow sql -c training -f sql/sales/orders.sql
 snow sql -c training -f sql/finance/ledger.sql
 ```
 
-### Étape 3.3 — Vérifier
+### 📝 Étape 3.3 — Vérifier
 
 ```bash
 snow sql -c training -q "SELECT * FROM ABC_SALES_DEV.GOLD.DAILY_REVENUE"
 snow sql -c training -q "SELECT * FROM ABC_FINANCE_DEV.SILVER.LEDGER"
 ```
 
-### Étape 3.4 — Prouver le zero-drift
+### 📝 Étape 3.4 — Prouver le zero-drift
 
 ```bash
 terraform plan -detailed-exitcode
 ```
 
-**Attendu :** code 0 — le SQL publié ne modifie pas la structure gérée par Terraform.
+✅ **Checkpoint** : code 0 — le SQL publié ne modifie pas la structure gérée par Terraform.
 
 > C'est la séparation des responsabilités : Terraform gère la structure, Snow CLI gère le contenu.
 
-## Partie 4 — Vérifier les Future Grants
+## 📝 Partie 4 — Vérifier les Future Grants
 
-### Étape 4.1 — Lister les Future Grants
+### 📝 Étape 4.1 — Lister les Future Grants
 
 ```bash
 snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA ABC_SALES_DEV.GOLD"
 ```
 
-**Attendu :** `GRANT SELECT ON FUTURE TABLES TO ROLE ROLE_ABC_SALES_RDR_DEV`.
+✅ **Checkpoint** : `GRANT SELECT ON FUTURE TABLES TO ROLE ROLE_ABC_SALES_RDR_DEV`.
 
-### Étape 4.2 — Tester le Future Grant
+### 📝 Étape 4.2 — Tester le Future Grant
 
 Créez une table manuellement dans GOLD :
 
@@ -373,15 +373,15 @@ snow sql -c training -q "CREATE TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE (ID INT)"
 snow sql -c training -q "SHOW GRANTS ON TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE"
 ```
 
-**Attendu :** le rôle reader a déjà SELECT grâce au Future Grant.
+✅ **Checkpoint** : le rôle reader a déjà SELECT grâce au Future Grant.
 
-### Étape 4.3 — Nettoyer
+### 📝 Étape 4.3 — Nettoyer
 
 ```bash
 snow sql -c training -q "DROP TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE"
 ```
 
-## Challenge
+## 🏆 Challenge
 
 Ajoutez un troisième domaine `MARKETING` avec un owner et un warehouse dédié. Publiez une vue `CAMPAIGN_PERFORMANCE` dans le schema GOLD.
 
@@ -392,7 +392,7 @@ Critères :
 - [ ] `terraform plan -detailed-exitcode` retourne 0;
 - [ ] le Future Grant est configuré pour le reader.
 
-## Cleanup
+## 🧹 Cleanup
 
 ```bash
 cd environments/dev
