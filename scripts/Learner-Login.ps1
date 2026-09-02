@@ -35,6 +35,21 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDir
 
+# ------------------------------------------------------------------
+# Ensure local toolchain (Terraform, Snow CLI, dbt, tflint) wins over
+# any system-wide installation in the current session.
+# ------------------------------------------------------------------
+$localBin = Join-Path $HOME '.data2ai\bin'
+$localVenv = Join-Path $HOME '.data2ai\venv\Scripts'
+foreach ($dir in @($localBin, $localVenv)) {
+    if (Test-Path $dir) {
+        $escaped = [Regex]::Escape($dir)
+        if ($env:PATH -notmatch "(^|;)$escaped(;|$)") {
+            $env:PATH = "$dir;$env:PATH"
+        }
+    }
+}
+
 if (-not $SecretsFile) {
     $SecretsFile = Join-Path $projectRoot 'secrets\shared-sp.txt'
 }
@@ -131,3 +146,5 @@ Write-Host ''
 Write-Host 'Next steps:' -ForegroundColor DarkGray
 Write-Host '  .\scripts\Test-LabConnectivity.ps1 -SkipDevOps' -ForegroundColor DarkGray
 Write-Host ''
+Write-Host '[INFO] PATH updated for this session. Local tools in .data2ai\bin and .data2ai\venv\Scripts take priority.' -ForegroundColor DarkGray
+Write-Host "       terraform version -> $(& (Join-Path $HOME '.data2ai\bin\terraform.exe') version 2>&1 | Select-Object -First 1)" -ForegroundColor DarkGray
