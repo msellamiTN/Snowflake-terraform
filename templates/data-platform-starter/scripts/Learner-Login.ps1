@@ -139,6 +139,16 @@ Write-Host '       ARM_SUBSCRIPTION_ID' -ForegroundColor DarkGray
 Write-Host "       LEARNER_PREFIX = $LearnerPrefix" -ForegroundColor DarkGray
 Write-Host ''
 
+Write-Host '[INFO] PATH updated for this session. Local tools in .data2ai\bin and .data2ai\venv\Scripts take priority.' -ForegroundColor DarkGray
+Write-Host ''
+
+Write-Host 'Verify (PowerShell):' -ForegroundColor Cyan
+Write-Host '  $env:ARM_SUBSCRIPTION_ID' -ForegroundColor DarkGray
+Write-Host '  $env:ARM_RESOURCE_GROUP' -ForegroundColor DarkGray
+Write-Host '  $env:ARM_STORAGE_ACCOUNT' -ForegroundColor DarkGray
+Write-Host '  $env:LEARNER_PREFIX' -ForegroundColor DarkGray
+Write-Host ''
+
 Write-Host '============================================================' -ForegroundColor Cyan
 Write-Host ' Ready for labs' -ForegroundColor Green
 Write-Host '============================================================' -ForegroundColor Cyan

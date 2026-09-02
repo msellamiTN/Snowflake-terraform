@@ -55,7 +55,21 @@ Le backend Azure est créé manuellement avec Azure CLI, pas avec Terraform. C'e
 
 ### Étape 1.1 — Définir les variables
 
-Lisez les valeurs depuis votre `.env` :
+Les variables Azure ont été définies par `Learner-Login.ps1` (Windows) ou `learner-login.sh` (Linux/macOS).
+
+**Windows (PowerShell) :**
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+Write-Host "Subscription: $env:ARM_SUBSCRIPTION_ID"
+Write-Host "Resource Group: $env:ARM_RESOURCE_GROUP"
+Write-Host "Storage Account: $env:ARM_STORAGE_ACCOUNT"
+```
+
+> `[IMPORTANT]` Sous PowerShell, les variables d'environnement utilisent le préfixe `$env:`.
+> Ne pas utiliser `source .env` ou `$ARM_SUBSCRIPTION_ID` sans `$env:`.
+
+**Linux/macOS (Bash) :**
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
@@ -67,6 +81,17 @@ echo "Storage Account: $ARM_STORAGE_ACCOUNT"
 
 ### Étape 1.2 — Créer le Resource Group
 
+**Windows (PowerShell) :**
+
+```powershell
+az group create `
+    --name $env:ARM_RESOURCE_GROUP `
+    --location "westeurope" `
+    --output table
+```
+
+**Linux/macOS (Bash) :**
+
 ```bash
 az group create \
     --name "$ARM_RESOURCE_GROUP" \
@@ -77,6 +102,20 @@ az group create \
 **Attendu :** une table avec `provisioningState : Succeeded`.
 
 ### Étape 1.3 — Créer le Storage Account
+
+**Windows (PowerShell) :**
+
+```powershell
+az storage account create `
+    --name $env:ARM_STORAGE_ACCOUNT `
+    --resource-group $env:ARM_RESOURCE_GROUP `
+    --location "westeurope" `
+    --sku "Standard_LRS" `
+    --encryption-services blob `
+    --output table
+```
+
+**Linux/macOS (Bash) :**
 
 ```bash
 az storage account create \
@@ -94,6 +133,17 @@ az storage account create \
 
 ### Étape 1.4 — Créer le conteneur
 
+**Windows (PowerShell) :**
+
+```powershell
+az storage container create `
+    --name $env:ARM_CONTAINER `
+    --account-name $env:ARM_STORAGE_ACCOUNT `
+    --output table
+```
+
+**Linux/macOS (Bash) :**
+
 ```bash
 az storage container create \
     --name "$ARM_CONTAINER" \
@@ -104,6 +154,17 @@ az storage container create \
 **Attendu :** `created : true`.
 
 ### Étape 1.5 — Vérifier
+
+**Windows (PowerShell) :**
+
+```powershell
+az storage account show `
+    --name $env:ARM_STORAGE_ACCOUNT `
+    --resource-group $env:ARM_RESOURCE_GROUP `
+    --query "name" -o tsv
+```
+
+**Linux/macOS (Bash) :**
 
 ```bash
 az storage account show \
@@ -177,7 +238,9 @@ terraform init -backend-config=backend.hcl
 
 ### Étape 2.3 — Formater
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 terraform fmt
 ```
 
@@ -185,7 +248,9 @@ terraform fmt
 
 ### Étape 3.1 — Initialiser avec migration
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 terraform init -migrate-state
 ```
 
@@ -200,6 +265,14 @@ Terraform has automatically migrated your state from "local" to "azurerm".
 
 ### Étape 3.2 — Vérifier que le state local est supprimé
 
+**Windows (PowerShell) :**
+
+```powershell
+Get-Item terraform.tfstate*
+```
+
+**Linux/macOS (Bash) :**
+
 ```bash
 ls terraform.tfstate*
 ```
@@ -208,7 +281,9 @@ ls terraform.tfstate*
 
 ### Étape 3.3 — Vérifier le state distant
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 terraform state list
 ```
 
@@ -221,6 +296,17 @@ snowflake_warehouse.etl
 ```
 
 ### Étape 3.4 — Vérifier dans Azure
+
+**Windows (PowerShell) :**
+
+```powershell
+az storage blob list `
+    --account-name $env:ARM_STORAGE_ACCOUNT `
+    --container-name $env:ARM_CONTAINER `
+    --query "[].name" -o tsv
+```
+
+**Linux/macOS (Bash) :**
 
 ```bash
 az storage blob list \
@@ -239,7 +325,9 @@ Dans les deux terminaux, placez-vous dans `environments/dev/`.
 
 ### Étape 4.2 — Lancer un plan dans le terminal 1
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 # Terminal 1
 terraform plan
 ```
@@ -248,7 +336,9 @@ Pendant que le plan s'exécute, le state est verrouillé dans Azure.
 
 ### Étape 4.3 — Tenter un plan dans le terminal 2
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 # Terminal 2
 terraform plan
 ```
@@ -265,7 +355,9 @@ C'est le comportement normal : le Blob Lease empêche les écritures concurrente
 
 Attendez que le terminal 1 termine, ou forcez le déverrouillage :
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 # Terminal 2 (seulement si le terminal 1 est terminé)
 terraform force-unlock <LOCK_ID>
 ```
@@ -276,17 +368,29 @@ terraform force-unlock <LOCK_ID>
 
 ### Étape 5.1 — Lister les ressources
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 terraform state list
 ```
 
 ### Étape 5.2 — Afficher le détail d'une ressource
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 terraform state show snowflake_database.raw
 ```
 
 ### Étape 5.3 — Voir la structure JSON du state
+
+**Windows (PowerShell) :**
+
+```powershell
+terraform show -json | Set-Content state.json
+```
+
+**Linux/macOS (Bash) :**
 
 ```bash
 terraform show -json > state.json
@@ -307,6 +411,16 @@ Le state contient :
 ## Partie 6 — terraform_remote_state
 
 ### Étape 6.1 — Créer un second dossier
+
+**Windows (PowerShell) :**
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+New-Item -ItemType Directory -Path environments\dev-reader -Force | Out-Null
+cd environments\dev-reader
+```
+
+**Linux/macOS (Bash) :**
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
@@ -352,7 +466,9 @@ output "raw_database_name" {
 
 ### Étape 6.3 — Initialiser et appliquer
 
-```bash
+**Windows (PowerShell) / Linux/macOS (Bash) :**
+
+```powershell
 terraform init
 terraform apply -auto-approve
 ```
@@ -360,6 +476,15 @@ terraform apply -auto-approve
 **Attendu :** `raw_database_name` affiche le nom de la database créée en M1.
 
 ### Étape 6.4 — Nettoyer le dossier reader
+
+**Windows (PowerShell) :**
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+Remove-Item -Recurse -Force environments\dev-reader
+```
+
+**Linux/macOS (Bash) :**
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
@@ -393,6 +518,15 @@ Critères :
 Ne détruisez pas les ressources Snowflare. Elles sont réutilisées au Jour 3.
 
 Si vous voulez nettoyer le backend Azure :
+
+**Windows (PowerShell) :**
+
+```powershell
+az storage account delete --name $env:ARM_STORAGE_ACCOUNT --resource-group $env:ARM_RESOURCE_GROUP --yes
+az group delete --name $env:ARM_RESOURCE_GROUP --yes
+```
+
+**Linux/macOS (Bash) :**
 
 ```bash
 az storage account delete --name "$ARM_STORAGE_ACCOUNT" --resource-group "$ARM_RESOURCE_GROUP" --yes
