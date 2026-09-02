@@ -164,9 +164,9 @@ az storage account create \
 
 ✅ **Checkpoint** : `provisioningState : Succeeded`.
 
-> � **Note** : Si le storage account existe déjà d'une session précédente, Azure affiche `A storage account with the provided name is found. Will continue to update the existing account.` C'est normal — la commande est idempotente.
+> 💡 **Note** : Si le Storage Account existe déjà, Azure affiche `A storage account with the provided name is found. Will continue to update the existing account.` C'est normal : la commande est idempotente et conserve le compte existant.
 
-> �💰 **COST** : `Standard_LRS` est le SKU le moins coûteux. Le state est petit; ce n'est pas une charge significative.
+> 💰 **COST** : `Standard_LRS` est le SKU le moins coûteux. Le state est petit; ce n'est pas une charge significative.
 
 ### 📝 Étape 1.4 — Créer le conteneur
 
@@ -194,7 +194,12 @@ az storage container create \
 ```
 </details>
 
-✅ **Checkpoint** : `created : true`.
+✅ **Checkpoint** :
+
+- `Created: True` : le conteneur vient d'être créé;
+- `Created: False` : le conteneur existait déjà. C'est également un résultat valide.
+
+> 💡 **Note** : La commande est idempotente. La relancer ne supprime ni le conteneur ni le state existant.
 
 ### 📝 Étape 1.5 — Vérifier
 
@@ -224,18 +229,22 @@ az storage account show \
 
 ## 📝 Partie 2 — Configurer le backend Terraform
 
-### 📝 Étape 2.1 — Créer `backend.tf`
+> ⚠️ **IMPORTANT** : Choisissez **une seule méthode** :
+>
+> - **Méthode A — recommandée pour ce lab** : toutes les valeurs sont dans `backend.tf`; lancez ensuite `terraform init -migrate-state` **sans** `-backend-config`.
+> - **Méthode B — optionnelle** : `backend.tf` contient un bloc vide et les valeurs sont dans `backend.hcl`; lancez alors `terraform init -migrate-state -backend-config="backend.hcl"`.
+>
+> Ne mélangez pas les deux méthodes.
 
-Dans `environments/dev/`, créez `backend.tf` :
+### 📝 Étape 2.1 — Se placer dans `environments/dev`
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-cd environments/dev
-New-Item -ItemType File -Path backend.tf
-# ou si VS Code est installé
-# code backend.tf
+cd "$HOME\Data2AI-Labs\data-platform\environments\dev"
+Get-Location
+Get-ChildItem backend.tf, terraform.tfstate -ErrorAction SilentlyContinue
 ```
 </details>
 
@@ -243,14 +252,39 @@ New-Item -ItemType File -Path backend.tf
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-cd environments/dev
-touch backend.tf
-# ou si VS Code est installé
-# code backend.tf
+cd "$HOME/Data2AI-Labs/data-platform/environments/dev"
+pwd
+ls -l backend.tf terraform.tfstate 2>/dev/null
 ```
 </details>
 
-Ajoutez :
+✅ **Checkpoint** : le répertoire courant se termine par `environments/dev` et le state local `terraform.tfstate` est présent avant la migration.
+
+### 📝 Étape 2.2 — Méthode A recommandée : configurer `backend.tf`
+
+Si `backend.tf` existe déjà, **ne le recréez pas**. Ouvrez-le et remplacez son contenu. Sinon, créez-le.
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+if (-not (Test-Path backend.tf)) {
+    New-Item -ItemType File -Path backend.tf | Out-Null
+}
+code backend.tf
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+touch backend.tf
+code backend.tf
+```
+</details>
+
+Ajoutez exactement ce bloc, en adaptant les valeurs à votre `.env` si nécessaire :
 
 ```hcl
 terraform {
@@ -263,13 +297,40 @@ terraform {
 }
 ```
 
-> 💡 **Note** : Ces valeurs correspondent aux valeurs par défaut de `.env.example`.
-> Remplacez-les si votre `.env` utilise d'autres noms.
+Vérifiez le fichier avant de continuer :
 
-### 📝 Étape 2.2 — Alternative : `backend.hcl` séparé
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
-> 💡 **Note** : Cette méthode nécessite le fichier `backend.hcl.example` dans `environments/dev/`.
-> Si le fichier n'existe pas dans votre clone, utilisez la méthode `backend.tf` complète (Étape 2.1). Vous pouvez aussi la créer à la main :
+```powershell
+Get-Content backend.tf
+Test-Path backend.hcl
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+cat backend.tf
+test -f backend.hcl && echo "backend.hcl exists" || echo "backend.hcl absent"
+```
+</details>
+
+✅ **Checkpoint** : `backend.tf` contient les quatre paramètres. Avec cette méthode, `backend.hcl` n'est pas nécessaire et peut être absent.
+
+<details>
+<summary>🧭 <b>Méthode B optionnelle : utiliser backend.hcl</b></summary>
+
+Utilisez cette méthode uniquement si votre formateur la demande. Dans `backend.tf`, mettez seulement :
+
+```hcl
+terraform {
+  backend "azurerm" {}
+}
+```
+
+Créez ensuite `backend.hcl` dans le **même dossier** :
 
 ```hcl
 resource_group_name  = "rg-data2ai-tf-state"
@@ -278,57 +339,45 @@ container_name       = "tfstate"
 key                  = "data-platform/dev/terraform.tfstate"
 ```
 
-Si `backend.hcl.example` existe, copiez-le :
-
-<details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
+Vérifiez que le fichier existe avant l'initialisation :
 
 ```powershell
-Copy-Item backend.hcl.example backend.hcl
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
-
-```bash
-cp backend.hcl.example backend.hcl
-```
-</details>
-
-Éditez `backend.hcl` avec vos valeurs réelles, puis dans `backend.tf` :
-
-```hcl
-terraform {
-  backend "azurerm" {}
-}
+Test-Path backend.hcl
 ```
 
-et initialisez avec :
+Le résultat doit être `True`. Pour cette méthode uniquement, la commande d'initialisation sera :
 
 ```powershell
-terraform init -backend-config=backend.hcl -migrate-state
+terraform init -migrate-state -backend-config="backend.hcl"
 ```
 
 > 🔒 **SECURITY** : `backend.hcl` est gitignored. Ne le commitez jamais.
+</details>
 
-### 📝 Étape 2.3 — Formater
+### 📝 Étape 2.3 — Formater avant l'initialisation
 
 ```powershell
 terraform fmt
+terraform fmt -check
 ```
 
-✅ **Checkpoint** : aucune erreur de formatage.
+✅ **Checkpoint** : les commandes se terminent sans erreur.
+
+> 💡 **Note** : N'exécutez pas encore `terraform validate`. Après l'ajout ou la modification d'un backend, Terraform doit d'abord exécuter `terraform init`.
 
 ## 📝 Partie 3 — Migrer le state local vers Azure
 
-### 📝 Étape 3.1 — Initialiser avec migration
+### 📝 Étape 3.1 — Initialiser avec la méthode choisie
+
+Pour la **méthode A recommandée**, exécutez uniquement :
 
 ```powershell
 terraform init -migrate-state
 ```
 
-Terraform détecte le backend, vous demande confirmation, puis copie le state local vers Azure Blob Storage.
+N'ajoutez pas `-backend-config=backend.hcl` lorsque les paramètres sont déjà écrits dans `backend.tf`.
+
+Terraform détecte le changement de backend, demande confirmation, puis copie le state local vers Azure Blob Storage. Répondez `yes` si les noms du Resource Group, du Storage Account, du conteneur et de la clé sont corrects.
 
 ✅ **Checkpoint** :
 
@@ -337,7 +386,17 @@ Successfully configured the backend "azurerm"!
 Terraform has automatically migrated your state from "local" to "azurerm".
 ```
 
-### 📝 Étape 3.2 — Vérifier que le state local est supprimé
+> 🔍 **En cas de `Too many command line arguments`** : vérifiez que vous êtes dans `environments/dev`. Si vous utilisez la méthode A, retirez complètement l'option `-backend-config` et relancez `terraform init -migrate-state`.
+
+Validez ensuite la configuration initialisée :
+
+```powershell
+terraform validate
+```
+
+✅ **Checkpoint** : `Success! The configuration is valid.`
+
+### 📝 Étape 3.2 — Inspecter les anciens fichiers de state local
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -355,7 +414,9 @@ ls terraform.tfstate* 2>/dev/null
 ```
 </details>
 
-✅ **Checkpoint** : aucun fichier `terraform.tfstate` local. Le state est maintenant dans Azure.
+> 💡 **Note** : Terraform peut conserver `terraform.tfstate` ou `terraform.tfstate.backup` comme copie locale après la migration. Leur présence ne signifie pas que Terraform les utilise encore. Ne les supprimez pas avant d'avoir validé le state distant aux étapes 3.3 et 3.4.
+
+✅ **Checkpoint** : la migration s'est terminée sans erreur. La preuve définitive est obtenue avec `terraform state list` puis avec la présence du blob Azure.
 
 ### 📝 Étape 3.3 — Vérifier le state distant
 
@@ -380,6 +441,7 @@ snowflake_warehouse.etl
 az storage blob list `
     --account-name $env:ARM_STORAGE_ACCOUNT `
     --container-name $env:ARM_CONTAINER `
+    --auth-mode login `
     --query "[].name" -o tsv
 ```
 </details>
@@ -391,52 +453,84 @@ az storage blob list `
 az storage blob list \
     --account-name "$ARM_STORAGE_ACCOUNT" \
     --container-name "$ARM_CONTAINER" \
+    --auth-mode login \
     --query "[].name" -o tsv
 ```
 </details>
 
 ✅ **Checkpoint** : `data-platform/dev/terraform.tfstate`.
 
+> 💡 **Note** : `--auth-mode login` force Azure CLI à utiliser la session ouverte par `Learner-Login.ps1`. Sans cette option, Azure CLI affiche un avertissement puis tente de récupérer une account key. Si la commande retourne `AuthorizationPermissionMismatch`, demandez au formateur d'attribuer au service principal le rôle `Storage Blob Data Reader` ou `Storage Blob Data Contributor`.
+
 ## 📝 Partie 4 — Tester le verrouillage
 
-### 📝 Étape 4.1 — Ouvrir deux terminaux
+### 📝 Étape 4.1 — Ouvrir et préparer deux terminaux
 
-Dans les deux terminaux, placez-vous dans `environments/dev/`.
+Chaque terminal possède ses propres variables d'environnement. Dans **les deux terminaux**, chargez donc l'authentification Azure, le PAT Snowflake et le bon dossier.
 
-### 📝 Étape 4.2 — Lancer un plan dans le terminal 1
-
-```powershell
-# Terminal 1
-terraform plan
-```
-
-Pendant que le plan s'exécute, le state est verrouillé dans Azure.
-
-### 📝 Étape 4.3 — Tenter un plan dans le terminal 2
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-# Terminal 2
-terraform plan
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+$env:TF_VAR_snowflake_token = (Get-Content .\secrets\snowflake_pat.txt -Raw).Trim()
+cd .\environments\dev
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+cd "$HOME/Data2AI-Labs/data-platform"
+source ./scripts/learner-login.sh APP01
+export TF_VAR_snowflake_token=$(tr -d '[:space:]' < ./secrets/snowflake_pat.txt)
+cd ./environments/dev
+```
+</details>
+
+Remplacez `APP01` par votre préfixe.
+
+### 📝 Étape 4.2 — Maintenir le verrou dans le terminal 1
+
+Dans le terminal 1, lancez `terraform apply` **sans répondre à la confirmation** :
+
+```powershell
+terraform apply
 ```
 
-✅ **Checkpoint** : une erreur indiquant que le state est verrouillé :
+Quand Terraform affiche `Enter a value:`, laissez le terminal en attente. L'opération conserve alors le verrou du state.
+
+> ⚠️ **IMPORTANT** : Ne saisissez pas `yes`. Ce test ne doit appliquer aucun changement.
+
+### 📝 Étape 4.3 — Vérifier le verrou dans le terminal 2
+
+Pendant que le terminal 1 attend toujours, exécutez dans le terminal 2 :
+
+```powershell
+terraform plan -lock-timeout=0s
+```
+
+✅ **Checkpoint** : Terraform refuse l'accès au state avec une erreur similaire à :
 
 ```text
 Error: Error acquiring the state lock
 ```
 
-C'est le comportement normal : le Blob Lease empêche les écritures concurrentes.
+C'est le comportement normal : le Blob Lease empêche les opérations concurrentes.
 
-### 📝 Étape 4.4 — Libérer le verrou
+### 📝 Étape 4.4 — Libérer le verrou normalement
 
-Attendez que le terminal 1 termine, ou forcez le déverrouillage :
+Retournez dans le terminal 1 et utilisez `Ctrl+C` pour annuler l'apply. Attendez le retour du prompt, puis vérifiez dans le terminal 2 :
 
 ```powershell
-# Terminal 2 (seulement si le terminal 1 est terminé)
-terraform force-unlock <LOCK_ID>
+terraform plan
 ```
 
-> ⚠️ **SECURITY** : Ne forcez jamais un unlock si un autre processus utilise réellement le state. Cela peut corrompre le state.
+✅ **Checkpoint** : le plan fonctionne de nouveau et affiche `No changes.`
+
+> ⚠️ **SECURITY** : N'utilisez `terraform force-unlock <LOCK_ID>` que si le processus du terminal 1 est réellement arrêté et que le verrou reste présent. Forcer l'unlock pendant une opération active peut corrompre le state.
 
 ## 📝 Partie 5 — Analyser le state
 
@@ -591,7 +685,8 @@ Critères :
 - [ ] `terraform validate` réussit;
 - [ ] `terraform output state_metadata` affiche les informations du backend;
 - [ ] `terraform plan` reste sans changement;
-- [ ] le state local n'existe plus.
+- [ ] le blob `data-platform/dev/terraform.tfstate` existe dans Azure;
+- [ ] Terraform utilise le backend distant après réouverture du terminal.
 
 ## 🧹 Cleanup
 
