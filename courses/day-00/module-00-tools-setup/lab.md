@@ -36,15 +36,22 @@ Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-sta
 **Windows :**
 
 ```powershell
-mkdir $HOME\Data2AI-Labs -Force
-git clone https://github.com/msellamiTN/data-platform-starter.git $HOME\Data2AI-Labs\data-platform
-cd $HOME\Data2AI-Labs\data-platform
+New-Item -ItemType Directory -Path "$HOME\Data2AI-Labs" -Force | Out-Null
+git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
+cd "$HOME\Data2AI-Labs\data-platform"
 ```
+
+> `[IMPORTANT]` Sous Windows, ne pas utiliser `~` (tilde) dans le chemin de clone.
+> PowerShell ne l'interprète pas comme le dossier personnel. Utilisez `$HOME` entre guillemets.
+> Si le répertoire contient des espaces (ex. `Formation Terraform`), encadrez le chemin :
+> ```powershell
+> git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
+> ```
 
 **Linux/macOS :**
 
 ```bash
-mkdir -p $HOME/Data2AI-Labs
+mkdir -p "$HOME/Data2AI-Labs"
 git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME/Data2AI-Labs/data-platform"
 cd "$HOME/Data2AI-Labs/data-platform"
 ```

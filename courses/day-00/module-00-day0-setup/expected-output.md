@@ -91,6 +91,17 @@ az account show --query 'name' -o tsv
 
 > `[IMPORTANT]` Relancez `Learner-Login` au début de chaque nouvelle session.
 
+## Accès Snowflake web (optionnel)
+
+L'apprenant peut se connecter à l'interface web Snowflake avec son username + password
+individuel (fourni par le formateur).
+
+- URL : https://app.snowflake.com
+- Username : `apprenant01` à `apprenant10`
+- Password : 14+ caractères (respecte la politique Snowflake)
+
+> Le PAT (CLI/Terraform) et le password (web) sont deux méthodes distinctes.
+
 ## Connexion Snowflake
 
 ### Sortie attendue du script de connexion

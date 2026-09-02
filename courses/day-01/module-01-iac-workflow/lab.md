@@ -28,7 +28,8 @@ flowchart LR
     DB --> SCHEMA[Schema INGESTION]
     SF --> WH[Warehouse ETL suspendu]
 ```
-![alt text](lab-architecture.png)
+ 
+![Architecture Atelier](assets/lab-architecture.png)
 ## Objectifs
 
 - créer une configuration Terraform depuis le clone du projet type;
@@ -367,7 +368,9 @@ snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_DEV'"
 
 ### Preuve Snowflake (interface web)
 
-Connectez-vous à l'interface Snowflake (https://app.snowflake.com) avec vos identifiants.
+Connectez-vous à l'interface Snowflake (https://app.snowflake.com) avec votre
+**username + password individuel** (fourni par le formateur, différent du PAT).
+
 Vérifiez que vos ressources apparaissent dans chaque section :
 
 **1. Database** — Allez dans **Data > Databases** et cherchez votre database :

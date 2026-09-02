@@ -54,7 +54,7 @@ Il **ne fournit pas** le code Terraform. Vous créerez les fichiers `.tf` au fil
 
 ## Authentification Snowflake
 
-### PAT (Personal Access Token)
+### PAT (Personal Access Token) - CLI et Terraform
 
 Le PAT est un jeton temporaire utilisé pour la formation. Le flux est :
 
@@ -63,6 +63,24 @@ Le PAT est un jeton temporaire utilisé pour la formation. Le flux est :
 3. le **script de connexion** lit `.env` automatiquement et crée la connexion Snowflake CLI;
 4. le PAT est jamais affiché, jamais stocké dans un fichier commité;
 5. le script efface le token de l'environnement dès que possible.
+
+### Username + Password - Interface web
+
+Le PAT ne fonctionne pas pour l'interface web `app.snowflake.com`. Pour permettre
+aux apprenants de vérifier visuellement leurs ressources, le formateur crée des
+**utilisateurs Snowflake individuels** avec mots de passe.
+
+Le flux est :
+
+1. le **formateur** exécute `Add-SnowflakeLearners.ps1` (ou `add-snowflake-learners.sh`);
+2. le script crée 10 utilisateurs (`apprenant01` à `apprenant10`) avec rôle `SYSADMIN`;
+3. les mots de passe respectent la politique Snowflake (14+ caractères, 1 chiffre, 1 majuscule, 1 minuscule);
+4. les mots de passe sont sauvegardés dans `secrets/learner-snowflake-passwords.txt` (gitignored);
+5. le **formateur** distribue chaque mot de passe à l'apprenant correspondant;
+6. l'**apprenant** se connecte à `https://app.snowflake.com` avec son username + password.
+
+> `[NOTE]` Le PAT (CLI/Terraform) et le password (web) sont deux méthodes d'authentification
+> distinctes pour le même compte Snowflake. L'apprenant utilise les deux selon le contexte.
 
 ## Authentification Azure
 

@@ -65,6 +65,11 @@ flowchart TD
 
 Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
 
+> `[IMPORTANT] Windows` : utilisez `$HOME` entre guillemets, pas `~` :
+> ```powershell
+> git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
+> ```
+
 ### 3. Vos identifiants Snowflake
 
 Le formateur a pré-rempli le fichier `.env.example` du projet type avec :
@@ -79,6 +84,12 @@ Vous copiez `.env.example` en `.env`, puis vous ajoutez uniquement :
 
 - votre **préfixe apprenant** unique (3 à 5 lettres);
 - votre **PAT** temporaire.
+
+Le formateur vous fournit également un **username + password Snowflake** individuel
+pour accéder à l'interface web (https://app.snowflake.com).
+
+> `[NOTE]` Le PAT est utilisé par la CLI et Terraform. Le password est utilisé pour
+> l'interface web uniquement. Les deux sont individuels.
 
 ### 4. Vos identifiants Azure (service principal partagé)
 
@@ -102,6 +113,12 @@ vos ressources Snowflake et votre state Terraform sont uniques.
 4. N'ajoutez pas `ACCOUNTADMIN` pour résoudre une erreur de privilège.
 5. Ne créez pas de network policy, utilisateur global ou ressource Cloud pendant ce module.
 6. Arrêtez-vous si `git check-ignore .env` ne retourne pas `.env`.
+
+## Formateur — Préparation
+
+> Si vous êtes formateur, consultez le [guide de préparation](module-00-environment-pre-setup/instructor-setup.md)
+> avant la formation. Il décrit la création du SP partagé, des utilisateurs Snowflake,
+> des PAT, et la configuration d'Azure DevOps.
 
 ## Besoin d'aide ?
 

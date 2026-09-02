@@ -183,6 +183,22 @@ snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c traini
 
 **Attendu :** une ligne avec votre utilisateur, votre rôle et votre compte.
 
+### 3.3 — Accéder à l'interface web Snowflake (optionnel)
+
+Le formateur vous a fourni un **identifiant Snowflake individuel** (username + password)
+pour accéder à l'interface web.
+
+1. Ouvrez **https://app.snowflake.com/ZVFXOZW/PM71247**
+2. Connectez-vous avec :
+   - **Username :** `apprenant01` (votre identifiant apprenant)
+   - **Password :** fourni par le formateur (14+ caractères)
+
+> `[NOTE]` Le PAT (utilisé par CLI et Terraform) ne fonctionne pas pour l'interface web.
+> L'interface web nécessite un username + password.
+> Le formateur vous distribue votre password individuel de façon sécurisée.
+> Le password respecte la politique Snowflake : 14+ caractères, 1 chiffre, 1 majuscule, 1 minuscule.
+> Le formateur a désactivé MFA pour votre utilisateur (bypass de 4 heures).
+
 ---
 
 ## 4. Inspecter la structure du projet type

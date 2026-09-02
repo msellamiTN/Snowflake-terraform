@@ -164,10 +164,28 @@ snow sql -q 'SELECT CURRENT_ROLE()' -c training
 
 ### 7. `git clone` échoue
 
+**Cas Windows — `~` n'est pas reconnu**
+
+PowerShell ne développe pas `~` en `C:\Users\<nom>`. Utilisez `$HOME` entre guillemets :
+
+```powershell
+New-Item -ItemType Directory -Path "$HOME\Data2AI-Labs" -Force | Out-Null
+git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
+cd "$HOME\Data2AI-Labs\data-platform"
+```
+
+Si le nom d'utilisateur contient un espace, encadrez toujours le chemin :
+
+```powershell
+git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
+```
+
 **Causes possibles :**
 
 | Cause | Correction |
 |---|---|
+| `~` non interprété sous Windows | Utiliser `$HOME` entre guillemets |
+| Chemin avec espace non quoté | Encadrer le chemin de `"..."` |
 | URL incorrecte | Vérifier l'URL fournie par le formateur |
 | Authentification requise | Le dépôt template est privé : configurer l'accès Git |
 | Réseau bloqué | Vérifier la connectivité vers la plateforme Git |
