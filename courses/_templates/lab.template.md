@@ -83,7 +83,7 @@ flowchart TD
 **Objectif :** <pourquoi ce dossier existe>.
 
 <details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
+<summary>![PowerShell](https://raw.githubusercontent.com/PowerShell/PowerShell/master/assets/Powershell_64.svg) <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 New-Item -ItemType Directory -Path <path> -Force
