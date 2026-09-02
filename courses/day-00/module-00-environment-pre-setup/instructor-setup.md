@@ -40,9 +40,12 @@ ARM_SUBSCRIPTION_ID=8c42d5b2-ab70-4051-ab0e-a96877557f6a
 
 ### 1.2 — Créer le backend Terraform (state)
 
+Choisissez une région Azure disponible pour votre abonnement. `westeurope` peut refuser de nouveaux clients ; `northeurope` est une alternative courante.
+
 ```powershell
-az group create --name rg-data2ai-tf-state --location westeurope
-az storage account create --name sadata2aitfstatemsn --resource-group rg-data2ai-tf-state --location westeurope --sku Standard_LRS
+$location = "northeurope"
+az group create --name rg-data2ai-tf-state --location $location
+az storage account create --name sadata2aitfstatemsn --resource-group rg-data2ai-tf-state --location $location --sku Standard_LRS
 az storage container create --name tfstate --account-name sadata2aitfstatemsn
 ```
 

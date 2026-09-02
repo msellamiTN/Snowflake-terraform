@@ -49,7 +49,7 @@ module "key_vault_rsa" {
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `resource_group_name` | string | yes | | Azure resource group name |
-| `resource_group_location` | string | no | `westeurope` | Azure region |
+| `resource_group_location` | string | no | `northeurope` | Azure region (use a region available for your subscription) |
 | `key_vault_name` | string | yes | | Key Vault name (globally unique) |
 | `tenant_id` | string | yes | | Azure AD tenant ID |
 | `environment` | string | no | `DEV` | `DEV`, `TEST`, or `PROD` |

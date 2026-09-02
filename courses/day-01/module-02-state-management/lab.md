@@ -86,7 +86,7 @@ echo "Storage Account: $ARM_STORAGE_ACCOUNT"
 ```powershell
 az group create `
     --name $env:ARM_RESOURCE_GROUP `
-    --location "westeurope" `
+    --location $env:ARM_LOCATION `
     --output table
 ```
 
@@ -95,9 +95,12 @@ az group create `
 ```bash
 az group create \
     --name "$ARM_RESOURCE_GROUP" \
-    --location "westeurope" \
+    --location "$ARM_LOCATION" \
     --output table
 ```
+
+> `[NOTE]` Si `ARM_LOCATION` n'est pas définie, utilisez une région disponible pour votre abonnement, par exemple `northeurope` ou `francecentral`.
+> Certaines régions comme `westeurope` peuvent refuser de nouveaux clients.
 
 **Attendu :** une table avec `provisioningState : Succeeded`.
 
@@ -109,7 +112,7 @@ az group create \
 az storage account create `
     --name $env:ARM_STORAGE_ACCOUNT `
     --resource-group $env:ARM_RESOURCE_GROUP `
-    --location "westeurope" `
+    --location $env:ARM_LOCATION `
     --sku "Standard_LRS" `
     --encryption-services blob `
     --output table
@@ -121,7 +124,7 @@ az storage account create `
 az storage account create \
     --name "$ARM_STORAGE_ACCOUNT" \
     --resource-group "$ARM_RESOURCE_GROUP" \
-    --location "westeurope" \
+    --location "$ARM_LOCATION" \
     --sku "Standard_LRS" \
     --encryption-services blob \
     --output table

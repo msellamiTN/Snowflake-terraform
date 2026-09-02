@@ -5,8 +5,8 @@ variable "resource_group_name" {
 
 variable "resource_group_location" {
   type        = string
-  description = "Azure region for the resource group and Key Vault."
-  default     = "westeurope"
+  description = "Azure region for the resource group and Key Vault. Use a region available for your subscription; westeurope may refuse new customers."
+  default     = "northeurope"
 }
 
 variable "key_vault_name" {
