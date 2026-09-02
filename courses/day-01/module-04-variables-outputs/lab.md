@@ -1,4 +1,4 @@
-﻿# Lab M4 — Variables, locals, outputs et multi-environnement
+﻿# 🧪 Lab M4 — Variables, locals, outputs et multi-environnement
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Aucune nouvelle ressource |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
-## Mission
+## 🎯 Mission
 
 Des valeurs dispersées et non validées rendent les environnements incohérents. Vous allez structurer les variables, ajouter des validations, créer des outputs exploitables et préparer la configuration pour DEV, UAT et PROD.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -21,22 +21,22 @@ flowchart LR
     M4 --> M5[M5 — Modules Landing Zone]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
-- ajouter des validations de variables pour rejeter les configurations invalides;
-- utiliser des `locals` pour centraliser les conventions de nommage;
-- exposer des outputs exploitables par d'autres modules;
-- créer des fichiers `.tfvars` par environnement;
-- comprendre la précédence des variables.
+- ✅ ajouter des validations de variables pour rejeter les configurations invalides;
+- ✅ utiliser des `locals` pour centraliser les conventions de nommage;
+- ✅ exposer des outputs exploitables par d'autres modules;
+- ✅ créer des fichiers `.tfvars` par environnement;
+- ✅ comprendre la précédence des variables.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M3 terminé;
 - [ ] `terraform plan` affiche `No changes` dans `environments/dev/`.
 
-## Partie 1 — Enrichir les variables
+## 📝 Partie 1 — Enrichir les variables
 
-### Étape 1.1 — Ajouter des variables dans `variables.tf`
+### 📝 Étape 1.1 — Ajouter des variables dans `variables.tf`
 
 Ouvrez `environments/dev/variables.tf` et ajoutez :
 
@@ -74,7 +74,7 @@ variable "tags" {
 }
 ```
 
-### Étape 1.2 — Mettre à jour `locals.tf`
+### 📝 Étape 1.2 — Mettre à jour `locals.tf`
 
 ```hcl
 locals {
@@ -88,7 +88,7 @@ locals {
 }
 ```
 
-### Étape 1.3 — Mettre à jour `main.tf`
+### 📝 Étape 1.3 — Mettre à jour `main.tf`
 
 Remplacez les valeurs en dur par les locals :
 
@@ -115,19 +115,19 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### Étape 1.4 — Formater, valider, planifier
+### 📝 Étape 1.4 — Formater, valider, planifier
 
-```bash
+```powershell
 terraform fmt
 terraform validate
 terraform plan
 ```
 
-**Attendu :** `No changes.` si les valeurs par défaut correspondent à la configuration actuelle.
+✅ **Checkpoint 1** : `No changes.` si les valeurs par défaut correspondent à la configuration actuelle.
 
-## Partie 2 — Enrichir les outputs
+## 📝 Partie 2 — Enrichir les outputs
 
-### Étape 2.1 — Ajouter des outputs structurés
+### 📝 Étape 2.1 — Ajouter des outputs structurés
 
 Dans `outputs.tf`, ajoutez :
 
@@ -153,19 +153,19 @@ output "connection_info" {
 }
 ```
 
-### Étape 2.2 — Formater et valider
+### 📝 Étape 2.2 — Formater et valider
 
-```bash
+```powershell
 terraform fmt
 terraform validate
 terraform output
 ```
 
-**Attendu :** `resource_summary` et `connection_info` s'affichent.
+✅ **Checkpoint 2** : `resource_summary` et `connection_info` s'affichent.
 
-## Partie 3 — Préparer les environnements
+## 📝 Partie 3 — Préparer les environnements
 
-### Étape 3.1 — Créer `terraform.tfvars` pour UAT
+### 📝 Étape 3.1 — Créer `terraform.tfvars` pour UAT
 
 Dans `environments/uat/`, créez `terraform.tfvars` :
 
@@ -182,7 +182,7 @@ auto_suspend_seconds    = 120
 
 Remplacez `ABC` par votre préfixe.
 
-### Étape 3.2 — Créer `terraform.tfvars` pour PROD
+### 📝 Étape 3.2 — Créer `terraform.tfvars` pour PROD
 
 Dans `environments/prod/`, créez `terraform.tfvars` :
 
@@ -197,9 +197,9 @@ data_retention_days     = 30
 auto_suspend_seconds    = 300
 ```
 
-> `[COST]` PROD utilise un warehouse `SMALL` et une rétention plus longue. En formation, ces valeurs restent économiques.
+> 💰 **COST** : PROD utilise un warehouse `SMALL` et une rétention plus longue. En formation, ces valeurs restent économiques.
 
-### Étape 3.3 — Vérifier la précédence
+### 📝 Étape 3.3 — Vérifier la précédence
 
 La précédence des variables Terraform est :
 
@@ -212,22 +212,22 @@ La précédence des variables Terraform est :
 
 Testez :
 
-```bash
+```powershell
 cd environments/dev
 terraform plan -var "warehouse_size=SMALL"
 ```
 
-**Attendu :** le plan propose de modifier le warehouse en `SMALL`.
+✅ **Checkpoint** : le plan propose de modifier le warehouse en `SMALL`.
 
-```bash
+```powershell
 terraform plan
 ```
 
-**Attendu :** le plan revient à `X-SMALL` (valeur du fichier `.tfvars`).
+✅ **Checkpoint 3** : le plan revient à `X-SMALL` (valeur du fichier `.tfvars`).
 
-## Partie 4 — lifecycle et depends_on
+## 📝 Partie 4 — lifecycle et depends_on
 
-### Étape 4.1 — Ajouter un lifecycle au warehouse
+### 📝 Étape 4.1 — Ajouter un lifecycle au warehouse
 
 Dans `main.tf`, ajoutez un bloc `lifecycle` au warehouse :
 
@@ -246,17 +246,17 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### Étape 4.2 — Tester prevent_destroy
+### 📝 Étape 4.2 — Tester prevent_destroy
 
-```bash
+```powershell
 terraform plan -destroy
 ```
 
-**Attendu :** Terraform refuse de détruire le warehouse à cause de `prevent_destroy`.
+✅ **Checkpoint** : Terraform refuse de détruire le warehouse à cause de `prevent_destroy`.
 
-> En production, `prevent_destroy` protège les ressources critiques contre une destruction accidentelle.
+> 💡 **Note** : En production, `prevent_destroy` protège les ressources critiques contre une destruction accidentelle.
 
-### Étape 4.3 — Retirer prevent_destroy pour la formation
+### 📝 Étape 4.3 — Retirer prevent_destroy pour la formation
 
 Retirez le bloc `lifecycle` pour permettre le cleanup en fin de formation :
 
@@ -271,7 +271,15 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-## Challenge
+## ✅ Validation finale
+
+- [ ] variables validées avec `validation` blocks;
+- [ ] outputs structurés affichés;
+- [ ] fichiers `.tfvars` pour DEV, UAT, PROD;
+- [ ] précédence testée;
+- [ ] `prevent_destroy` testé puis retiré.
+
+## 🏆 Challenge
 
 Ajoutez une variable `enable_monitoring` (booléen, défaut `false`) et un output `monitoring_enabled` qui reflète sa valeur. Ajoutez une validation qui refuse `true` en PROD si le warehouse est `X-SMALL`.
 
@@ -282,6 +290,6 @@ Critères :
 - [ ] `terraform plan -var enable_monitoring=true` fonctionne en DEV;
 - [ ] la validation refuse `enable_monitoring=true` avec `warehouse_size=X-SMALL` en PROD.
 
-## Cleanup
+## 🧹 Cleanup
 
-Conservez les ressources pour le Jour 3.
+> ⚠️ **WARNING** : Conservez les ressources pour le Jour 3.

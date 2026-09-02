@@ -1,4 +1,4 @@
-﻿# Lab M1 — Créer votre premier projet Terraform Snowflake
+﻿# 🧪 Lab M1 — Créer votre premier projet Terraform Snowflake
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Warehouse X-SMALL, initialement suspendu |
 | **Cleanup** | Conserver jusqu'au début du Jour 2 |
 
-## Mission
+## 🎯 Mission
 
 Vous êtes Data Platform Engineer. Votre équipe vous demande une zone RAW minimale composée d'une database, d'un schema d'ingestion et d'un warehouse économique. Le changement doit être relisible avant exécution et reproductible sans exposer de credential.
 
-## Architecture finale
+## 🏗️ Architecture finale
 
 ```mermaid
 flowchart LR
@@ -28,58 +28,88 @@ flowchart LR
     DB --> SCHEMA[Schema INGESTION]
     SF --> WH[Warehouse ETL suspendu]
 ```
- 
+
 ![Architecture Atelier](assets/lab-architecture.png)
-## Objectifs
 
-- créer une configuration Terraform depuis le clone du projet type;
-- authentifier le provider Snowflake avec un PAT sans placer de secret dans le code;
-- expliquer les blocs `terraform`, `required_providers`, `provider` et `resource`;
-- lire un plan avant application;
-- prouver la création des trois ressources;
-- vérifier l'idempotence avec un second plan.
+## 🎯 Objectifs
 
-## Prérequis
+- ✅ créer une configuration Terraform depuis le clone du projet type;
+- ✅ authentifier le provider Snowflake avec un PAT sans placer de secret dans le code;
+- ✅ expliquer les blocs `terraform`, `required_providers`, `provider` et `resource`;
+- ✅ lire un plan avant application;
+- ✅ prouver la création des trois ressources;
+- ✅ vérifier l'idempotence avec un second plan.
+
+## 📋 Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`;
 - [ ] vous connaissez votre préfixe unique (variable `LEARNER_PREFIX` dans `.env`).
 
-## Partie 1 — Se placer dans le bon dossier
+## 📝 Partie 1 — Se placer dans le bon dossier
 
 Tous les fichiers de M1 vont dans `environments/dev/` du clone.
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+cd environments\dev
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
 cd environments/dev
 ```
+</details>
 
 Vérifiez que le dossier contient uniquement les fichiers d'exemple :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+Get-ChildItem -Force
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 ls -la
 ```
+</details>
 
-**Attendu :** `README.md`, `backend.hcl.example`, `terraform.tfvars.example`. Aucun fichier `.tf`.
+✅ **Checkpoint 1** : `README.md`, `backend.hcl.example`, `terraform.tfvars.example`. Aucun fichier `.tf`.
 
-## Partie 2 — Déclarer Terraform et le provider
+## 📝 Partie 2 — Déclarer Terraform et le provider
 
-### Étape 2.1 — Créer `versions.tf`
+### 📝 Étape 2.1 — Créer `versions.tf`
 
-**[WINDOWS]**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 New-Item -ItemType File -Path versions.tf
 code versions.tf
 ```
+</details>
 
-**[UNIX]**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 touch versions.tf
 code versions.tf
 ```
+</details>
 
 Ajoutez :
 
@@ -100,9 +130,9 @@ terraform {
 - `source` identifie le provider officiel;
 - `= 2.14.0` épingle exactement la version du provider, sans accepter de correctif non testé.
 
-> **Pourquoi pas `~> 2.14.0` ?** Voir [docs/version-policy.md](../../docs/version-policy.md). Une contrainte souple autorise des versions différentes entre apprenants.
+> 💡 **Note** : Pourquoi pas `~> 2.14.0` ? Voir [docs/version-policy.md](../../docs/version-policy.md). Une contrainte souple autorise des versions différentes entre apprenants.
 
-### Étape 2.2 — Créer `provider.tf`
+### 📝 Étape 2.2 — Créer `provider.tf`
 
 ```hcl
 provider "snowflake" {
@@ -118,21 +148,21 @@ provider "snowflake" {
 - `authenticator = "PROGRAMMATIC_ACCESS_TOKEN"` indique au provider d'utiliser le PAT ;
 - `token` reçoit la valeur du PAT, passée via la variable `snowflake_token` (jamais en clair dans le code).
 
-> **Sécurité** — Le PAT est lu depuis le fichier `secrets/snowflake_pat.txt` créé au Jour 0 et passé via `TF_VAR_snowflake_token`. Aucun secret n'est écrit dans un fichier `.tf`.
+> 🔒 **Security** : Le PAT est lu depuis le fichier `secrets/snowflake_pat.txt` créé au Jour 0 et passé via `TF_VAR_snowflake_token`. Aucun secret n'est écrit dans un fichier `.tf`.
 
-### Étape 2.3 — Formater et valider
+### 📝 Étape 2.3 — Formater et valider
 
-```bash
+```powershell
 terraform fmt
 terraform init
 terraform validate
 ```
 
-**Attendu :** `The configuration is valid.`
+✅ **Checkpoint 2** : `The configuration is valid.`
 
-## Partie 3 — Créer les variables et les noms
+## 📝 Partie 3 — Créer les variables et les noms
 
-### Étape 3.1 — Créer `variables.tf`
+### 📝 Étape 3.1 — Créer `variables.tf`
 
 ```hcl
 variable "snowflake_organization" {
@@ -191,7 +221,7 @@ variable "warehouse_size" {
 
 Les validations empêchent les noms non conformes et les warehouses trop grands pour ce lab.
 
-### Étape 3.2 — Créer `locals.tf`
+### 📝 Étape 3.2 — Créer `locals.tf`
 
 ```hcl
 locals {
@@ -202,7 +232,7 @@ locals {
 }
 ```
 
-### Étape 3.3 — Créer `terraform.tfvars`
+### 📝 Étape 3.3 — Créer `terraform.tfvars`
 
 ```hcl
 snowflake_organization = "ZVFXOZW"
@@ -215,24 +245,24 @@ warehouse_size         = "X-SMALL"
 
 Remplacez `ABC` par votre préfixe (celui de votre `.env`). Adaptez les valeurs Snowflake à votre `.env` si nécessaire. Le fichier est ignoré par Git.
 
-> `[IMPORTANT]` Terraform lit les variables depuis `terraform.tfvars`, **pas** depuis `.env`.
+> ⚠️ **IMPORTANT** : Terraform lit les variables depuis `terraform.tfvars`, **pas** depuis `.env`.
 > Si vous changez votre `LEARNER_PREFIX` dans `.env`, vous devez **aussi** le changer dans
 > `terraform.tfvars`. Sinon le plan utilisera l'ancien préfixe.
 
-> **Note** — La variable `snowflake_token` (le PAT) n'est **pas** dans `terraform.tfvars`. Elle est passée via une variable d'environnement pour éviter de la stocker en clair (voir Étape 5.1).
+> 💡 **Note** : La variable `snowflake_token` (le PAT) n'est **pas** dans `terraform.tfvars`. Elle est passée via une variable d'environnement pour éviter de la stocker en clair (voir Étape 5.1).
 
-### Étape 3.4 — Formater et valider
+### 📝 Étape 3.4 — Formater et valider
 
-```bash
+```powershell
 terraform fmt
 terraform validate
 ```
 
-**Attendu :** `The configuration is valid.`
+✅ **Checkpoint 3** : `The configuration is valid.`
 
-## Partie 4 — Créer les ressources
+## 📝 Partie 4 — Créer les ressources
 
-### Étape 4.1 — Créer `main.tf`
+### 📝 Étape 4.1 — Créer `main.tf`
 
 ```hcl
 resource "snowflake_database" "raw" {
@@ -259,7 +289,7 @@ resource "snowflake_warehouse" "etl" {
 
 La référence `snowflake_database.raw.name` crée une dépendance implicite : Terraform doit créer la database avant son schema. Le warehouse est indépendant et peut être créé en parallèle.
 
-### Étape 4.2 — Créer `outputs.tf`
+### 📝 Étape 4.2 — Créer `outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -278,50 +308,58 @@ output "warehouse_name" {
 }
 ```
 
-### Étape 4.3 — Formater et valider
+### 📝 Étape 4.3 — Formater et valider
 
-```bash
+```powershell
 terraform fmt
 terraform validate
 ```
 
-**Attendu :** `The configuration is valid.`
+✅ **Checkpoint 4** : `The configuration is valid.`
 
-## Partie 5 — Planifier sans modifier
+## 📝 Partie 5 — Planifier sans modifier
 
-### Étape 5.1 — Charger le PAT dans l'environnement
+### 📝 Étape 5.1 — Charger le PAT dans l'environnement
 
 Le PAT ne doit pas être dans `terraform.tfvars`. On le charge depuis le fichier créé au Jour 0 :
 
-**[WINDOWS]**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 $env:TF_VAR_snowflake_token = (Get-Content ..\..\secrets\snowflake_pat.txt -Raw).Trim()
 ```
+</details>
 
-**[UNIX]**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 export TF_VAR_snowflake_token=$(cat ../../secrets/snowflake_pat.txt | tr -d '[:space:]')
 ```
+</details>
 
-> `[SECURITY]` La variable d'environnement `TF_VAR_snowflake_token` est automatiquement lue par Terraform. Elle n'apparaît ni dans le code, ni dans les logs, ni dans le state.
+> 🔒 **Security** : La variable d'environnement `TF_VAR_snowflake_token` est automatiquement lue par Terraform. Elle n'apparaît ni dans le code, ni dans les logs, ni dans le state.
 
-### Étape 5.2 — Planifier
+### 📝 Étape 5.2 — Planifier
 
-**Windows (PowerShell) :**
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform plan -out "m01.tfplan"
 ```
+</details>
 
-**Linux/macOS :**
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 terraform plan -out=m01.tfplan
 ```
+</details>
 
-> `[NOTE]` Sur PowerShell, utilisez `-out "m01.tfplan"` (espace + guillemets) au lieu de `-out=m01.tfplan` pour éviter une erreur de parsing.
+> 💡 **Note** : Sur PowerShell, utilisez `-out "m01.tfplan"` (espace + guillemets) au lieu de `-out=m01.tfplan` pour éviter une erreur de parsing.
 
 Le plan attendu contient exactement :
 
@@ -331,42 +369,46 @@ Le plan attendu contient exactement :
 
 Il doit afficher `3 to add`, aucune modification et aucune destruction.
 
-> `[SECURITY]` Le plan contient des données de configuration. Il est ignoré par `*.tfplan`. Ne le commitez pas.
+> 🔒 **Security** : Le plan contient des données de configuration. Il est ignoré par `*.tfplan`. Ne le commitez pas.
 
-## Partie 6 — Appliquer après revue
+✅ **Checkpoint 5** : `Plan: 3 to add, 0 to change, 0 to destroy.`
+
+## 📝 Partie 6 — Appliquer après revue
 
 Avant de continuer, relisez le plan et confirmez votre préfixe. L'application crée trois objets dans le compte Snowflake.
 
-```bash
+```powershell
 terraform apply m01.tfplan
 ```
 
-**Attendu :**
+✅ **Checkpoint 6** :
 
 ```text
 Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ```
 
-## Partie 7 — Prouver le résultat
+## 📝 Partie 7 — Prouver le résultat
 
-### Preuve Terraform
+### 🔍 Preuve Terraform
 
-```bash
+```powershell
 terraform output
 terraform state list
 ```
 
-### Preuve Snowflake (CLI)
+✅ **Checkpoint** : 3 ressources listées.
+
+### 🔍 Preuve Snowflake (CLI)
 
 La connexion `training` lit le PAT depuis le fichier automatiquement (configuré au Jour 0). Remplacez `ABC` par votre préfixe :
 
-```bash
+```powershell
 snow sql -c training -q "SHOW DATABASES LIKE 'ABC_RAW_DEV'"
 snow sql -c training -q "SHOW SCHEMAS LIKE 'INGESTION' IN DATABASE ABC_RAW_DEV"
 snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_ABC_ETL_DEV'"
 ```
 
-### Preuve Snowflake (interface web)
+### 🔍 Preuve Snowflake (interface web)
 
 Connectez-vous à l'interface Snowflake (https://app.snowflake.com) avec votre
 **username + password individuel** (fourni par le formateur, différent du PAT).
@@ -391,21 +433,21 @@ Vérifiez que vos ressources apparaissent dans chaque section :
 
 > Le warehouse `WH_APP01_ETL_DEV` doit apparaître avec le statut `Suspended` (initialement suspendu).
 
-> `[NOTE]` Remplacez `APP01` par votre `LEARNER_PREFIX`. Si les ressources n'apparaissent pas, vérifiez que vous êtes sur le bon compte Snowflake (organisation + account).
+> 💡 **Note** : Remplacez `APP01` par votre `LEARNER_PREFIX`. Si les ressources n'apparaissent pas, vérifiez que vous êtes sur le bon compte Snowflake (organisation + account).
 
-### Preuve d'idempotence
+### 🔍 Preuve d'idempotence
 
-```bash
+```powershell
 terraform plan
 ```
 
-**Attendu :** `No changes. Your infrastructure matches the configuration.`
+✅ **Checkpoint 7** : `No changes. Your infrastructure matches the configuration.`
 
-## Erreur contrôlée — Préfixe invalide
+## 🐛 Erreur contrôlée — Préfixe invalide
 
 Dans `terraform.tfvars`, remplacez temporairement le préfixe par `abc-invalid`, puis exécutez :
 
-```bash
+```powershell
 terraform validate
 terraform plan
 ```
@@ -414,7 +456,16 @@ Le plan doit refuser la valeur avec le message de validation. Restaurez ensuite 
 
 Cette erreur ne modifie aucune ressource distante.
 
-## Challenge
+## ✅ Validation finale
+
+- [ ] structure conforme;
+- [ ] formatage et syntaxe valides;
+- [ ] plan conforme aux ressources annoncées;
+- [ ] preuve fonctionnelle obtenue;
+- [ ] second plan sans modification inattendue;
+- [ ] aucun secret ou artefact interdit dans Git.
+
+## 🏆 Challenge
 
 Ajoutez un output `resource_summary` contenant les trois noms dans un objet :
 
@@ -436,26 +487,35 @@ Critères :
 - [ ] `terraform plan` reste sans changement;
 - [ ] aucun credential n'est présent dans les fichiers `.tf` ou `.tfvars`.
 
-## Point de reprise
+## 🎯 Point de reprise
 
 Conservez le workspace et les ressources jusqu'au module State du Jour 2. Pour reprendre :
 
-```bash
-cd $HOME/Data2AI-Labs/data-platform/environments/dev
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
-# Windows
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform\environments\dev"
 $env:TF_VAR_snowflake_token = (Get-Content ..\..\secrets\snowflake_pat.txt -Raw).Trim()
-
-# Linux/macOS
-export TF_VAR_snowflake_token=$(cat ../../secrets/snowflake_pat.txt | tr -d '[:space:]')
-
 terraform init
 terraform plan
 ```
+</details>
 
-N'exécutez pas encore `terraform destroy` : le module suivant réutilise ces ressources pour expliquer le state, le drift et l'import.
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
-## Troubleshooting
+```bash
+cd $HOME/Data2AI-Labs/data-platform/environments/dev
+export TF_VAR_snowflake_token=$(cat ../../secrets/snowflake_pat.txt | tr -d '[:space:]')
+terraform init
+terraform plan
+```
+</details>
+
+> ⚠️ **WARNING** : N'exécutez pas encore `terraform destroy` : le module suivant réutilise ces ressources pour expliquer le state, le drift et l'import.
+
+## 🔧 Troubleshooting
 
 | Symptôme | Cause | Solution |
 |---|---|---|

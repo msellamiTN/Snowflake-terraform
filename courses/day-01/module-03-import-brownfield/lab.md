@@ -1,4 +1,4 @@
-﻿# Lab M3 — Import brownfield et alignement Terraform
+﻿# 🧪 Lab M3 — Import brownfield et alignement Terraform
 
 | Élément | Valeur |
 |---|---|
@@ -9,11 +9,11 @@
 | **Coût** | Aucune nouvelle ressource |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
-## Mission
+## 🎯 Mission
 
 Une entreprise ne remplace pas une plateforme Snowflake existante pour adopter Terraform. Elle l'intègre sans interruption. Vous allez importer une ressource Snowflake existante dans le state Terraform, puis corriger la dérive.
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -21,42 +21,42 @@ flowchart LR
     M3 --> M4[M4 — Contrats typés]
 ```
 
-## Objectifs
+## 🎯 Objectifs
 
-- importer une ressource Snowflake existante dans Terraform;
-- générer la configuration à partir de l'import;
-- détecter et corriger une dérive intentionnelle;
-- utiliser un bloc `moved` pour refactorer sans destruction.
+- ✅ importer une ressource Snowflake existante dans Terraform;
+- ✅ générer la configuration à partir de l'import;
+- ✅ détecter et corriger une dérive intentionnelle;
+- ✅ utiliser un bloc `moved` pour refactorer sans destruction.
 
-## Prérequis
+## 📋 Prérequis
 
 - [ ] M2 terminé : le state est dans Azure Blob Storage;
 - [ ] `terraform state list` affiche 3 ressources;
 - [ ] `snow sql -c training -q 'SHOW DATABASES'` fonctionne.
 
-## Partie 1 — Créer une ressource hors Terraform
+## 📝 Partie 1 — Créer une ressource hors Terraform
 
-### Étape 1.1 — Créer une database manuellement dans Snowflake
+### 📝 Étape 1.1 — Créer une database manuellement dans Snowflake
 
-```bash
+```powershell
 snow sql -c training -q "CREATE DATABASE ABC_BROWNFIELD_DEV COMMENT = 'Created manually outside Terraform'"
 ```
 
 Remplacez `ABC` par votre préfixe.
 
-### Étape 1.2 — Vérifier
+### 📝 Étape 1.2 — Vérifier
 
-```bash
+```powershell
 snow sql -c training -q "SHOW DATABASES LIKE 'ABC_BROWNFIELD_DEV'"
 ```
 
-**Attendu :** une ligne avec votre database.
+✅ **Checkpoint 1** : une ligne avec votre database.
 
-> Cette ressource existe dans Snowflake mais **pas** dans le state Terraform. C'est une ressource brownfield.
+> 💡 **Note** : Cette ressource existe dans Snowflake mais **pas** dans le state Terraform. C'est une ressource brownfield.
 
-## Partie 2 — Importer dans Terraform
+## 📝 Partie 2 — Importer dans Terraform
 
-### Étape 2.1 — Ajouter un bloc resource vide
+### 📝 Étape 2.1 — Ajouter un bloc resource vide
 
 Dans `environments/dev/main.tf`, ajoutez :
 
@@ -66,52 +66,64 @@ resource "snowflake_database" "brownfield" {
 }
 ```
 
-### Étape 2.2 — Formater et valider
+### 📝 Étape 2.2 — Formater et valider
 
-```bash
+```powershell
 terraform fmt
 terraform validate
 ```
 
-### Étape 2.3 — Importer la ressource
+### 📝 Étape 2.3 — Importer la ressource
 
-```bash
+```powershell
 terraform import snowflake_database.brownfield ABC_BROWNFIELD_DEV
 ```
 
 Remplacez `ABC` par votre préfixe.
 
-**Attendu :**
+✅ **Checkpoint 2** :
 
 ```text
 Import successful!
 ```
 
-### Étape 2.4 — Vérifier le state
+### 📝 Étape 2.4 — Vérifier le state
 
-```bash
+```powershell
 terraform state list
 ```
 
-**Attendu :** 4 ressources, dont `snowflake_database.brownfield`.
+✅ **Checkpoint** : 4 ressources, dont `snowflake_database.brownfield`.
 
-### Étape 2.5 — Générer la configuration
+### 📝 Étape 2.5 — Générer la configuration
 
-```bash
+```powershell
 terraform plan -generate-config-out=generated.tf
 ```
 
 Terraform compare le state et la configuration, puis génère un fichier avec les attributs réels de la ressource.
 
-**Attendu :** un fichier `generated.tf` est créé avec la configuration complète de la database.
+✅ **Checkpoint** : un fichier `generated.tf` est créé avec la configuration complète de la database.
 
-### Étape 2.6 — Intégrer la configuration générée
+### 📝 Étape 2.6 — Intégrer la configuration générée
 
 Ouvrez `generated.tf`, copiez les attributs pertinents dans `main.tf` (dans le bloc `snowflake_database.brownfield`), puis supprimez `generated.tf` :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+Remove-Item generated.tf
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 rm generated.tf
 ```
+</details>
 
 Votre `main.tf` devrait maintenant contenir :
 
@@ -123,51 +135,51 @@ resource "snowflake_database" "brownfield" {
 }
 ```
 
-### Étape 2.7 — Formater, valider, planifier
+### 📝 Étape 2.7 — Formater, valider, planifier
 
-```bash
+```powershell
 terraform fmt
 terraform validate
 terraform plan
 ```
 
-**Attendu :** `No changes. Your infrastructure matches the configuration.`
+✅ **Checkpoint 3** : `No changes. Your infrastructure matches the configuration.`
 
-## Partie 3 — Détecter et corriger une dérive
+## 📝 Partie 3 — Détecter et corriger une dérive
 
-### Étape 3.1 — Modifier la ressource hors Terraform
+### 📝 Étape 3.1 — Modifier la ressource hors Terraform
 
-```bash
+```powershell
 snow sql -c training -q "ALTER DATABASE ABC_BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
 ```
 
-### Étape 3.2 — Détecter la dérive
+### 📝 Étape 3.2 — Détecter la dérive
 
-```bash
+```powershell
 terraform plan
 ```
 
-**Attendu :** Terraform détecte que le comment a changé et propose de le remettre à la valeur de la configuration.
+✅ **Checkpoint** : Terraform détecte que le comment a changé et propose de le remettre à la valeur de la configuration.
 
-### Étape 3.3 — Corriger la dérive
+### 📝 Étape 3.3 — Corriger la dérive
 
-```bash
+```powershell
 terraform apply
 ```
 
-**Attendu :** Terraform remet le comment à la valeur définie dans `main.tf`.
+✅ **Checkpoint** : Terraform remet le comment à la valeur définie dans `main.tf`.
 
-### Étape 3.4 — Vérifier l'idempotence
+### 📝 Étape 3.4 — Vérifier l'idempotence
 
-```bash
+```powershell
 terraform plan
 ```
 
-**Attendu :** `No changes.`
+✅ **Checkpoint 4** : `No changes.`
 
-## Partie 4 — Refactorer avec un bloc moved
+## 📝 Partie 4 — Refactorer avec un bloc moved
 
-### Étape 4.1 — Renommer la ressource dans main.tf
+### 📝 Étape 4.1 — Renommer la ressource dans main.tf
 
 Renommez `snowflake_database.brownfield` en `snowflake_database.imported` :
 
@@ -179,7 +191,7 @@ resource "snowflake_database" "imported" {
 }
 ```
 
-### Étape 4.2 — Ajouter un bloc moved
+### 📝 Étape 4.2 — Ajouter un bloc moved
 
 Ajoutez en haut de `main.tf` :
 
@@ -190,33 +202,41 @@ moved {
 }
 ```
 
-### Étape 4.3 — Planifier
+### 📝 Étape 4.3 — Planifier
 
-```bash
+```powershell
 terraform plan
 ```
 
-**Attendu :** `1 resource has been moved.` et `No changes.` — Terraform a déplacé la ressource dans le state sans la recréer.
+✅ **Checkpoint** : `1 resource has been moved.` et `No changes.` — Terraform a déplacé la ressource dans le state sans la recréer.
 
-### Étape 4.4 — Appliquer
+### 📝 Étape 4.4 — Appliquer
 
-```bash
+```powershell
 terraform apply
 ```
 
-### Étape 4.5 — Supprimer le bloc moved
+### 📝 Étape 4.5 — Supprimer le bloc moved
 
 Une fois le move appliqué, supprimez le bloc `moved` de `main.tf`. Il n'est plus nécessaire.
 
-```bash
+```powershell
 terraform fmt
 terraform validate
 terraform plan
 ```
 
-**Attendu :** `No changes.`
+✅ **Checkpoint 5** : `No changes.`
 
-## Challenge
+## ✅ Validation finale
+
+- [ ] import réussi sans erreur;
+- [ ] configuration générée et intégrée;
+- [ ] dérive détectée et corrigée;
+- [ ] bloc `moved` utilisé sans destruction;
+- [ ] `terraform plan` sans changement.
+
+## 🏆 Challenge
 
 Importez le warehouse créé en M1 dans une nouvelle ressource `snowflake_warehouse.imported_etl` avec un bloc `moved`.
 
@@ -227,13 +247,13 @@ Critères :
 - [ ] le bloc `moved` déplace la ressource sans destruction;
 - [ ] `terraform state list` affiche le nouveau nom.
 
-## Cleanup
+## 🧹 Cleanup
 
-Ne détruisez pas les ressources. Elles sont réutilisées au Jour 3.
+> ⚠️ **WARNING** : Ne détruisez pas les ressources. Elles sont réutilisées au Jour 3.
 
 Si vous voulez supprimer la database brownfield :
 
-```bash
+```powershell
 snow sql -c training -q "DROP DATABASE ABC_BROWNFIELD_DEV"
 terraform state rm snowflake_database.imported
 ```
