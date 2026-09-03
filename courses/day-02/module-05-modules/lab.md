@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M5 — Module Landing Zone réutilisable
+# 🧪 Lab M5 — Module Landing Zone réutilisable
 
 > [<- Jour 2](../README.md) · [<- Jour 1](../../day-01/README.md) · **Module 05** · [Module suivant ->](../module-06-dynamic-logic/lab.md)
 
@@ -580,6 +580,52 @@ terraform apply
 ```
 
 ✅ **Checkpoint** : `3 added, 0 changed, 0 destroyed.`
+
+### 🌐 Étape 4.5 — Vérification Non-Destructive dans Snowflake Snowsight
+
+1. Ouvrez **[app.snowflake.com](https://app.snowflake.com)** avec vos identifiants apprenant.
+2. Naviguez dans **Data > Databases** et vérifiez que vos bases originales (créées au M01/M04) existent toujours intactes à côté de la nouvelle base `SALES`.
+3. Le refactoring en module n'a provoqué aucune recréation : la migration de code ne détruit rien si les adresses de ressources sont correctement gérées.
+
+---
+
+## 🐛 Chaos Lab M05 — Rupture du Contrat d'Interface du Module
+
+*Que se passe-t-il quand vous modifiez un output dans un module sans adapter l'appelant ?*
+
+1. **Injection de l'erreur :** Dans `modules/landing-zone/outputs.tf`, renommez `database_name` en `db_name` :
+   ```hcl
+   output "db_name" {  # ← renommé
+     value = snowflake_database.raw.name
+   }
+   ```
+2. **Observation :** Lancez `terraform validate` :
+   ```text
+   Error: Unsupported attribute
+     module.landing_zone.database_name is not defined
+   ```
+3. **Enseignement :** Le contrat d'interface d'un module est un engagement. Modifier un output casse les appelants en cascade. Utilisez `moved` pour les renommages progressifs.
+4. **Remédiation :** Restaurez le nom original `database_name` et constatez le retour à la normale.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 5 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 Module directory structure
+[PASS] T2 Module inputs/outputs contract
+[PASS] T3 Root module instantiation
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Multiple module instances
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M4 — Variables, locals, outputs et lifecycle
+# 🧪 Lab M4 — Variables, locals, outputs et lifecycle
 
 > [<- Jour 1](../README.md) · [<- Module precedent](../module-03-import-brownfield/lab.md) · **Module 4** · [Jour 2 ->](../../day-02/README.md)
 
@@ -485,6 +485,52 @@ terraform plan
 - [ ] précédence testée avec `-var`;
 - [ ] `prevent_destroy` testé puis retiré;
 - [ ] `terraform plan` affiche `No changes.`
+
+---
+
+## 🐛 Chaos Lab M04 — Validation FinOps Bloquante (Arrêt Sans Appel Réseau)
+
+*La gouvernance FinOps exige que les tailles de warehouse soient contraintes dès la déclaration, sans jamais interroger l'API Snowflake :*
+
+1. **Injection d'une taille interdite :** Depuis le terminal, lancez la commande suivante :
+   ```powershell
+   terraform plan -var="warehouse_size=MEDIUM"
+   ```
+2. **Observation :** Terraform bloque immédiatement **avant** tout appel réseau vers Snowflake :
+   ```text
+   Error: Invalid value for variable
+
+     on variables.tf line X:
+     X: variable "warehouse_size" {
+
+   Politique FinOps: Seules les tailles XSMALL et SMALL sont admises.
+   ```
+3. **Enseignement :** Les blocs `validation {}` agissent comme des gardes-fous locaux. Aucun crédit Snowflake n'est consommé et aucune requête API n'est émise. C'est la base de la gouvernance FinOps as-code.
+4. **Vérification complémentaire :** Testez avec un nom d'environnement invalide :
+   ```powershell
+   terraform plan -var="environment=STAGING"
+   ```
+   La regex rejette toute valeur hors de `DEV`, `UAT`, `PROD`.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 4 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 variables.tf with strict types
+[PASS] T2 Validation blocks (warehouse_size, environment)
+[PASS] T3 locals.tf naming convention
+[PASS] T4 outputs.tf structured
+[PASS] T5 terraform fmt & validate
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

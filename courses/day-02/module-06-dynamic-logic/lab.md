@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M6 — Déploiement dynamique avec `for_each`, `for` et `dynamic`
+# 🧪 Lab M6 — Déploiement dynamique avec `for_each`, `for` et `dynamic`
 
 > [<- Jour 2](../README.md) · [<- Module precedent](../module-05-modules/lab.md) · **Module 06** · [Module suivant ->](../module-07-cicd-pipeline/lab.md)
 
@@ -559,6 +559,56 @@ terraform apply
 ```
 
 ✅ **Checkpoint** : `1 to add` — le schema `MONITORING`.
+
+### 🌐 Étape 5.4 — Vérification Dynamique dans Snowflake Snowsight
+
+1. Ouvrez **[app.snowflake.com](https://app.snowflake.com)** avec vos identifiants apprenant.
+2. Naviguez dans **Data > Databases** > Votre database M06.
+3. Vérifiez la présence des schemas créés dynamiquement (`RAW`, `CLEAN`, `CURATED`, et le conditionnel `MONITORING`).
+4. Cliquez sur chaque schema pour vérifier ses commentaires et la cohérence des attributs (retention, etc.).
+
+---
+
+## 🐛 Chaos Lab M06 — Suppression Chirurgicale d'une Couche de Données
+
+*Démontrez que `for_each` supprime uniquement la couche ciblée sans réindexer :*
+
+1. **Injection :** Dans votre `terraform.tfvars` ou votre variable `layers`, retirez la couche `CLEAN` du milieu :
+   ```hcl
+   layers = {
+     RAW     = { comment = "Raw data" }
+     # CLEAN = { comment = "Cleaned data" }  ← retiré
+     CURATED = { comment = "Curated data" }
+   }
+   ```
+2. **Observation :** Lancez `terraform plan` et observez :
+   ```text
+   - snowflake_schema.layers["CLEAN"] will be destroyed
+   Plan: 0 to add, 0 to change, 1 to destroy.
+   ```
+   Seul `CLEAN` est ciblé. `RAW` et `CURATED` sont intacts car `for_each` utilise les clés de la map et non des indices numériques.
+3. **Enseignement :** Avec `count`, retirer un élément au milieu aurait décalé les indices et provoqué une recréation destructive de `CURATED`. C'est pourquoi `for_each` est la norme en entreprise.
+4. **Remédiation :** Rétablissez `CLEAN` dans la map, exécutez `terraform plan` et constatez `1 to add`.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 6 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 for_each on map variable
+[PASS] T2 Dynamic blocks usage
+[PASS] T3 Conditional expressions (ternary)
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Stable resource addressing
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

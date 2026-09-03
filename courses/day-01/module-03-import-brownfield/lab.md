@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M3 — Import brownfield et alignement Terraform
+# 🧪 Lab M3 — Import brownfield et alignement Terraform
 
 > [<- Jour 1](../README.md) · [<- Module precedent](../module-02-state-management/lab.md) · **Module 3** · [Module suivant ->](../module-04-variables-outputs/lab.md)
 
@@ -612,9 +612,51 @@ terraform plan
 - [ ] configuration générée et intégrée;
 - [ ] dérive détectée et corrigée;
 - [ ] bloc `moved` utilisé sans destruction;
-- [ ] `terraform plan` sans changement.
+- [ ] `terraform plan` sans changement;
+- [ ] ressource importée visible dans Snowflake Snowsight.
 
-## 🏆 Challenge
+### 🌐 Vérification dans Snowflake Snowsight
+
+1. Ouvrez **[app.snowflake.com](https://app.snowflake.com)** avec vos identifiants apprenant.
+2. Naviguez dans **Data > Databases** et localisez votre database brownfield importée.
+3. Vérifiez que le commentaire a bien été réaligné par Terraform (plus de trace de la valeur manuelle) et que la structure est identique à la déclaration HCL.
+
+---
+
+## 🐛 Chaos Lab M03 — Sensibilité à la Casse des Identifiants Snowflake
+
+*Snowflake est sensible à la casse uniquement pour les identifiants quotés. Vous allez le constater en conditions réelles.*
+
+1. **Injection de l'erreur :** Dans votre bloc `import {}`, modifiez l'identifiant en minuscules :
+   ```hcl
+   import {
+     to = snowflake_database.brownfield
+     id = "app01_m03_brownfield_dev"  # ← minuscules
+   }
+   ```
+2. **Observation :** Lancez `terraform plan`. Snowflake ne retrouve pas la ressource car les identifiants non quotés sont stockés en majuscules.
+3. **Diagnostic :** L'erreur retournée contient `Error: Cannot import non-existent remote object`.
+4. **Remédiation :** Rétablissez les majuscules (`APP01_M03_BROWNFIELD_DEV`), relancez et constatez le plan d'import réussi.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 3 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 import block declared
+[PASS] T2 generated config cleaned
+[PASS] T3 Drift detected and corrected
+[PASS] T4 moved block used (zero destroy)
+[PASS] T5 terraform fmt & validate
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 Importez le warehouse créé dans ce lab dans une nouvelle ressource `snowflake_warehouse.imported_etl` avec un bloc `moved`.
 

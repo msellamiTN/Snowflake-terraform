@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M8 — Gestion multi-environnements : DEV, UAT, PROD
+# 🧪 Lab M8 — Gestion multi-environnements : DEV, UAT, PROD
 
 > [<- Jour 2](../README.md) · [<- Module precedent](../module-07-cicd-pipeline/lab.md) · **Module 08** · [Jour 3 ->](../../day-03/README.md)
 
@@ -534,6 +534,54 @@ L'approche par directories (utilisée dans ce lab) est préférée pour la produ
 - les variables sont explicites dans des fichiers séparés;
 - le code est auditable indépendamment;
 - pas de risque de workspace confusion.
+
+### 🌐 Étape 5.3 — Vérification Azure Portal & Snowsight
+
+**Portail Microsoft Azure (`portal.azure.com`) :**
+1. Naviguez vers votre compte de stockage > Conteneurs > `tfstate`.
+2. Vérifiez la présence des **trois fichiers de state distincts** :
+   - `training/APP01/m08-dev/terraform.tfstate`
+   - `training/APP01/m08-uat/terraform.tfstate`
+   - `training/APP01/m08-prod/terraform.tfstate`
+3. Les trois fichiers sont physiquement séparés : aucune modification ne peut cascader d'un environnement à l'autre.
+
+**Snowflake Snowsight (`app.snowflake.com`) :**
+1. Naviguez dans **Data > Databases**.
+2. Constatez la coexistence des objets DEV, UAT et PROD avec des préfixes distincts et des configurations adaptées (taille de warehouse, durée de rétention).
+
+---
+
+## 🐛 Chaos Lab M08 — Preuve d'Isolation Hermétique entre Environnements
+
+*Démontrez que modifier DEV ne peut jamais impacter PROD :*
+
+1. **Modification en DEV :** Dans le dossier `dev/`, modifiez le commentaire du warehouse ou un attribut quelconque.
+2. **Vérification PROD :** Depuis le dossier `prod/`, lancez :
+   ```powershell
+   terraform plan
+   ```
+3. **Résultat attendu :** `No changes. Your infrastructure matches the configuration.` Le state PROD est totalement isolé du state DEV.
+4. **Enseignement :** L'approche par répertoires dédiés garantit une isolation de production qui serait impossible avec les workspaces Terraform.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 8 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 Directory-based layout (dev/uat/prod)
+[PASS] T2 Isolated backend keys
+[PASS] T3 Environment-specific variables
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Cross-environment isolation verified
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

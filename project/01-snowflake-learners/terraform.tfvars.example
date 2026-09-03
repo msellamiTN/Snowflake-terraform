@@ -19,7 +19,7 @@ default_role       = "SYSADMIN"
 mins_to_bypass_mfa = 240
 must_change_password = false
 
-# Snowflake instructor connection (ACCOUNTADMIN)
+# Snowflake instructor connection (Enterprise account, ACCOUNTADMIN)
 snowflake_organization = "ZVFXOZW"
 snowflake_account      = "PM71247"
 snowflake_user         = "DATA2AI"
@@ -27,5 +27,5 @@ snowflake_role         = "ACCOUNTADMIN"
 snowflake_token        = "<instructor PAT>"
 
 # Azure Key Vault (from 00-bootstrap)
-key_vault_id = "/subscriptions/8c42d5b2-ab70-4051-ab0e-a96877557f6a/resourceGroups/rg-data2ai-tf-state/providers/Microsoft.KeyVault/vaults/kvdata2aitfsecrets"
+key_vault_id = "/subscriptions/8c42d5b2-ab70-4051-ab0e-a96877557f6a/resourceGroups/rg-data2ai-tf-state/providers/Microsoft.KeyVault/vaults/kvdata2aitfsecretsmsn"
 store_passwords_in_kv = true

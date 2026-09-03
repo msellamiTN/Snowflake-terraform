@@ -23,6 +23,7 @@ provider "snowflake" {
 }
 
 provider "azurerm" {
+  subscription_id = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
   features {}
 }
 
@@ -35,8 +36,8 @@ locals {
     for i in range(1, var.learner_count + 1) :
     format("APP%02d", i) => {
       index    = i
-      username = format(var.learner_username_pattern, format("%02d", i))
-      password = format(var.learner_password_pattern, format("%02d", i))
+      username = replace(var.learner_username_pattern, "{i}", format("%02d", i))
+      password = replace(var.learner_password_pattern, "{i}", format("%02d", i))
       prefix   = format("APP%02d", i)
     }
   }
