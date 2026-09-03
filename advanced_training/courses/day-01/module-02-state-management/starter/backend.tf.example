@@ -1,0 +1,12 @@
+# Exemple de référence uniquement : construisez vous-même backend.tf pendant le lab.
+# Remplacez APP01 par votre préfixe apprenant.
+#
+# terraform {
+#   backend "azurerm" {
+#     resource_group_name  = "rg-data2ai-tf-state"
+#     storage_account_name = "sadata2aitfstatemsn"
+#     container_name       = "tfstate"
+#     key                  = "training/APP01/dev/terraform.tfstate"
+#     use_azuread_auth     = true
+#   }
+# }
