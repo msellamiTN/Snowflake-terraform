@@ -20,27 +20,9 @@ variable "snowflake_role" {
   default     = "ACCOUNTADMIN"
 }
 
-variable "deployment_mode" {
+variable "snowflake_token" {
   type        = string
-  description = "Authentication mode: training (password fallback) or production (JWT key-pair)."
-  default     = "training"
-
-  validation {
-    condition     = contains(["training", "production"], var.deployment_mode)
-    error_message = "deployment_mode must be 'training' or 'production'."
-  }
-}
-
-variable "private_key_path" {
-  type        = string
-  description = "Path to PKCS#8 private key for JWT auth (required when deployment_mode=production)."
-  sensitive   = true
-  default     = ""
-}
-
-variable "snowflake_password" {
-  type        = string
-  description = "Snowflake password (used when deployment_mode=training). Must be empty in production."
+  description = "Snowflake PAT (optional - read from secrets/snowflake_pat.txt if not set)"
   sensitive   = true
   default     = ""
 }

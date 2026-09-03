@@ -65,7 +65,6 @@ flowchart LR
 ```powershell
 cd "$HOME\Data2AI-Labs\data-platform"
 .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
-$env:TF_VAR_snowflake_password = (Get-Content .\secrets\snowflake_password.txt -Raw).Trim()
 cd .\environments\dev
 terraform version
 terraform state list
@@ -79,7 +78,6 @@ terraform plan
 ```bash
 cd "$HOME/Data2AI-Labs/data-platform"
 source ./scripts/learner-login.sh APP01
-export TF_VAR_snowflake_password=$(tr -d '[:space:]' < ./secrets/snowflake_password.txt)
 cd ./environments/dev
 terraform version
 terraform state list
@@ -89,7 +87,7 @@ terraform plan
 
 ✅ **Checkpoint préflight** : Terraform `v1.14.5`, ressources M1 listées, et `terraform plan` affiche `No changes`.
 
-> 🔒 **Security** : n'affichez jamais `ARM_CLIENT_SECRET`, `SNOWFLAKE_PASSWORD` ou `TF_VAR_snowflake_password`.
+> 🔒 **Security** : n'affichez jamais `ARM_CLIENT_SECRET`, `SNOWFLAKE_PAT` ou `TF_VAR_snowflake_token`.
 
 > ⚠️ **IMPORTANT** : Si vous obtenez `Error acquiring the state lock`, un processus Terraform précédent a laissé un verrou. Voir [troubleshooting.md](troubleshooting.md) — utilisez `terraform force-unlock <LOCK_ID>` uniquement si aucun processus Terraform n'est actif.
 

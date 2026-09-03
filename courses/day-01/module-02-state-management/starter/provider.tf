@@ -2,13 +2,6 @@ provider "snowflake" {
   organization_name = var.snowflake_organization
   account_name      = var.snowflake_account
   user              = var.snowflake_user
-  role              = var.snowflake_role
-
-  # Training mode: password fallback
-  password      = var.deployment_mode == "training" ? var.snowflake_password : null
-  authenticator = var.deployment_mode == "training" ? "snowflake" : null
-
-  # Production mode: JWT key-pair auth
-  private_key = var.deployment_mode == "production" ? file(var.private_key_path) : null
+  authenticator     = "PROGRAMMATIC_ACCESS_TOKEN"
+  token             = try(trim(file("${path.module}/../../secrets/snowflake_pat.txt"), "\n\r"), var.snowflake_token, "")
 }
-
