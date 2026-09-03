@@ -36,7 +36,9 @@ $ErrorActionPreference = 'Stop'
 # Force UTF-8 for Python stdout/stderr on Windows (cp1252 locale).
 # DO NOT set PYTHONUTF8=1: it makes Python decode subprocess output (e.g. icacls)
 # as UTF-8, which crashes on French Windows where icacls emits cp1252 bytes.
+# Actively remove it if a previous session left it in the environment.
 $env:PYTHONIOENCODING = 'utf-8'
+Remove-Item Env:\PYTHONUTF8 -ErrorAction SilentlyContinue
 
 # ------------------------------------------------------------------
 # Load .env if it exists (force UTF-8 to avoid cp1252 decoding errors)

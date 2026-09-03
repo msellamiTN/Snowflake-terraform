@@ -48,6 +48,8 @@ if (-not $ReportPath) {
 $ErrorActionPreference = 'Stop'
 # DO NOT set PYTHONUTF8=1: it makes Python decode subprocess output (e.g. icacls)
 # as UTF-8, which crashes on French Windows where icacls emits cp1252 bytes.
+# Actively remove it if a previous session left it in the environment.
+Remove-Item Env:\PYTHONUTF8 -ErrorAction SilentlyContinue
 
 # ------------------------------------------------------------------
 # Load .env
@@ -215,7 +217,8 @@ Write-Host '== 2. Snowflake Connectivity' -ForegroundColor Cyan
 $connectionName = Get-ConfigValue 'SNOWFLAKE_CONNECTION' 'training'
 
 # Check that the connection exists in snow CLI config
-$snowConfigDir = Join-Path $env:LOCALAPPDATA 'snowflake'
+# Snow CLI uses ~/.snowflake/config.toml as the default location.
+$snowConfigDir = Join-Path $HOME '.snowflake'
 $snowConfigFile = Join-Path $snowConfigDir 'config.toml'
 
 if (Test-Path $snowConfigFile) {
