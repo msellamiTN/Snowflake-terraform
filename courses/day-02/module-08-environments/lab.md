@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, vous pouvez commencer.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 DEV, UAT et PROD ont des risques, coûts et rythmes différents. Vous allez créer un module `landing-zone`, puis le déployer dans les trois environnements avec une isolation de state et de nommage.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** déployer un module Terraform dans DEV, UAT et PROD avec isolation de state  
+> **Afin de :** garantir qu'aucune modification d'un environnement n'impacte les autres
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -60,7 +66,7 @@ flowchart TD
     PROD --> MOD
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - créer un module `landing-zone` réutilisable;
 - déployer le module dans DEV, UAT et PROD;
@@ -68,15 +74,19 @@ flowchart TD
 - définir une matrice de paramètres par environnement;
 - comprendre la différence entre workspaces et directories.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`.
 
-## 📝 Partie 0 — Créer le module landing-zone
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-### 📝 Étape 0.1 — Créer la structure de dossiers
+### 📝 Étape 5.0 — Créer le module landing-zone
+
+#### Créer la structure de dossiers
 
 ```bash
 cd "$HOME/Data2AI-Labs/data-platform/labs/m08-environments"
@@ -84,7 +94,7 @@ mkdir -p modules/landing-zone
 mkdir -p dev uat prod
 ```
 
-### 📝 Étape 0.2 — Créer `modules/landing-zone/variables.tf`
+#### Créer `modules/landing-zone/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -141,7 +151,7 @@ variable "auto_suspend_seconds" {
 }
 ```
 
-### 📝 Étape 0.3 — Créer `modules/landing-zone/main.tf`
+#### Créer `modules/landing-zone/main.tf`
 
 ```hcl
 locals {
@@ -173,7 +183,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 0.4 — Créer `modules/landing-zone/outputs.tf`
+#### Créer `modules/landing-zone/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -192,7 +202,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 0.5 — Créer `modules/landing-zone/versions.tf`
+#### Créer `modules/landing-zone/versions.tf`
 
 ```hcl
 terraform {
@@ -207,7 +217,7 @@ terraform {
 }
 ```
 
-### 📝 Étape 0.6 — Valider le module
+#### Valider le module
 
 ```bash
 cd modules/landing-zone
@@ -218,9 +228,9 @@ terraform validate
 
 ✅ **Checkpoint** : `The configuration is valid.`
 
-## 📝 Partie 1 — Configurer DEV
+### 📝 Étape 5.1 — Configurer DEV
 
-### 📝 Étape 1.1 — Créer les fichiers Terraform dans `dev/`
+#### Créer les fichiers Terraform dans `dev/`
 
 ```bash
 cd ../dev
@@ -346,7 +356,7 @@ learner_prefix         = "APP01"
 
 Remplacez `APP01` par votre préfixe apprenant.
 
-### 📝 Étape 1.2 — Initialiser et planifier
+#### Initialiser et planifier
 
 ```bash
 terraform fmt
@@ -357,13 +367,13 @@ terraform plan -out "m08-dev.tfplan"
 
 ✅ **Checkpoint** : `3 to add` — database, schema et warehouse DEV.
 
-### 📝 Étape 1.3 — Appliquer
+#### Appliquer
 
 ```bash
 terraform apply m08-dev.tfplan
 ```
 
-### 📝 Étape 1.4 — Vérifier dans Snowflake
+#### Vérifier dans Snowflake
 
 ```powershell
 snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M08_RAW_DEV'"
@@ -371,9 +381,9 @@ snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M08_RAW_DEV'"
 
 > Remplacez `APP01` par votre préfixe.
 
-## 📝 Partie 2 — Configurer UAT
+### 📝 Étape 5.2 — Configurer UAT
 
-### 📝 Étape 2.1 — Créer les fichiers dans `uat/`
+#### Créer les fichiers dans `uat/`
 
 ```bash
 cd ../uat
@@ -414,7 +424,7 @@ module "landing_zone" {
 
 **`terraform.tfvars`** — identique à DEV.
 
-### 📝 Étape 2.2 — Initialiser, planifier, appliquer
+#### Initialiser, planifier, appliquer
 
 ```bash
 terraform fmt
@@ -426,15 +436,15 @@ terraform apply m08-uat.tfplan
 
 ✅ **Checkpoint** : `3 to add` — database, schema et warehouse UAT.
 
-### 📝 Étape 2.3 — Vérifier dans Snowflake
+#### Vérifier dans Snowflake
 
 ```powershell
 snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M08_RAW_UAT'"
 ```
 
-## 📝 Partie 3 — Configurer PROD
+### 📝 Étape 5.3 — Configurer PROD
 
-### 📝 Étape 3.1 — Créer les fichiers dans `prod/`
+#### Créer les fichiers dans `prod/`
 
 ```bash
 cd ../prod
@@ -467,7 +477,7 @@ module "landing_zone" {
 }
 ```
 
-### 📝 Étape 3.2 — Initialiser, planifier, appliquer
+#### Initialiser, planifier, appliquer
 
 ```bash
 terraform fmt
@@ -477,16 +487,16 @@ terraform plan -out "m08-prod.tfplan"
 terraform apply m08-prod.tfplan
 ```
 
-### 📝 Étape 3.3 — Vérifier
+#### Vérifier
 
 ```powershell
 snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M08_RAW_PROD'"
 snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_APP01_M08_ETL_PROD'"
 ```
 
-## 📝 Partie 4 — Matrice de paramètres
+### 📝 Étape 5.4 — Matrice de paramètres
 
-### 📝 Étape 4.1 — Comparer les environnements
+#### Comparer les environnements
 
 | Paramètre | DEV | UAT | PROD |
 |---|---|---|---|
@@ -497,7 +507,7 @@ snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_APP01_M08_ETL_PROD'"
 | Database | `APP01_M08_RAW_DEV` | `APP01_M08_RAW_UAT` | `APP01_M08_RAW_PROD` |
 | Warehouse | `WH_APP01_M08_ETL_DEV` | `WH_APP01_M08_ETL_UAT` | `WH_APP01_M08_ETL_PROD` |
 
-### 📝 Étape 4.2 — Vérifier l'isolation du state
+#### Vérifier l'isolation du state
 
 ```bash
 az storage blob list \
@@ -515,9 +525,9 @@ training/APP01/m08-uat/terraform.tfstate
 training/APP01/m08-prod/terraform.tfstate
 ```
 
-## 📝 Partie 5 — Workspaces vs directories
+### 📝 Étape 5.5 — Workspaces vs directories
 
-### 📝 Étape 5.1 — Comprendre les deux approches
+#### Comprendre les deux approches
 
 | Critère | Workspaces | Directories |
 |---|---|---|
@@ -526,7 +536,7 @@ training/APP01/m08-prod/terraform.tfstate
 | Variables | `terraform.workspace` | Fichiers `.tfvars` séparés |
 | Recommandé pour | Expérimentation | Production |
 
-### 📝 Étape 5.2 — Pourquoi directories ici
+#### Pourquoi directories ici
 
 L'approche par directories (utilisée dans ce lab) est préférée pour la production car :
 
@@ -535,7 +545,7 @@ L'approche par directories (utilisée dans ce lab) est préférée pour la produ
 - le code est auditable indépendamment;
 - pas de risque de workspace confusion.
 
-### 🌐 Étape 5.3 — Vérification Azure Portal & Snowsight
+#### Vérification Azure Portal & Snowsight
 
 **Portail Microsoft Azure (`portal.azure.com`) :**
 1. Naviguez vers votre compte de stockage > Conteneurs > `tfstate`.
@@ -551,21 +561,31 @@ L'approche par directories (utilisée dans ce lab) est préférée pour la produ
 
 ---
 
-## 🐛 Chaos Lab M08 — Preuve d'Isolation Hermétique entre Environnements
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Démontrez que modifier DEV ne peut jamais impacter PROD :*
 
-1. **Modification en DEV :** Dans le dossier `dev/`, modifiez le commentaire du warehouse ou un attribut quelconque.
-2. **Vérification PROD :** Depuis le dossier `prod/`, lancez :
-   ```powershell
-   terraform plan
-   ```
-3. **Résultat attendu :** `No changes. Your infrastructure matches the configuration.` Le state PROD est totalement isolé du state DEV.
-4. **Enseignement :** L'approche par répertoires dédiés garantit une isolation de production qui serait impossible avec les workspaces Terraform.
+### Symptôme & Injection
+
+Dans le dossier `dev/`, modifiez le commentaire du warehouse ou un attribut quelconque.
+
+### Diagnostic & Observation
+
+Depuis le dossier `prod/`, lancez :
+
+```powershell
+terraform plan
+```
+
+Résultat attendu : `No changes. Your infrastructure matches the configuration.` Le state PROD est totalement isolé du state DEV.
+
+### Remédiation & Enseignement
+
+L'approche par répertoires dédiés garantit une isolation de production qui serait impossible avec les workspaces Terraform.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 ```powershell
 .\scripts\SelfPacedLab.ps1 -Module 8 -All -Report
@@ -583,18 +603,24 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Auditez l'isolation des trois environnements et prouvez qu'aucune quatrième clé de state n'est créée.
+> **Scénario :** Auditez l'isolation des trois environnements et prouvez qu'aucune quatrième clé de state n'est créée.
+> **Contraintes :**
+> - `terraform init` réussit dans `dev/`, `uat/` et `prod/`;
+> - chaque backend contient `use_azuread_auth = true`;
+> - la liste Azure Blob, obtenue avec `--auth-mode login`, contient uniquement les clés `training/APP01/m08-dev|uat|prod/terraform.tfstate` attendues;
+> - les databases s'appellent `APP01_M08_RAW_DEV`, `APP01_M08_RAW_UAT` et `APP01_M08_RAW_PROD`.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform init` réussit dans `dev/`, `uat/` et `prod/`;
-- [ ] chaque backend contient `use_azuread_auth = true`;
-- [ ] la liste Azure Blob, obtenue avec `--auth-mode login`, contient uniquement les clés `training/APP01/m08-dev|uat|prod/terraform.tfstate` attendues;
-- [ ] les databases s'appellent `APP01_M08_RAW_DEV`, `APP01_M08_RAW_UAT` et `APP01_M08_RAW_PROD`.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez les ressources de chaque environnement, du plus risqué au moins risqué :
 

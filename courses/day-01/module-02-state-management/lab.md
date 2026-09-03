@@ -714,11 +714,11 @@ Pour ancrer votre compréhension de l'infrastructure cloud :
 
 ---
 
-## 🐛 6. Chaos Lab : Tester le verrouillage (State Lock Concurrency)
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Dans ce Chaos Lab, vous allez provoquer intentionnellement un conflit de verrouillage de state pour observer le mécanisme de bail exclusif (Blob Lease) d'Azure Storage.*
 
-### 📝 Étape 5.1 — Ouvrir et préparer deux terminaux
+### Symptôme & Injection : Préparer deux terminaux
 
 Chaque terminal possède ses propres variables d'environnement. Dans **les deux terminaux**, chargez donc l'authentification Azure, le PAT Snowflake et le bon dossier.
 

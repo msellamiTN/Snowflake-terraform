@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m05.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Les domaines Data ont besoin d'une plateforme cohérente sans copier des centaines de ressources. Vous allez d'abord créer les ressources directement, puis les extraire dans un module réutilisable `landing-zone`, et enfin appeler ce module pour un second domaine.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** extraire les ressources Snowflake dans un module Terraform réutilisable  
+> **Afin de :** provisionner plusieurs domaines Data sans duplication de code
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -58,7 +64,7 @@ flowchart TD
     MOD --> WH[snowflake_warehouse]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - créer un module Terraform avec une interface typée;
 - créer les ressources directement, puis les extraire dans un module;
@@ -66,15 +72,19 @@ flowchart TD
 - versionner le module avec un `README.md` et des `outputs`;
 - réutiliser le module pour un second domaine.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`.
 
-## 📝 Partie 0 — Préparer le dossier du lab
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-### 📝 Étape 0.1 — Découvrir les fichiers fournis
+### 📝 Étape 5.0 — Préparer le dossier du lab
+
+#### Découvrir les fichiers fournis
 
 Le dossier `labs/m05-modules/` contient déjà les fichiers de base :
 
@@ -87,7 +97,7 @@ Le dossier `labs/m05-modules/` contient déjà les fichiers de base :
 | `main.tf` | Vide — créé par l'apprenant |
 | `outputs.tf` | Vide — créé par l'apprenant |
 
-### 📝 Étape 0.2 — Créer `terraform.tfvars`
+#### Créer `terraform.tfvars`
 
 Copiez le modèle et adaptez les valeurs :
 
@@ -123,7 +133,7 @@ snowflake_user         = "DATA2AI"
 
 Remplacez `APP01` par votre préfixe apprenant.
 
-### 📝 Étape 0.3 — Ajouter les variables spécifiques au lab
+#### Ajouter les variables spécifiques au lab
 
 Dans `variables.tf`, ajoutez à la fin du fichier :
 
@@ -162,11 +172,11 @@ variable "auto_suspend_seconds" {
 }
 ```
 
-## 📝 Partie 1 — Créer les ressources directement
+### 📝 Étape 5.1 — Créer les ressources directement
 
 Avant d'extraire un module, vous allez créer les ressources directement dans `main.tf`. Cela vous permettra de voir exactement ce que le module encapsulera.
 
-### 📝 Étape 1.1 — Créer `locals.tf`
+#### Créer `locals.tf`
 
 ```hcl
 locals {
@@ -179,7 +189,7 @@ locals {
 
 > 💡 **Note** : Le préfixe `M05` dans les noms isole les ressources de ce lab de celles des autres labs.
 
-### 📝 Étape 1.2 — Créer `main.tf`
+#### Créer `main.tf`
 
 ```hcl
 resource "snowflake_database" "raw" {
@@ -204,7 +214,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `outputs.tf`
+#### Créer `outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -223,7 +233,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 1.4 — Formater, valider, planifier
+#### Formater, valider, planifier
 
 ```bash
 terraform fmt
@@ -234,7 +244,7 @@ terraform plan -out "m05.tfplan"
 
 ✅ **Checkpoint** : `Plan: 3 to add, 0 to change, 0 to destroy.`
 
-### 📝 Étape 1.5 — Appliquer
+#### Appliquer
 
 ```bash
 terraform apply m05.tfplan
@@ -242,7 +252,7 @@ terraform apply m05.tfplan
 
 ✅ **Checkpoint** : `Apply complete! Resources: 3 added, 0 changed, 0 destroyed.`
 
-### 📝 Étape 1.6 — Vérifier dans Snowflake
+#### Vérifier dans Snowflake
 
 ```powershell
 snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M05_RAW_DEV'"
@@ -251,17 +261,17 @@ snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_APP01_M05_ETL_DEV'"
 
 > Remplacez `APP01` par votre préfixe.
 
-## 📝 Partie 2 — Extraire les ressources dans un module
+### 📝 Étape 5.2 — Extraire les ressources dans un module
 
 Maintenant que les ressources existent, vous allez les extraire dans un module réutilisable.
 
-### 📝 Étape 2.1 — Créer les dossiers
+#### Créer les dossiers
 
 ```bash
 mkdir -p modules/landing-zone
 ```
 
-### 📝 Étape 2.2 — Créer `modules/landing-zone/variables.tf`
+#### Créer `modules/landing-zone/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -322,7 +332,7 @@ variable "auto_suspend_seconds" {
 > 💡 **Note** : La validation du module accepte jusqu'à 10 caractères pour `learner_prefix`,
 > afin de permettre des préfixes composés comme `APP01SAL` (domaine Sales).
 
-### 📝 Étape 2.3 — Créer `modules/landing-zone/main.tf`
+#### Créer `modules/landing-zone/main.tf`
 
 ```hcl
 locals {
@@ -354,7 +364,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 2.4 — Créer `modules/landing-zone/outputs.tf`
+#### Créer `modules/landing-zone/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -373,7 +383,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 2.5 — Créer `modules/landing-zone/versions.tf`
+#### Créer `modules/landing-zone/versions.tf`
 
 ```hcl
 terraform {
@@ -388,7 +398,7 @@ terraform {
 }
 ```
 
-### 📝 Étape 2.6 — Créer `modules/landing-zone/README.md`
+#### Créer `modules/landing-zone/README.md`
 
 ```markdown
 # landing-zone
@@ -425,7 +435,7 @@ module "landing_zone" {
 | warehouse_name | ETL warehouse name |
 ```
 
-### 📝 Étape 2.7 — Initialiser, formater et valider le module
+#### Initialiser, formater et valider le module
 
 > `[IMPORTANT]` Vous devez créer **tous les fichiers du module** (variables.tf, main.tf,
 > outputs.tf, versions.tf) **avant** cette étape. Si un fichier manque, `terraform validate`
@@ -446,14 +456,14 @@ terraform validate
 > la Partie 3 n'est pas terminée. Un module incomplet référencé depuis `main.tf`
 > provoquera des erreurs `Reference to undeclared resource`.
 
-## 📝 Partie 3 — Appeler le module depuis main.tf
+### 📝 Étape 5.3 — Appeler le module depuis main.tf
 
 > `[IMPORTANT]` Cette partie modifie `main.tf`, `locals.tf` ET `outputs.tf`.
 > Vous devez faire **toutes les étapes 3.1 à 3.3** avant de lancer `terraform init`.
 > Si vous lancez `terraform init` après seulement l'étape 3.1, Terraform détectera
 > le module mais les anciens outputs référenceront des ressources qui n'existent plus.
 
-### 📝 Étape 3.1 — Réécrire `main.tf`
+#### Réécrire `main.tf`
 
 **Remplacez tout le contenu** de `main.tf` par :
 
@@ -471,7 +481,7 @@ module "landing_zone" {
 > Les ressources (database, schema, warehouse) sont maintenant dans le module.
 > `main.tf` ne contient plus que l'appel du module.
 
-### 📝 Étape 3.2 — Supprimer `locals.tf`
+#### Supprimer `locals.tf`
 
 Les locals n'étaient utilisés que par les ressources directes qui sont maintenant dans le module.
 
@@ -491,7 +501,7 @@ rm locals.tf
 ```
 </details>
 
-### 📝 Étape 3.3 — Remplacer `outputs.tf`
+#### Remplacer `outputs.tf`
 
 **Remplacez tout le contenu** de `outputs.tf` par :
 
@@ -520,7 +530,7 @@ output "resource_summary" {
 }
 ```
 
-### 📝 Étape 3.4 — Formater et initialiser
+#### Formater et initialiser
 
 ```bash
 cd ..
@@ -530,7 +540,7 @@ terraform init
 
 Terraform télécharge le module local.
 
-### 📝 Étape 3.5 — Planifier
+#### Planifier
 
 ```bash
 terraform plan
@@ -540,9 +550,9 @@ terraform plan
 
 > 💡 **Note** : Si Terraform propose de recréer les ressources, c'est que les noms ou attributs diffèrent. Vérifiez vos variables.
 
-## 📝 Partie 4 — Réutiliser le module pour un second domaine
+### 📝 Étape 5.4 — Réutiliser le module pour un second domaine
 
-### 📝 Étape 4.1 — Ajouter un second appel dans `main.tf`
+#### Ajouter un second appel dans `main.tf`
 
 ```hcl
 module "landing_zone_sales" {
@@ -555,7 +565,7 @@ module "landing_zone_sales" {
 }
 ```
 
-### 📝 Étape 4.2 — Ajouter les outputs
+#### Ajouter les outputs
 
 ```hcl
 output "sales_database_name" {
@@ -564,7 +574,7 @@ output "sales_database_name" {
 }
 ```
 
-### 📝 Étape 4.3 — Planifier
+#### Planifier
 
 ```bash
 terraform fmt
@@ -573,7 +583,7 @@ terraform plan
 
 ✅ **Checkpoint** : `3 to add` — le second module crée une nouvelle database, un nouveau schema et un nouveau warehouse.
 
-### 📝 Étape 4.4 — Appliquer
+#### Appliquer
 
 ```bash
 terraform apply
@@ -581,7 +591,7 @@ terraform apply
 
 ✅ **Checkpoint** : `3 added, 0 changed, 0 destroyed.`
 
-### 🌐 Étape 4.5 — Vérification Non-Destructive dans Snowflake Snowsight
+#### Vérification Non-Destructive dans Snowflake Snowsight
 
 1. Ouvrez **[app.snowflake.com](https://app.snowflake.com)** avec vos identifiants apprenant.
 2. Naviguez dans **Data > Databases** et vérifiez que vos bases originales (créées au M01/M04) existent toujours intactes à côté de la nouvelle base `SALES`.
@@ -589,27 +599,38 @@ terraform apply
 
 ---
 
-## 🐛 Chaos Lab M05 — Rupture du Contrat d'Interface du Module
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Que se passe-t-il quand vous modifiez un output dans un module sans adapter l'appelant ?*
 
-1. **Injection de l'erreur :** Dans `modules/landing-zone/outputs.tf`, renommez `database_name` en `db_name` :
-   ```hcl
-   output "db_name" {  # ← renommé
-     value = snowflake_database.raw.name
-   }
-   ```
-2. **Observation :** Lancez `terraform validate` :
-   ```text
-   Error: Unsupported attribute
-     module.landing_zone.database_name is not defined
-   ```
-3. **Enseignement :** Le contrat d'interface d'un module est un engagement. Modifier un output casse les appelants en cascade. Utilisez `moved` pour les renommages progressifs.
-4. **Remédiation :** Restaurez le nom original `database_name` et constatez le retour à la normale.
+### Symptôme & Injection
+
+Dans `modules/landing-zone/outputs.tf`, renommez `database_name` en `db_name` :
+
+```hcl
+output "db_name" {  # ← renommé
+  value = snowflake_database.raw.name
+}
+```
+
+### Diagnostic & Observation
+
+Lancez `terraform validate` :
+
+```text
+Error: Unsupported attribute
+  module.landing_zone.database_name is not defined
+```
+
+Le contrat d'interface d'un module est un engagement. Modifier un output casse les appelants en cascade. Utilisez `moved` pour les renommages progressifs.
+
+### Remédiation
+
+Restaurez le nom original `database_name` et constatez le retour à la normale.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 ```powershell
 .\scripts\SelfPacedLab.ps1 -Module 5 -All -Report
@@ -627,17 +648,23 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez une variable `schemas` (list of strings) au module qui crée plusieurs schemas dans la même database avec `for_each`.
+> **Scénario :** Ajoutez une variable `schemas` (list of strings) au module qui crée plusieurs schemas dans la même database avec `for_each`.
+> **Contraintes :**
+> - `terraform validate` réussit;
+> - `terraform plan` crée les schemas supplémentaires;
+> - le module reste réutilisable sans modification de l'appelant existant.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform validate` réussit;
-- [ ] `terraform plan` crée les schemas supplémentaires;
-- [ ] le module reste réutilisable sans modification de l'appelant existant.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées dans ce lab (domaine principal + domaine Sales) :
 

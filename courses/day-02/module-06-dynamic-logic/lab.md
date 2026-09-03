@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m06.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 La plateforme doit absorber de nouveaux schémas, warehouses et domaines sans dupliquer le code. Vous allez créer un module `landing-zone` piloté par métadonnées avec `for_each`, `for` et `dynamic`.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** piloter la création de ressources Snowflake par métadonnées avec `for_each` et `dynamic`  
+> **Afin de :** absorber de nouveaux domaines sans duplication de code
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -50,7 +56,7 @@ flowchart LR
     M6 --> M7[M7 — Pipeline GitOps]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - créer un module `landing-zone` réutilisable avec une interface typée;
 - utiliser `for_each` pour créer plusieurs ressources à partir d'une map;
@@ -58,15 +64,19 @@ flowchart LR
 - utiliser `dynamic` pour générer des blocs répétitifs;
 - comprendre la différence entre `count` et `for_each`.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`.
 
-## 📝 Partie 0 — Préparer le dossier du lab
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-### 📝 Étape 0.1 — Découvrir les fichiers fournis
+### 📝 Étape 5.0 — Préparer le dossier du lab
+
+#### Découvrir les fichiers fournis
 
 Le dossier `labs/m06-dynamic-logic/` contient déjà les fichiers de base :
 
@@ -79,7 +89,7 @@ Le dossier `labs/m06-dynamic-logic/` contient déjà les fichiers de base :
 | `main.tf` | Vide — créé par l'apprenant |
 | `outputs.tf` | Vide — créé par l'apprenant |
 
-### 📝 Étape 0.2 — Créer `terraform.tfvars`
+#### Créer `terraform.tfvars`
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -111,7 +121,7 @@ snowflake_account      = "PM71247"
 snowflake_user         = "DATA2AI"
 ```
 
-### 📝 Étape 0.3 — Ajouter les variables spécifiques au lab
+#### Ajouter les variables spécifiques au lab
 
 Dans `variables.tf`, ajoutez à la fin du fichier :
 
@@ -128,15 +138,15 @@ variable "data_retention_days" {
 }
 ```
 
-## 📝 Partie 1 — Créer le module de base
+### 📝 Étape 5.1 — Créer le module de base
 
-### 📝 Étape 1.1 — Créer les dossiers
+#### Créer les dossiers
 
 ```bash
 mkdir -p modules/landing-zone
 ```
 
-### 📝 Étape 1.2 — Créer `modules/landing-zone/variables.tf`
+#### Créer `modules/landing-zone/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -172,7 +182,7 @@ variable "data_retention_days" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `modules/landing-zone/main.tf`
+#### Créer `modules/landing-zone/main.tf`
 
 ```hcl
 locals {
@@ -202,7 +212,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 1.4 — Créer `modules/landing-zone/outputs.tf`
+#### Créer `modules/landing-zone/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -221,7 +231,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 1.5 — Créer `modules/landing-zone/versions.tf`
+#### Créer `modules/landing-zone/versions.tf`
 
 ```hcl
 terraform {
@@ -236,7 +246,7 @@ terraform {
 }
 ```
 
-### 📝 Étape 1.6 — Valider le module
+#### Valider le module
 
 ```bash
 cd modules/landing-zone
@@ -247,7 +257,7 @@ terraform validate
 
 ✅ **Checkpoint** : `The configuration is valid.`
 
-### 📝 Étape 1.7 — Appeler le module depuis `main.tf`
+#### Appeler le module depuis `main.tf`
 
 Revenez dans le dossier du lab et créez `main.tf` :
 
@@ -280,7 +290,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 1.8 — Déployer
+#### Déployer
 
 ```bash
 terraform fmt
@@ -292,9 +302,9 @@ terraform apply m06.tfplan
 
 ✅ **Checkpoint** : `Apply complete! Resources: 3 added, 0 changed, 0 destroyed.`
 
-## 📝 Partie 2 — for_each pour les schemas
+### 📝 Étape 5.2 — for_each pour les schemas
 
-### 📝 Étape 2.1 — Ajouter une variable `schemas` au module
+#### Ajouter une variable `schemas` au module
 
 Dans `modules/landing-zone/variables.tf`, ajoutez :
 
@@ -314,7 +324,7 @@ variable "schemas" {
 }
 ```
 
-### 📝 Étape 2.2 — Remplacer la ressource schema par un for_each
+#### Remplacer la ressource schema par un for_each
 
 Dans `modules/landing-zone/main.tf`, remplacez le bloc `snowflake_schema.ingestion` par :
 
@@ -328,7 +338,7 @@ resource "snowflake_schema" "this" {
 }
 ```
 
-### 📝 Étape 2.3 — Mettre à jour les outputs du module
+#### Mettre à jour les outputs du module
 
 Dans `modules/landing-zone/outputs.tf`, remplacez l'output `schema_name` par :
 
@@ -339,7 +349,7 @@ output "schema_names" {
 }
 ```
 
-### 📝 Étape 2.4 — Mettre à jour l'appelant
+#### Mettre à jour l'appelant
 
 Dans `main.tf`, ajoutez le paramètre `schemas` :
 
@@ -363,7 +373,7 @@ module "landing_zone" {
 }
 ```
 
-### 📝 Étape 2.5 — Mettre à jour les outputs de l'appelant
+#### Mettre à jour les outputs de l'appelant
 
 Dans `outputs.tf` :
 
@@ -374,7 +384,7 @@ output "schema_names" {
 }
 ```
 
-### 📝 Étape 2.6 — Formater, valider, planifier, appliquer
+#### Formater, valider, planifier, appliquer
 
 ```bash
 terraform fmt
@@ -389,9 +399,9 @@ terraform plan
 terraform apply
 ```
 
-## 📝 Partie 3 — for_each pour les warehouses
+### 📝 Étape 5.3 — for_each pour les warehouses
 
-### 📝 Étape 3.1 — Ajouter une variable `warehouses`
+#### Ajouter une variable `warehouses`
 
 Dans `modules/landing-zone/variables.tf` :
 
@@ -413,7 +423,7 @@ variable "warehouses" {
 }
 ```
 
-### 📝 Étape 3.2 — Remplacer la ressource warehouse par un for_each
+#### Remplacer la ressource warehouse par un for_each
 
 Dans `modules/landing-zone/main.tf`, remplacez le bloc `snowflake_warehouse.etl` par :
 
@@ -430,7 +440,7 @@ resource "snowflake_warehouse" "this" {
 }
 ```
 
-### 📝 Étape 3.3 — Mettre à jour les outputs du module
+#### Mettre à jour les outputs du module
 
 Dans `modules/landing-zone/outputs.tf`, remplacez l'output `warehouse_name` par :
 
@@ -441,7 +451,7 @@ output "warehouse_names" {
 }
 ```
 
-### 📝 Étape 3.4 — Mettre à jour l'appelant
+#### Mettre à jour l'appelant
 
 ```hcl
 module "landing_zone" {
@@ -462,7 +472,7 @@ module "landing_zone" {
 }
 ```
 
-### 📝 Étape 3.5 — Mettre à jour les outputs de l'appelant
+#### Mettre à jour les outputs de l'appelant
 
 Dans `outputs.tf`, remplacez l'output `warehouse_name` par :
 
@@ -473,7 +483,7 @@ output "warehouse_names" {
 }
 ```
 
-### 📝 Étape 3.6 — Planifier et appliquer
+#### Planifier et appliquer
 
 ```bash
 terraform fmt
@@ -484,9 +494,9 @@ terraform apply
 
 ✅ **Checkpoint** : `1 to add` — le nouveau warehouse `WH_APP01_M06_BI_DEV`.
 
-## 📝 Partie 4 — for expressions et dynamic
+### 📝 Étape 5.4 — for expressions et dynamic
 
-### 📝 Étape 4.1 — Utiliser for pour un output consolidé
+#### Utiliser for pour un output consolidé
 
 Dans `modules/landing-zone/outputs.tf` :
 
@@ -501,7 +511,7 @@ output "all_resources" {
 }
 ```
 
-### 📝 Étape 4.2 — Vérifier
+#### Vérifier
 
 ```bash
 terraform output all_resources
@@ -509,9 +519,9 @@ terraform output all_resources
 
 ✅ **Checkpoint** : un objet avec la database, la liste des schemas et la liste des warehouses.
 
-## 📝 Partie 5 — count vs for_each
+### 📝 Étape 5.5 — count vs for_each
 
-### 📝 Étape 5.1 — Comprendre la différence
+#### Comprendre la différence
 
 | Critère | `count` | `for_each` |
 |---|---|---|
@@ -520,7 +530,7 @@ terraform output all_resources
 | Suppression | décale tous les index | supprime uniquement la clé visée |
 | Recommandé pour | activer/désactiver | collections nommées |
 
-### 📝 Étape 5.2 — Exemple de count pour un feature flag
+#### Exemple de count pour un feature flag
 
 Ajoutez dans `modules/landing-zone/variables.tf` :
 
@@ -544,7 +554,7 @@ resource "snowflake_schema" "monitoring" {
 }
 ```
 
-### 📝 Étape 5.3 — Activer et tester
+#### Activer et tester
 
 Dans `main.tf` :
 
@@ -560,7 +570,7 @@ terraform apply
 
 ✅ **Checkpoint** : `1 to add` — le schema `MONITORING`.
 
-### 🌐 Étape 5.4 — Vérification Dynamique dans Snowflake Snowsight
+#### Vérification Dynamique dans Snowflake Snowsight
 
 1. Ouvrez **[app.snowflake.com](https://app.snowflake.com)** avec vos identifiants apprenant.
 2. Naviguez dans **Data > Databases** > Votre database M06.
@@ -569,30 +579,42 @@ terraform apply
 
 ---
 
-## 🐛 Chaos Lab M06 — Suppression Chirurgicale d'une Couche de Données
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Démontrez que `for_each` supprime uniquement la couche ciblée sans réindexer :*
 
-1. **Injection :** Dans votre `terraform.tfvars` ou votre variable `layers`, retirez la couche `CLEAN` du milieu :
-   ```hcl
-   layers = {
-     RAW     = { comment = "Raw data" }
-     # CLEAN = { comment = "Cleaned data" }  ← retiré
-     CURATED = { comment = "Curated data" }
-   }
-   ```
-2. **Observation :** Lancez `terraform plan` et observez :
-   ```text
-   - snowflake_schema.layers["CLEAN"] will be destroyed
-   Plan: 0 to add, 0 to change, 1 to destroy.
-   ```
-   Seul `CLEAN` est ciblé. `RAW` et `CURATED` sont intacts car `for_each` utilise les clés de la map et non des indices numériques.
-3. **Enseignement :** Avec `count`, retirer un élément au milieu aurait décalé les indices et provoqué une recréation destructive de `CURATED`. C'est pourquoi `for_each` est la norme en entreprise.
-4. **Remédiation :** Rétablissez `CLEAN` dans la map, exécutez `terraform plan` et constatez `1 to add`.
+### Symptôme & Injection
+
+Dans votre `terraform.tfvars` ou votre variable `layers`, retirez la couche `CLEAN` du milieu :
+
+```hcl
+layers = {
+  RAW     = { comment = "Raw data" }
+  # CLEAN = { comment = "Cleaned data" }  ← retiré
+  CURATED = { comment = "Curated data" }
+}
+```
+
+### Diagnostic & Observation
+
+Lancez `terraform plan` et observez :
+
+```text
+- snowflake_schema.layers["CLEAN"] will be destroyed
+Plan: 0 to add, 0 to change, 1 to destroy.
+```
+
+Seul `CLEAN` est ciblé. `RAW` et `CURATED` sont intacts car `for_each` utilise les clés de la map et non des indices numériques.
+
+Avec `count`, retirer un élément au milieu aurait décalé les indices et provoqué une recréation destructive de `CURATED`. C'est pourquoi `for_each` est la norme en entreprise.
+
+### Remédiation
+
+Rétablissez `CLEAN` dans la map, exécutez `terraform plan` et constatez `1 to add`.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 ```powershell
 .\scripts\SelfPacedLab.ps1 -Module 6 -All -Report
@@ -610,17 +632,23 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez une variable `tags` (map de strings) au module et utilisez `dynamic` pour appliquer ces tags à chaque ressource qui supporte les tags.
+> **Scénario :** Ajoutez une variable `tags` (map de strings) au module et utilisez `dynamic` pour appliquer ces tags à chaque ressource qui supporte les tags.
+> **Contraintes :**
+> - `terraform validate` réussit;
+> - `terraform plan` n'affiche pas de changement si les tags sont vides;
+> - les tags s'appliquent quand ils sont fournis.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform validate` réussit;
-- [ ] `terraform plan` n'affiche pas de changement si les tags sont vides;
-- [ ] les tags s'appliquent quand ils sont fournis.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées dans ce lab :
 

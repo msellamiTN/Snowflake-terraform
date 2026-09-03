@@ -34,11 +34,17 @@
 > cd labs\m07-cicd-pipeline
 > ```
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Les changements manuels ne fournissent ni séparation des responsabilités ni preuve d'approbation. Vous allez configurer un pipeline Azure DevOps qui produit un plan immuable, applique après revue et audite la dérive.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** configurer un pipeline CI/CD Azure DevOps pour Terraform  
+> **Afin de :** garantir la séparation des responsabilités et l'approbation avant déploiement
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -55,7 +61,7 @@ flowchart TD
     APPLY --> AUDIT[Audit: drift detection]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - créer et comprendre le pipeline `azure-pipelines.yml`;
 - configurer un service connection Azure DevOps;
@@ -63,15 +69,19 @@ flowchart TD
 - appliquer après approbation;
 - comprendre les gates d'environnement.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] un projet Azure DevOps avec accès au repository;
 - [ ] un service connection Azure DevOps pour Snowflake (ou PAT en variable group).
 
-## 📝 Partie 1 — Créer le pipeline
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-### 📝 Étape 1.1 — Créer `azure-pipelines.yml`
+### 📝 Étape 5.1 — Créer le pipeline
+
+#### Créer `azure-pipelines.yml`
 
 Ce lab ne crée **aucune ressource Snowflake**. Il s'agit uniquement de configurer
 le pipeline CI/CD qui orchestrera vos déploiements Terraform.
@@ -219,7 +229,7 @@ stages:
               ARM_TENANT_ID: $(ARM_TENANT_ID)
 ```
 
-### 📝 Étape 1.2 — Comprendre les stages
+#### Comprendre les stages
 
 Le pipeline contient 5 stages :
 
@@ -231,7 +241,7 @@ Le pipeline contient 5 stages :
 | `Apply` | main only | `terraform apply tfplan` |
 | `Audit` | main only | `terraform plan -detailed-exitcode` pour détecter la dérive |
 
-### 📝 Étape 1.3 — Comprendre les variables
+#### Comprendre les variables
 
 Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps :
 
@@ -244,9 +254,9 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 
 > 🔒 **SECURITY** : Les secrets sont stockés dans le Variable Group et jamais dans le code.
 
-## 📝 Partie 2 — Configurer Azure DevOps
+### 📝 Étape 5.2 — Configurer Azure DevOps
 
-### 📝 Étape 2.1 — Créer un Variable Group
+#### Créer un Variable Group
 
 1. Dans Azure DevOps, allez dans **Pipelines > Library**;
 2. cliquez **+ Variable group**;
@@ -255,7 +265,7 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 5. marquez `SNOWFLAKE_PAT` comme secret;
 6. liez le variable group au pipeline.
 
-### 📝 Étape 2.2 — Connecter le repository
+#### Connecter le repository
 
 1. Dans **Pipelines > Pipelines**, cliquez **New Pipeline**;
 2. sélectionnez votre repository Git;
@@ -263,16 +273,16 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 4. sélectionnez `/labs/m07-cicd-pipeline/azure-pipelines.yml`;
 5. exécutez le pipeline.
 
-## 📝 Partie 3 — Tester le pipeline sur une PR
+### 📝 Étape 5.3 — Tester le pipeline sur une PR
 
-### 📝 Étape 3.1 — Créer une branche
+#### Créer une branche
 
 ```bash
 cd "$HOME/Data2AI-Labs/data-platform"
 git checkout -b feature/add-archive-schema
 ```
 
-### 📝 Étape 3.2 — Faire un changement mineur
+#### Faire un changement mineur
 
 Dans `labs/m06-dynamic-logic/main.tf`, ajoutez un schema supplémentaire dans le bloc `schemas` :
 
@@ -284,7 +294,7 @@ Dans `labs/m06-dynamic-logic/main.tf`, ajoutez un schema supplémentaire dans le
   }
 ```
 
-### 📝 Étape 3.3 — Commit et push
+#### Commit et push
 
 ```bash
 git add labs/m06-dynamic-logic/main.tf
@@ -292,13 +302,13 @@ git commit -m "Add ARCHIVE schema to landing zone"
 git push origin feature/add-archive-schema
 ```
 
-### 📝 Étape 3.4 — Créer une PR
+#### Créer une PR
 
 Dans Azure DevOps, créez une Pull Request vers `main`.
 
-### 📝 Étape 3.5 — Observer le pipeline
+#### Observer le pipeline
 
-### 🌐 Étape 3.5 — Créer et Réviser la Pull Request dans Azure DevOps Web
+#### Créer et Réviser la Pull Request dans Azure DevOps Web
 
 1. Ouvrez votre navigateur sur **[dev.azure.com](https://dev.azure.com)** et accédez à votre projet.
 2. Dans le menu de gauche, rendez-vous dans **Repos > Pull requests** et cliquez sur **New pull request**.
@@ -312,7 +322,7 @@ Dans Azure DevOps, créez une Pull Request vers `main`.
 
 ---
 
-### 🌐 Étape 3.6 — Approuver l'Environment Gate & Observer l'Apply
+#### Approuver l'Environment Gate & Observer l'Apply
 
 1. Retournez dans la Pull Request et cliquez sur **Approve**, puis **Complete** (sélectionnez *Merge (no fast-forward)*) et validez.
 2. Rendez-vous dans **Pipelines > Pipelines** et cliquez sur la dernière exécution déclenchée sur la branche `main`.
@@ -325,7 +335,7 @@ Dans Azure DevOps, créez une Pull Request vers `main`.
 
 ---
 
-### ❄️ Étape 3.7 — Vérification dans Snowflake Snowsight
+#### Vérification dans Snowflake Snowsight
 
 1. Ouvrez votre console **Snowflake Snowsight (`https://app.snowflake.com`)**.
 2. Naviguez dans **Data > Databases** > Votre base de données.
@@ -333,50 +343,9 @@ Dans Azure DevOps, créez une Pull Request vers `main`.
 
 ---
 
-## 🐛 Chaos Lab M07 — Pull Request Rejetée par le Pipeline CI/CD
+### � Étape 5.4 — Comprendre les gates d'environnement
 
-*Pour éprouver la robustesse de votre garde-fou automatisé :*
-
-1. **Injection d'une erreur HCL :** Créez une nouvelle branche locale `feature/broken-syntax` :
-   ```powershell
-   git checkout -b feature/broken-syntax
-   ```
-2. Dans un fichier `.tf`, introduisez délibérément une erreur de syntaxe (ex: une accolade non fermée ou un type de variable erroné).
-3. Commitez et poussez la branche vers Azure Repos :
-   ```powershell
-   git commit -am "test: introduce syntax error"
-   git push origin feature/broken-syntax
-   ```
-4. Ouvrez la Pull Request sur **Azure DevOps Web** :
-   - Constatez que le stage `Validate` passe instantanément en **rouge (Failed)**.
-   - La Pull Request est **bloquée**, empêchant tout déploiement corrompu en production.
-5. **Remédiation :** Corrigez l'erreur en local, commitez et poussez. Le pipeline se relance automatiquement et repasse au **vert**.
-
----
-
-## 🤖 Validation Automatisée de votre Progression
-
-Exécutez le script d'auto-évaluation pour vérifier la conformité de votre pipeline et de vos configurations :
-
-```powershell
-.\scripts\SelfPacedLab.ps1 -Module 7 -All -Report
-```
-
-✅ **Résultat attendu :**
-```text
-[PASS] T1 azure-pipelines.yml exists
-[PASS] T1 Multi-stage pipeline declared (Validate, Plan, Apply)
-[PASS] T2 Approval gate environment configured
-[PASS] T3 terraform fmt & validate passed
-[PASS] T4 Git branch hygiene compliant
-Result: 5/5 Tasks Passed.
-```
-
----
-
-## 📝 Partie 4 — Comprendre les gates d'environnement
-
-### 📝 Étape 4.1 — Gates par environnement
+#### Gates par environnement
 
 Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
 
@@ -386,7 +355,7 @@ Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
 | UAT | Approval manuel | Tech lead |
 | PROD | Approval manuel + fenêtre | Change advisory board |
 
-### 📝 Étape 4.2 — Ajouter un stage UAT (concept)
+#### Ajouter un stage UAT (concept)
 
 ```yaml
 - stage: PlanUAT
@@ -415,21 +384,83 @@ Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
               terraform apply tfplan
 ```
 
-## 🏆 Challenge
+---
 
-Ajoutez un stage `tflint` au pipeline qui échoue si `tflint` détecte des problèmes dans `labs/m06-dynamic-logic/modules/`.
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
-Critères :
+*Pour éprouver la robustesse de votre garde-fou automatisé :*
 
-- [ ] le stage `Validate` exécute `tflint`;
-- [ ] le pipeline échoue si `tflint` retourne des erreurs;
-- [ ] le pipeline passe après correction.
+### Symptôme & Injection
 
-## 🧹 Cleanup
+Créez une nouvelle branche locale `feature/broken-syntax` :
+
+```powershell
+git checkout -b feature/broken-syntax
+```
+
+Dans un fichier `.tf`, introduisez délibérément une erreur de syntaxe (ex: une accolade non fermée ou un type de variable erroné).
+
+Commitez et poussez la branche vers Azure Repos :
+
+```powershell
+git commit -am "test: introduce syntax error"
+git push origin feature/broken-syntax
+```
+
+### Diagnostic & Observation
+
+Ouvrez la Pull Request sur **Azure DevOps Web** :
+
+- Constatez que le stage `Validate` passe instantanément en **rouge (Failed)**.
+- La Pull Request est **bloquée**, empêchant tout déploiement corrompu en production.
+
+### Remédiation
+
+Corrigez l'erreur en local, commitez et poussez. Le pipeline se relance automatiquement et repasse au **vert**.
+
+---
+
+## 🤖 7. Validation Automatisée (*Check My Progress*)
+
+Exécutez le script d'auto-évaluation pour vérifier la conformité de votre pipeline et de vos configurations :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 7 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 azure-pipelines.yml exists
+[PASS] T1 Multi-stage pipeline declared (Validate, Plan, Apply)
+[PASS] T2 Approval gate environment configured
+[PASS] T3 terraform fmt & validate passed
+[PASS] T4 Git branch hygiene compliant
+Result: 5/5 Tasks Passed.
+```
+
+---
+
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
+
+> **Scénario :** Ajoutez un stage `tflint` au pipeline qui échoue si `tflint` détecte des problèmes dans `labs/m06-dynamic-logic/modules/`.
+> **Contraintes :**
+> - le stage `Validate` exécute `tflint`;
+> - le pipeline échoue si `tflint` retourne des erreurs;
+> - le pipeline passe après correction.
+
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
+
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Ce lab ne crée **aucune ressource Snowflake**. Il n'y a pas de `terraform destroy` à exécuter.
 
-> 💡 **Note** : Si vous avez appliqué des changements via le pipeline (Partie 3),
+> 💡 **Note** : Si vous avez appliqué des changements via le pipeline (Étape 5.3),
 > nettoyez les ressources du lab M06 avec `.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M06`.
 
 ---

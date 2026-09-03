@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m03.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Une entreprise ne remplace pas une plateforme Snowflake existante pour adopter Terraform. Elle l'intègre sans interruption. Vous allez créer des ressources Terraform, puis importer une ressource Snowflake existante (brownfield) dans le state Terraform, et corriger la dérive.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** importer une ressource Snowflake existante (brownfield) dans Terraform  
+> **Afin de :** aligner l'infrastructure réelle avec le code versionné sans interruption de service
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -54,7 +60,7 @@ flowchart LR
     TF -->|moved block| BF2[Resource importée]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - ✅ créer des ressources Snowflake avec Terraform (state local);
 - ✅ importer une ressource Snowflake existante dans Terraform;
@@ -62,18 +68,22 @@ flowchart LR
 - ✅ détecter et corriger une dérive intentionnelle;
 - ✅ utiliser un bloc `moved` pour refactorer sans destruction.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`;
 - [ ] vous connaissez votre préfixe unique (variable `LEARNER_PREFIX` dans `.env`).
 
-## 📝 Partie 1 — Créer les ressources Snowflake (state local)
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
+
+### 📝 Étape 5.1 — Créer les ressources Snowflake (state local)
 
 Ce lab est **autonome** : il ne dépend pas de M1 ou M2. Vous allez créer vos propres ressources avec un préfixe `M03`, puis importer une database brownfield.
 
-### � Étape 1.1 — Se placer dans le dossier du lab
+#### Se placer dans le dossier du lab
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -95,7 +105,7 @@ ls -la
 
 ✅ **Checkpoint** : `provider.tf`, `versions.tf`, `variables.tf`, `terraform.tfvars.example`, `main.tf` (stub), `outputs.tf` (stub), `.gitignore`.
 
-### 📝 Étape 1.2 — Ajouter `warehouse_size` dans `variables.tf`
+#### Ajouter `warehouse_size` dans `variables.tf`
 
 Le fichier `variables.tf` est pré-rempli avec les variables de base. **Ajoutez à la fin du fichier** :
 
@@ -112,7 +122,7 @@ variable "warehouse_size" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `locals.tf`
+#### Créer `locals.tf`
 
 ```powershell
 code locals.tf
@@ -127,7 +137,7 @@ locals {
 }
 ```
 
-### 📝 Étape 1.4 — Créer `terraform.tfvars`
+#### Créer `terraform.tfvars`
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -160,7 +170,7 @@ warehouse_size         = "X-SMALL"
 
 Remplacez `APP01` par votre préfixe.
 
-### 📝 Étape 1.5 — Créer `main.tf`
+#### Créer `main.tf`
 
 Remplacez le contenu du stub `main.tf` par :
 
@@ -187,7 +197,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 1.6 — Créer `outputs.tf`
+#### Créer `outputs.tf`
 
 Remplacez le contenu du stub `outputs.tf` par :
 
@@ -208,7 +218,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 1.7 — Initialiser, planifier, appliquer
+#### Initialiser, planifier, appliquer
 
 ```powershell
 terraform fmt
@@ -232,9 +242,9 @@ terraform state list
 
 > 🔒 **Security** : n'affichez jamais `ARM_CLIENT_SECRET`, `SNOWFLAKE_PAT` ou `TF_VAR_snowflake_token`.
 
-## 📝 Partie 2 — Créer une ressource hors Terraform
+### 📝 Étape 5.2 — Créer une ressource hors Terraform
 
-### 📝 Étape 2.1 — Créer une database manuellement dans Snowflake
+#### Créer une database manuellement dans Snowflake
 
 Chaque apprenant utilise son préfixe pour éviter les conflits de noms dans le compte Snowflake partagé. Remplacez `APP01` par votre préfixe.
 
@@ -258,7 +268,7 @@ snow sql -c training -q "CREATE DATABASE ${brownfield_db} COMMENT = 'Created man
 
 > 💡 **Note** : Avec le préfixe `APP01`, la database s'appelle `DB_APP01_M03_BROWNFIELD_DEV`. Utilisez le même nom dans toutes les étapes suivantes.
 
-### 📝 Étape 2.2 — Vérifier
+#### Vérifier
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -280,9 +290,9 @@ snow sql -c training -q "SHOW DATABASES LIKE 'DB_${LEARNER_PREFIX}_M03_BROWNFIEL
 
 > 💡 **Note** : Cette ressource existe dans Snowflake mais **pas** dans le state Terraform. C'est une ressource brownfield.
 
-## 📝 Partie 3 — Importer dans Terraform
+### 📝 Étape 5.3 — Importer dans Terraform
 
-### 📝 Étape 3.1 — Ajouter un bloc resource vide
+#### Ajouter un bloc resource vide
 
 Dans `labs/m03-import-brownfield/main.tf`, ajoutez à la fin du fichier. Remplacez `APP01` par votre préfixe :
 
@@ -294,7 +304,7 @@ resource "snowflake_database" "brownfield" {
 
 > 💡 **Note** : Utilisez le nom exact de la database créée à l'étape 2.1. Si vous l'avez personnalisée, adaptez la valeur.
 
-### 📝 Étape 3.2 — Formater et valider
+#### Formater et valider
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -316,7 +326,7 @@ terraform validate
 
 ✅ **Checkpoint** : `Success! The configuration is valid.`
 
-### 📝 Étape 3.3 — Importer la ressource
+#### Importer la ressource
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -340,7 +350,7 @@ terraform import snowflake_database.brownfield "DB_${LEARNER_PREFIX}_M03_BROWNFI
 Import successful!
 ```
 
-### 📝 Étape 3.4 — Vérifier le state
+#### Vérifier le state
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -360,7 +370,7 @@ terraform state list
 
 ✅ **Checkpoint** : la liste contient `snowflake_database.brownfield` en plus des ressources M03.
 
-### 📝 Étape 3.5 — Générer la configuration
+#### Générer la configuration
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -382,7 +392,7 @@ Terraform compare le state et la configuration, puis génère un fichier avec le
 
 ✅ **Checkpoint** : un fichier `generated.tf` est créé avec la configuration complète de la database.
 
-### 📝 Étape 3.6 — Intégrer la configuration générée
+#### Intégrer la configuration générée
 
 Ouvrez `generated.tf`, copiez les attributs pertinents dans `main.tf` (dans le bloc `snowflake_database.brownfield`), puis supprimez `generated.tf` :
 
@@ -412,7 +422,7 @@ resource "snowflake_database" "brownfield" {
 }
 ```
 
-### 📝 Étape 3.7 — Formater, valider, planifier
+#### Formater, valider, planifier
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -436,9 +446,9 @@ terraform plan
 
 ✅ **Checkpoint 4** : `No changes. Your infrastructure matches the configuration.`
 
-## 📝 Partie 4 — Détecter et corriger une dérive
+### 📝 Étape 5.4 — Détecter et corriger une dérive
 
-### 📝 Étape 4.1 — Modifier la ressource hors Terraform
+#### Modifier la ressource hors Terraform
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -456,7 +466,7 @@ snow sql -c training -q "ALTER DATABASE DB_${LEARNER_PREFIX}_M03_BROWNFIELD_DEV 
 ```
 </details>
 
-### 📝 Étape 4.2 — Détecter la dérive
+#### Détecter la dérive
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -476,7 +486,7 @@ terraform plan
 
 ✅ **Checkpoint** : Terraform détecte que le `comment` a changé et propose de le remettre à la valeur de la configuration.
 
-### 📝 Étape 4.3 — Corriger la dérive
+#### Corriger la dérive
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -496,7 +506,7 @@ terraform apply
 
 ✅ **Checkpoint** : Terraform remet le `comment` à la valeur définie dans `main.tf`.
 
-### 📝 Étape 4.4 — Vérifier l'idempotence
+#### Vérifier l'idempotence
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -516,9 +526,9 @@ terraform plan
 
 ✅ **Checkpoint 5** : `No changes.`
 
-## 📝 Partie 5 — Refactorer avec un bloc moved
+### 📝 Étape 5.5 — Refactorer avec un bloc moved
 
-### 📝 Étape 5.1 — Renommer la ressource dans main.tf
+#### Renommer la ressource dans main.tf
 
 Renommez `snowflake_database.brownfield` en `snowflake_database.imported` :
 
@@ -530,7 +540,7 @@ resource "snowflake_database" "imported" {
 }
 ```
 
-### 📝 Étape 5.2 — Ajouter un bloc moved
+#### Ajouter un bloc moved
 
 Ajoutez en haut de `main.tf` :
 
@@ -541,7 +551,7 @@ moved {
 }
 ```
 
-### 📝 Étape 5.3 — Planifier
+#### Planifier
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -561,7 +571,7 @@ terraform plan
 
 ✅ **Checkpoint** : `1 resource has been moved.` et `No changes.` — Terraform a déplacé la ressource dans le state sans la recréer.
 
-### 📝 Étape 5.4 — Appliquer
+#### Appliquer
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -579,7 +589,7 @@ terraform apply
 ```
 </details>
 
-### 📝 Étape 5.5 — Supprimer le bloc moved
+#### Supprimer le bloc moved
 
 Une fois le move appliqué, supprimez le bloc `moved` de `main.tf`. Il n'est plus nécessaire.
 
@@ -605,42 +615,34 @@ terraform plan
 
 ✅ **Checkpoint 6** : `No changes.`
 
-## ✅ Validation finale
-
-- [ ] ressources M03 créées avec Terraform;
-- [ ] import réussi sans erreur;
-- [ ] configuration générée et intégrée;
-- [ ] dérive détectée et corrigée;
-- [ ] bloc `moved` utilisé sans destruction;
-- [ ] `terraform plan` sans changement;
-- [ ] ressource importée visible dans Snowflake Snowsight.
-
-### 🌐 Vérification dans Snowflake Snowsight
-
-1. Ouvrez **[app.snowflake.com](https://app.snowflake.com)** avec vos identifiants apprenant.
-2. Naviguez dans **Data > Databases** et localisez votre database brownfield importée.
-3. Vérifiez que le commentaire a bien été réaligné par Terraform (plus de trace de la valeur manuelle) et que la structure est identique à la déclaration HCL.
-
----
-
-## 🐛 Chaos Lab M03 — Sensibilité à la Casse des Identifiants Snowflake
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Snowflake est sensible à la casse uniquement pour les identifiants quotés. Vous allez le constater en conditions réelles.*
 
-1. **Injection de l'erreur :** Dans votre bloc `import {}`, modifiez l'identifiant en minuscules :
-   ```hcl
-   import {
-     to = snowflake_database.brownfield
-     id = "app01_m03_brownfield_dev"  # ← minuscules
-   }
-   ```
-2. **Observation :** Lancez `terraform plan`. Snowflake ne retrouve pas la ressource car les identifiants non quotés sont stockés en majuscules.
-3. **Diagnostic :** L'erreur retournée contient `Error: Cannot import non-existent remote object`.
-4. **Remédiation :** Rétablissez les majuscules (`APP01_M03_BROWNFIELD_DEV`), relancez et constatez le plan d'import réussi.
+### Symptôme & Injection
+
+Dans votre bloc `import {}`, modifiez l'identifiant en minuscules :
+
+```hcl
+import {
+  to = snowflake_database.brownfield
+  id = "app01_m03_brownfield_dev"  # ← minuscules
+}
+```
+
+### Diagnostic & Observation
+
+Lancez `terraform plan`. Snowflake ne retrouve pas la ressource car les identifiants non quotés sont stockés en majuscules.
+
+L'erreur retournée contient `Error: Cannot import non-existent remote object`.
+
+### Remédiation
+
+Rétablissez les majuscules (`APP01_M03_BROWNFIELD_DEV`), relancez et constatez le plan d'import réussi.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 ```powershell
 .\scripts\SelfPacedLab.ps1 -Module 3 -All -Report
@@ -658,16 +660,24 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-Importez le warehouse créé dans ce lab dans une nouvelle ressource `snowflake_warehouse.imported_etl` avec un bloc `moved`.
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Critères :
+> **Scénario :** Importez le warehouse créé dans ce lab dans une nouvelle ressource `snowflake_warehouse.imported_etl` avec un bloc `moved`.
+> **Contraintes :**
+> - `terraform import` réussit;
+> - `terraform plan` affiche `No changes` après alignement;
+> - le bloc `moved` déplace la ressource sans destruction;
+> - `terraform state list` affiche le nouveau nom.
 
-- [ ] `terraform import` réussit;
-- [ ] `terraform plan` affiche `No changes` après alignement;
-- [ ] le bloc `moved` déplace la ressource sans destruction;
-- [ ] `terraform state list` affiche le nouveau nom.
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées dans ce lab (y compris la database brownfield importée) :
 

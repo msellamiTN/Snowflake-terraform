@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m09.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 La valeur Data commence quand les fichiers arrivent de façon fiable dans Snowflake. Vous allez créer un module d'ingestion avec un stage interne, un file format CSV et une table cible, le tout dans un lab auto-contenu qui crée également sa propre base de données.
 
-## 🏗️ Architecture
+> **En tant que :** Data Engineer  
+> **Je veux :** créer un module d'ingestion Snowflake avec stage, file format et table  
+> **Afin de :** charger des fichiers CSV de façon fiable et auditable
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -60,7 +66,7 @@ flowchart TD
     TABLE --> WH
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - créer un module `landing-zone` avec une base de données et un warehouse;
 - créer un module `ingestion` avec stage, file format et table;
@@ -69,25 +75,29 @@ flowchart TD
 - charger un fichier de test via `snow sql`;
 - vérifier les données chargées.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`;
 - [ ] vous connaissez votre préfixe unique (variable `LEARNER_PREFIX` dans `.env`).
 
-## 📝 Partie 1 — Créer le module landing-zone
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
+
+### 📝 Étape 5.1 — Créer le module landing-zone
 
 Ce lab est auto-contenu : il crée sa propre base de données avec un nom spécifique au module (`APP01_M09_RAW_DEV`). Le module `landing-zone` est identique à celui du M5, mais avec une variable `lab_id` pour produire des noms uniques par lab.
 
-### 📝 Étape 1.1 — Créer la structure
+#### Créer la structure
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/labs/m09-snowflake-advanced
 mkdir -p modules/landing-zone
 ```
 
-### 📝 Étape 1.2 — Créer `modules/landing-zone/variables.tf`
+#### Créer `modules/landing-zone/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -140,7 +150,7 @@ variable "auto_suspend_seconds" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `modules/landing-zone/main.tf`
+#### Créer `modules/landing-zone/main.tf`
 
 ```hcl
 locals {
@@ -174,7 +184,7 @@ resource "snowflake_warehouse" "etl" {
 
 > 💡 **Note** : La variable `lab_id` produit le nom `APP01_M09_RAW_DEV` au lieu de `APP01_RAW_DEV`. Cela isole les ressources de ce lab de celles des autres labs.
 
-### 📝 Étape 1.4 — Créer `modules/landing-zone/outputs.tf`
+#### Créer `modules/landing-zone/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -193,7 +203,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 1.5 — Créer `modules/landing-zone/versions.tf`
+#### Créer `modules/landing-zone/versions.tf`
 
 ```hcl
 terraform {
@@ -208,7 +218,7 @@ terraform {
 }
 ```
 
-### 📝 Étape 1.6 — Formater et valider
+#### Formater et valider
 
 ```bash
 cd modules/landing-zone
@@ -219,16 +229,16 @@ terraform validate
 
 ✅ **Checkpoint** : `The configuration is valid.`
 
-## 📝 Partie 2 — Créer le module ingestion
+### 📝 Étape 5.2 — Créer le module ingestion
 
-### 📝 Étape 2.1 — Créer la structure
+#### Créer la structure
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/labs/m09-snowflake-advanced
 mkdir -p modules/ingestion
 ```
 
-### 📝 Étape 2.2 — Créer `modules/ingestion/variables.tf`
+#### Créer `modules/ingestion/variables.tf`
 
 ```hcl
 variable "database" {
@@ -255,7 +265,7 @@ variable "stage_name" {
 }
 ```
 
-### 📝 Étape 2.3 — Créer `modules/ingestion/main.tf`
+#### Créer `modules/ingestion/main.tf`
 
 ```hcl
 resource "snowflake_file_format" "csv" {
@@ -315,7 +325,7 @@ resource "snowflake_table" "raw_customers" {
 }
 ```
 
-### 📝 Étape 2.4 — Créer `modules/ingestion/outputs.tf`
+#### Créer `modules/ingestion/outputs.tf`
 
 ```hcl
 output "stage_name" {
@@ -331,7 +341,7 @@ output "table_name" {
 }
 ```
 
-### 📝 Étape 2.5 — Créer `modules/ingestion/versions.tf`
+#### Créer `modules/ingestion/versions.tf`
 
 ```hcl
 terraform {
@@ -346,7 +356,7 @@ terraform {
 }
 ```
 
-### 📝 Étape 2.6 — Formater et valider
+#### Formater et valider
 
 ```bash
 cd modules/ingestion
@@ -354,9 +364,9 @@ terraform fmt
 terraform validate
 ```
 
-## 📝 Partie 3 — Appeler les modules depuis le lab
+### 📝 Étape 5.3 — Appeler les modules depuis le lab
 
-### 📝 Étape 3.1 — Ajouter les variables lab-specific dans `variables.tf`
+#### Ajouter les variables lab-specific dans `variables.tf`
 
 Les fichiers `provider.tf`, `versions.tf` et `variables.tf` existent déjà dans `labs/m09-snowflake-advanced/`. Ajoutez ces variables à la fin de `variables.tf` :
 
@@ -379,7 +389,7 @@ variable "warehouse_size" {
 }
 ```
 
-### 📝 Étape 3.2 — Créer `terraform.tfvars`
+#### Créer `terraform.tfvars`
 
 Copiez le fichier d'exemple et complétez-le :
 
@@ -389,7 +399,7 @@ Copy-Item terraform.tfvars.example terraform.tfvars
 
 Vérifiez que `learner_prefix = "APP01"` (ou votre préfixe) et `environment = "DEV"`.
 
-### 📝 Étape 3.3 — Écrire `main.tf`
+#### Écrire `main.tf`
 
 **Remplacez tout le contenu** de `main.tf` par :
 
@@ -415,7 +425,7 @@ module "ingestion" {
 
 > � **Note** : Les modules sont référencés avec `./modules/...` car ils se trouvent dans le même dossier de lab (`labs/m09-snowflake-advanced/modules/`).
 
-### 📝 Étape 3.4 — Écrire `outputs.tf`
+#### Écrire `outputs.tf`
 
 **Remplacez tout le contenu** de `outputs.tf` par :
 
@@ -437,7 +447,7 @@ output "ingestion_table" {
 }
 ```
 
-### 📝 Étape 3.5 — Planifier et appliquer
+#### Planifier et appliquer
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/labs/m09-snowflake-advanced
@@ -455,7 +465,7 @@ terraform apply m09.tfplan
 
 ✅ **Checkpoint** : `Apply complete! Resources: 6 added, 0 changed, 0 destroyed.`
 
-### 📝 Étape 3.6 — Vérifier dans Snowflake
+#### Vérifier dans Snowflake
 
 ```bash
 snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M09_RAW_DEV'"
@@ -464,9 +474,9 @@ snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_APP01_M09_ETL_DEV'"
 
 Remplacez `APP01` par votre préfixe.
 
-## 📝 Partie 4 — Charger un fichier de test
+### 📝 Étape 5.4 — Charger un fichier de test
 
-### 📝 Étape 4.1 — Créer un fichier CSV de test
+#### Créer un fichier CSV de test
 
 ```bash
 cat > /tmp/customers.csv << 'EOF'
@@ -477,7 +487,7 @@ ID,FIRST_NAME,LAST_NAME,EMAIL
 EOF
 ```
 
-### 📝 Étape 4.2 — Uploader le fichier vers le stage
+#### Uploader le fichier vers le stage
 
 ```bash
 snow sql -c training -q "PUT file:///tmp/customers.csv @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS AUTO_COMPRESS=TRUE"
@@ -485,13 +495,13 @@ snow sql -c training -q "PUT file:///tmp/customers.csv @APP01_M09_RAW_DEV.INGEST
 
 Remplacez `APP01` par votre préfixe.
 
-### 📝 Étape 4.3 — Charger les données dans la table
+#### Charger les données dans la table
 
 ```bash
 snow sql -c training -q "COPY INTO APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS (ID, FIRST_NAME, LAST_NAME, EMAIL) FROM @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS FILE_FORMAT = (FORMAT_NAME = APP01_M09_RAW_DEV.INGESTION.FF_CSV) ON_ERROR = 'ABORT_STATEMENT'"
 ```
 
-### 📝 Étape 4.4 — Vérifier les données dans le terminal
+#### Vérifier les données dans le terminal
 
 ```bash
 snow sql -c training -q "SELECT COUNT(*) FROM APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS"
@@ -500,7 +510,7 @@ snow sql -c training -q "SELECT * FROM APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS
 
 ✅ **Checkpoint** : 3 lignes avec les données du fichier CSV.
 
-### 🌐 Étape 4.5 — Prévisualisation Visuelle dans Snowflake Snowsight
+#### Prévisualisation Visuelle dans Snowflake Snowsight
 
 1. Ouvrez votre navigateur sur **[app.snowflake.com](https://app.snowflake.com)**.
 2. Naviguez vers **Data > Databases > APP01_M09_RAW_DEV > INGESTION > Tables > RAW_CUSTOMERS**.
@@ -510,9 +520,9 @@ snow sql -c training -q "SELECT * FROM APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS
 
 ---
 
-## 📝 Partie 5 — Ingestion Hybride Externe ADLS Gen2 (Pattern Enterprise)
+### 📝 Étape 5.5 — Ingestion Hybride Externe ADLS Gen2 (Pattern Enterprise)
 
-### 📝 Étape 5.1 — Comprendre la différence Architectural
+#### Comprendre la différence Architectural
 
 | Critère | Stage interne | Stage externe Azure ADLS Gen2 |
 |---|---|---|
@@ -521,7 +531,7 @@ snow sql -c training -q "SELECT * FROM APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS
 | Coût de conservation | Facturation Snowflake | Facturation Azure Blob (très économique) |
 | Cas d'usage recommandé | Développements & petits volumes | **Production d'entreprise, Data Lakes** |
 
-### 📝 Étape 5.2 — Déclaration de la Storage Integration Azure
+#### Déclaration de la Storage Integration Azure
 
 En entreprise, la délégation d'identité repose sur un Principal de Service Microsoft Entra ID (*Zero Shared Secrets*) :
 
@@ -537,34 +547,48 @@ resource "snowflake_storage_integration" "azure" {
 
 ---
 
-## 🐛 Chaos Lab M09 — Rejet de Données Corrompues lors du COPY INTO
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *En production, les fichiers sources contiennent parfois des formats anormaux. Vous allez tester le comportement défensif de Snowflake.*
 
-1. **Injection d'un fichier corrompu :** Créez un fichier contenant un champ texte au lieu d'un ID numérique :
-   ```bash
-   cat > /tmp/bad_customers.csv << 'EOF'
-   ID,FIRST_NAME,LAST_NAME,EMAIL
-   NON_NUMERIQUE,Daniel,Faussaire,daniel@bad.com
-   EOF
-   ```
-2. **Upload vers le stage :**
-   ```bash
-   snow sql -c training -q "PUT file:///tmp/bad_customers.csv @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS"
-   ```
-3. **Exécution du COPY INTO :**
-   ```bash
-   snow sql -c training -q "COPY INTO APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS FROM @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS/bad_customers.csv FILE_FORMAT = (FORMAT_NAME = APP01_M09_RAW_DEV.INGESTION.FF_CSV) ON_ERROR = 'ABORT_STATEMENT'"
-   ```
-4. **Observation du diagnostic :** Snowflake rejette la transaction entière :
-   ```text
-   Numeric value 'NON_NUMERIQUE' is not recognized. File 'bad_customers.csv.gz', line 2, character 1.
-   ```
-5. **Remédiation FinOps :** Utilisez `ON_ERROR = 'CONTINUE'` ou `VALIDATION_MODE = 'RETURN_ERRORS'` pour auditer les rejets sans interrompre le pipeline d'ingestion.
+### Symptôme & Injection
+
+Créez un fichier contenant un champ texte au lieu d'un ID numérique :
+
+```bash
+cat > /tmp/bad_customers.csv << 'EOF'
+ID,FIRST_NAME,LAST_NAME,EMAIL
+NON_NUMERIQUE,Daniel,Faussaire,daniel@bad.com
+EOF
+```
+
+Upload vers le stage :
+
+```bash
+snow sql -c training -q "PUT file:///tmp/bad_customers.csv @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS"
+```
+
+### Diagnostic & Observation
+
+Exécution du COPY INTO :
+
+```bash
+snow sql -c training -q "COPY INTO APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS FROM @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS/bad_customers.csv FILE_FORMAT = (FORMAT_NAME = APP01_M09_RAW_DEV.INGESTION.FF_CSV) ON_ERROR = 'ABORT_STATEMENT'"
+```
+
+Snowflake rejette la transaction entière :
+
+```text
+Numeric value 'NON_NUMERIQUE' is not recognized. File 'bad_customers.csv.gz', line 2, character 1.
+```
+
+### Remédiation FinOps
+
+Utilisez `ON_ERROR = 'CONTINUE'` ou `VALIDATION_MODE = 'RETURN_ERRORS'` pour auditer les rejets sans interrompre le pipeline d'ingestion.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 Exécutez le script d'évaluation pour valider l'ensemble du module d'ingestion :
 
@@ -584,17 +608,23 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez une seconde table `RAW_ORDERS` avec 4 colonnes (ORDER_ID, CUSTOMER_ID, AMOUNT, ORDER_DATE) et chargez un fichier de test.
+> **Scénario :** Ajoutez une seconde table `RAW_ORDERS` avec 4 colonnes (ORDER_ID, CUSTOMER_ID, AMOUNT, ORDER_DATE) et chargez un fichier de test.
+> **Contraintes :**
+> - `terraform plan` crée la nouvelle table;
+> - le chargement `COPY INTO` réussit;
+> - `SELECT COUNT(*)` retourne le bon nombre de lignes.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform plan` crée la nouvelle table;
-- [ ] le chargement `COPY INTO` réussit;
-- [ ] `SELECT COUNT(*)` retourne le bon nombre de lignes.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées par ce lab :
 

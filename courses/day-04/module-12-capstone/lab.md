@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m12.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Le comité d'architecture attend une plateforme gouvernée, exploitable et auditable. Vous allez assembler tous les modules (landing-zone, ingestion, security, RBAC) dans une configuration complète et prouver le zero-drift.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** assembler tous les modules dans une configuration Capstone unique  
+> **Afin de :** prouver le zero-drift et la gouvernance de la plateforme complète
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart TD
@@ -61,23 +67,27 @@ flowchart TD
     RBAC --> GRANTS[Future Grants]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - composer tous les modules dans une configuration unique;
 - déployer la plateforme complète en une seule commande;
 - prouver le zero-drift avec `terraform plan -detailed-exitcode`;
 - documenter l'architecture avec les outputs.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Le dossier `labs/m12-capstone/` contient `provider.tf`, `versions.tf`, `variables.tf` et `terraform.tfvars.example` (fournis).
 - [ ] Les sous-dossiers `labs/m12-capstone/modules/landing-zone/`, `modules/ingestion/`, `modules/security/` et `modules/rbac/` existent (avec `versions.tf` fourni).
 
-## 📝 Partie 1 — Créer les modules
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
+
+### 📝 Étape 5.1 — Créer les modules
 
 Ce lab est autonome : les 4 modules sont créés dans `labs/m12-capstone/modules/` puis assemblés dans `main.tf`.
 
-### 📝 Étape 1.1 — Créer `modules/landing-zone/`
+#### Créer `modules/landing-zone/`
 
 `modules/landing-zone/variables.tf` :
 
@@ -172,7 +182,7 @@ output "warehouse_names" {
 }
 ```
 
-### 📝 Étape 1.2 — Créer `modules/ingestion/`
+#### Créer `modules/ingestion/`
 
 `modules/ingestion/variables.tf` :
 
@@ -245,7 +255,7 @@ output "stage_name" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `modules/security/`
+#### Créer `modules/security/`
 
 `modules/security/variables.tf` :
 
@@ -296,7 +306,7 @@ output "user_name" {
 }
 ```
 
-### 📝 Étape 1.4 — Créer `modules/rbac/`
+#### Créer `modules/rbac/`
 
 `modules/rbac/variables.tf` :
 
@@ -412,7 +422,7 @@ output "role_reader" {
 }
 ```
 
-### 📝 Étape 1.5 — Formater et valider chaque module
+#### Formater et valider chaque module
 
 ```bash
 cd labs/m12-capstone/modules/landing-zone
@@ -428,9 +438,9 @@ cd ../rbac
 terraform fmt && terraform validate
 ```
 
-## 📝 Partie 2 — Composez la configuration finale
+### 📝 Étape 5.2 — Composez la configuration finale
 
-### 📝 Étape 2.1 — Écrire `labs/m12-capstone/main.tf`
+#### Écrire `labs/m12-capstone/main.tf`
 
 ```hcl
 module "landing_zone" {
@@ -481,7 +491,7 @@ resource "snowflake_grant_account_role" "tech_raw" {
 }
 ```
 
-### 📝 Étape 2.2 — Ajouter la variable `rsa_public_key`
+#### Ajouter la variable `rsa_public_key`
 
 Dans `labs/m12-capstone/variables.tf`, ajoutez :
 
@@ -494,7 +504,7 @@ variable "rsa_public_key" {
 }
 ```
 
-### 📝 Étape 2.3 — Écrire les outputs dans `outputs.tf`
+#### Écrire les outputs dans `outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -532,7 +542,7 @@ output "platform_summary" {
 }
 ```
 
-### 📝 Étape 2.4 — Formater et valider
+#### Formater et valider
 
 ```bash
 cd labs/m12-capstone
@@ -542,9 +552,9 @@ terraform validate
 
 ✅ **Checkpoint** : `The configuration is valid.`
 
-## 📝 Partie 3 — Déployer la plateforme
+### 📝 Étape 5.3 — Déployer la plateforme
 
-### 📝 Étape 3.1 — Planifier
+#### Planifier
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -564,13 +574,13 @@ terraform plan -out=m12.tfplan
 
 ✅ **Checkpoint** : le plan affiche les ressources à créer (database, schemas, warehouse, table, stage, user, rôles, grants).
 
-### 📝 Étape 3.2 — Appliquer
+#### Appliquer
 
 ```bash
 terraform apply "m12.tfplan"
 ```
 
-### 📝 Étape 3.3 — Vérifier les outputs
+#### Vérifier les outputs
 
 ```bash
 terraform output platform_summary
@@ -578,69 +588,9 @@ terraform output platform_summary
 
 ✅ **Checkpoint** : un objet avec la database, les schemas, les warehouses, l'utilisateur et les rôles.
 
-## � Partie 4 — Chaos Lab : Dérive manuelle dans Snowsight & Rétablissement Zero-Drift
+### 📝 Étape 5.4 — Documenter l'architecture
 
-*Dans ce Chaos Lab d'entreprise, vous injectez une dérive manuelle hors IaC directement via l'interface graphique Snowsight, vous la détectez au terminal via terraform plan, et vous forcez la réconciliation.*
-
-### 📝 Étape 4.1 — Plan avec detailed-exitcode
-
-```bash
-terraform plan -detailed-exitcode
-```
-
-| Code | Signification |
-|---|---|
-| 0 | No changes — zero drift |
-| 1 | Error |
-| 2 | Changes detected — drift |
-
-✅ **Checkpoint** : code 0 (no changes).
-
-### 📝 Étape 4.2 — Simuler une dérive via Snowsight UI
-
-Dans **Snowflake Snowsight** (`app.snowflake.com`) ou via la CLI, modifiez une ressource hors Terraform :
-
-```bash
-snow sql -c training -q "ALTER DATABASE APP01_M12_RAW_DEV SET COMMENT = 'Drift test from Snowsight UI'"
-```
-
-### 📝 Étape 4.3 — Détecter la dérive
-
-```bash
-terraform plan -detailed-exitcode
-```
-
-✅ **Checkpoint** : code 2 (changes detected). Observez le diff montrant la divergence de commentaire.
-
-### 📝 Étape 4.4 — Corriger la dérive
-
-```bash
-terraform apply
-```
-
-### 📝 Étape 4.5 — Vérifier le retour à zero-drift
-
-```bash
-terraform plan -detailed-exitcode
-```
-
-✅ **Checkpoint** : code 0.
-
-### 🌐 Étape 4.6 — Audit Visuel Multi-Console (Snowsight, Portail Azure, Azure DevOps)
-
-1. **❄️ Snowflake Snowsight (`app.snowflake.com`) :**
-   - Naviguez dans **Data > Databases** : vérifiez l'arborescence `APP01_M12_RAW_DEV` avec ses schemas `INGESTION` et `STAGING`.
-   - Naviguez dans **Admin > Warehouses** : vérifiez que `WH_APP01_M12_ETL_DEV` est suspendu avec taille `X-SMALL`.
-   - Naviguez dans **Admin > Users & Roles** : confirmez les rôles créés et l'utilisateur technique `TF_APP01_M12_SVC`.
-2. **🔵 Portail Microsoft Azure (`portal.azure.com`) :**
-   - Ouvrez le conteneur Blob hébergeant le state : constatez que la clé d'état `training/APP01/m12/terraform.tfstate` est présente et chiffrée.
-   - Vérifiez dans Azure Key Vault que les secrets utilisés par la chaîne de déploiement sont intacts.
-3. **🚀 Azure DevOps Web (`dev.azure.com`) :**
-   - Vérifiez que la Pull Request a été auditée et que les tests automatiques de la pipeline CI/CD sont au vert.
-
-## 📝 Partie 5 — Documenter l'architecture
-
-### 📝 Étape 5.1 — Générer un diagramme
+#### Générer un diagramme
 
 Dans `docs/architecture.md`, ajoutez un diagramme Mermaid qui reflète votre déploiement réel :
 
@@ -669,7 +619,7 @@ flowchart TD
     TF --> Snowflake
 ```
 
-### 📝 Étape 5.2 — Capturer les outputs
+#### Capturer les outputs
 
 ```bash
 terraform output -json > docs/m12-outputs.json
@@ -679,7 +629,73 @@ terraform output -json > docs/m12-outputs.json
 
 ---
 
-## 🤖 Validation Automatisée & Score Capstone (100 Pts)
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
+
+*Dans ce Chaos Lab d'entreprise, vous injectez une dérive manuelle hors IaC directement via l'interface graphique Snowsight, vous la détectez au terminal via terraform plan, et vous forcez la réconciliation.*
+
+### Symptôme & Injection
+
+Vérifiez d'abord le zero-drift initial :
+
+```bash
+terraform plan -detailed-exitcode
+```
+
+| Code | Signification |
+|---|---|
+| 0 | No changes — zero drift |
+| 1 | Error |
+| 2 | Changes detected — drift |
+
+✅ **Checkpoint** : code 0 (no changes).
+
+Simulez une dérive via Snowsight UI ou la CLI :
+
+```bash
+snow sql -c training -q "ALTER DATABASE APP01_M12_RAW_DEV SET COMMENT = 'Drift test from Snowsight UI'"
+```
+
+### Diagnostic & Observation
+
+Détectez la dérive :
+
+```bash
+terraform plan -detailed-exitcode
+```
+
+✅ **Checkpoint** : code 2 (changes detected). Observez le diff montrant la divergence de commentaire.
+
+### Remédiation
+
+Corrigez la dérive :
+
+```bash
+terraform apply
+```
+
+Vérifiez le retour à zero-drift :
+
+```bash
+terraform plan -detailed-exitcode
+```
+
+✅ **Checkpoint** : code 0.
+
+#### Audit Visuel Multi-Console (Snowsight, Portail Azure, Azure DevOps)
+
+1. **❄️ Snowflake Snowsight (`app.snowflake.com`) :**
+   - Naviguez dans **Data > Databases** : vérifiez l'arborescence `APP01_M12_RAW_DEV` avec ses schemas `INGESTION` et `STAGING`.
+   - Naviguez dans **Admin > Warehouses** : vérifiez que `WH_APP01_M12_ETL_DEV` est suspendu avec taille `X-SMALL`.
+   - Naviguez dans **Admin > Users & Roles** : confirmez les rôles créés et l'utilisateur technique `TF_APP01_M12_SVC`.
+2. **🔵 Portail Microsoft Azure (`portal.azure.com`) :**
+   - Ouvrez le conteneur Blob hébergeant le state : constatez que la clé d'état `training/APP01/m12/terraform.tfstate` est présente et chiffrée.
+   - Vérifiez dans Azure Key Vault que les secrets utilisés par la chaîne de déploiement sont intacts.
+3. **🚀 Azure DevOps Web (`dev.azure.com`) :**
+   - Vérifiez que la Pull Request a été auditée et que les tests automatiques de la pipeline CI/CD sont au vert.
+
+---
+
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 Le projet Capstone est évalué par le moteur d'audit de formation. Lancez la vérification complète pour obtenir votre rapport et score d'ingénierie :
 
@@ -704,18 +720,24 @@ Rapport exporté : student-track/_reports/module-12-APP01.md
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez un module `monitoring` qui crée une database `APP01_M12_MONITORING_DEV` avec un schema `METRICS` et une table `WAREHOUSE_USAGE`. Configurez un Future Grant pour que le rôle `ROLE_APP01_M12_RDR_DEV` puisse lire cette table.
+> **Scénario :** Ajoutez un module `monitoring` qui crée une database `APP01_M12_MONITORING_DEV` avec un schema `METRICS` et une table `WAREHOUSE_USAGE`. Configurez un Future Grant pour que le rôle `ROLE_APP01_M12_RDR_DEV` puisse lire cette table.
+> **Contraintes :**
+> - `terraform plan` crée les ressources monitoring;
+> - `terraform apply` réussit;
+> - `terraform plan -detailed-exitcode` retourne 0;
+> - le Future Grant est visible avec `SHOW FUTURE GRANTS`.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform plan` crée les ressources monitoring;
-- [ ] `terraform apply` réussit;
-- [ ] `terraform plan -detailed-exitcode` retourne 0;
-- [ ] le Future Grant est visible avec `SHOW FUTURE GRANTS`.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées dans ce lab :
 

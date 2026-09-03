@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m04.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Des valeurs dispersées et non validées rendent les environnements incohérents. Vous allez structurer les variables, ajouter des validations, créer des outputs exploitables et tester la précédence des variables.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** structurer les variables Terraform avec validations, locals et outputs exploitables  
+> **Afin de :** garantir des environnements cohérents et reproductibles
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -53,7 +59,7 @@ flowchart LR
     CLI[-var en CLI] -->|priorité max| VARS
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - ✅ créer des ressources Snowflake avec Terraform (state local);
 - ✅ ajouter des validations de variables pour rejeter les configurations invalides;
@@ -62,18 +68,22 @@ flowchart LR
 - ✅ comprendre la précédence des variables avec `-var`;
 - ✅ tester `lifecycle` et `prevent_destroy`.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`;
 - [ ] vous connaissez votre préfixe unique (variable `LEARNER_PREFIX` dans `.env`).
 
-## 📝 Partie 1 — Créer les ressources Snowflake (state local)
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
+
+### 📝 Étape 5.1 — Créer les ressources Snowflake (state local)
 
 Ce lab est **autonome** : il ne dépend pas de M1, M2 ou M3. Vous allez créer vos propres ressources avec un préfixe `M04`, puis les enrichir avec des variables validées et des outputs structurés.
 
-### 📝 Étape 1.1 — Se placer dans le dossier du lab
+#### Se placer dans le dossier du lab
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -95,7 +105,7 @@ ls -la
 
 ✅ **Checkpoint** : `provider.tf`, `versions.tf`, `variables.tf`, `terraform.tfvars.example`, `main.tf` (stub), `outputs.tf` (stub), `.gitignore`.
 
-### 📝 Étape 1.2 — Ajouter `warehouse_size` dans `variables.tf`
+#### Ajouter `warehouse_size` dans `variables.tf`
 
 Le fichier `variables.tf` est pré-rempli avec les variables de base. **Ajoutez à la fin du fichier** :
 
@@ -112,7 +122,7 @@ variable "warehouse_size" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `locals.tf`
+#### Créer `locals.tf`
 
 ```powershell
 code locals.tf
@@ -127,7 +137,7 @@ locals {
 }
 ```
 
-### 📝 Étape 1.4 — Créer `terraform.tfvars`
+#### Créer `terraform.tfvars`
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -160,7 +170,7 @@ warehouse_size         = "X-SMALL"
 
 Remplacez `APP01` par votre préfixe.
 
-### 📝 Étape 1.5 — Créer `main.tf`
+#### Créer `main.tf`
 
 Remplacez le contenu du stub `main.tf` par :
 
@@ -187,7 +197,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 1.6 — Créer `outputs.tf`
+#### Créer `outputs.tf`
 
 Remplacez le contenu du stub `outputs.tf` par :
 
@@ -208,7 +218,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 1.7 — Initialiser, planifier, appliquer
+#### Initialiser, planifier, appliquer
 
 ```powershell
 terraform fmt
@@ -230,9 +240,9 @@ terraform state list
 
 ✅ **Checkpoint** : 3 ressources listées (`snowflake_database.raw`, `snowflake_schema.ingestion`, `snowflake_warehouse.etl`).
 
-## 📝 Partie 2 — Enrichir les variables
+### 📝 Étape 5.2 — Enrichir les variables
 
-### 📝 Étape 2.1 — Ajouter des variables dans `variables.tf`
+#### Ajouter des variables dans `variables.tf`
 
 Ouvrez `labs/m04-variables-outputs/variables.tf` et **ajoutez à la fin du fichier** ces nouvelles variables (ne modifiez pas les variables existantes) :
 
@@ -270,7 +280,7 @@ variable "tags" {
 }
 ```
 
-### 📝 Étape 2.2 — Remplacer le contenu de `locals.tf`
+#### Remplacer le contenu de `locals.tf`
 
 **Remplacez tout le contenu** de `labs/m04-variables-outputs/locals.tf` par :
 
@@ -288,7 +298,7 @@ locals {
 
 > Les deux nouveaux locals (`retention` et `suspend`) référencent les nouvelles variables validées.
 
-### 📝 Étape 2.3 — Remplacer le contenu de `main.tf`
+#### Remplacer le contenu de `main.tf`
 
 **Remplacez tout le contenu** de `labs/m04-variables-outputs/main.tf` par :
 
@@ -317,7 +327,7 @@ resource "snowflake_warehouse" "etl" {
 
 > Les valeurs en dur (`data_retention_time_in_days = 1` et `auto_suspend = 60`) sont remplacées par les locals `retention` et `suspend`.
 
-### 📝 Étape 2.4 — Formater, valider, planifier
+#### Formater, valider, planifier
 
 ```powershell
 terraform fmt
@@ -329,9 +339,9 @@ terraform plan
 
 > Si le plan montre des changements, vérifiez que les `default` des nouvelles variables correspondent aux anciennes valeurs en dur (1 et 60).
 
-## 📝 Partie 3 — Enrichir les outputs
+### 📝 Étape 5.3 — Enrichir les outputs
 
-### 📝 Étape 3.1 — Remplacer le contenu de `outputs.tf`
+#### Remplacer le contenu de `outputs.tf`
 
 **Remplacez tout le contenu** de `labs/m04-variables-outputs/outputs.tf` par :
 
@@ -372,7 +382,7 @@ output "connection_info" {
 }
 ```
 
-### 📝 Étape 3.2 — Formater et valider
+#### Formater et valider
 
 ```powershell
 terraform fmt
@@ -382,7 +392,7 @@ terraform output
 
 ✅ **Checkpoint 3** : `resource_summary` et `connection_info` s'affichent avec les valeurs de vos ressources.
 
-## 📝 Partie 4 — Tester la précédence des variables
+### 📝 Étape 5.4 — Tester la précédence des variables
 
 La précédence des variables Terraform est :
 
@@ -393,7 +403,7 @@ La précédence des variables Terraform est :
 5. Variables d'environnement `TF_VAR_*`;
 6. `default` dans la déclaration (le plus faible).
 
-### 📝 Étape 4.1 — Tester la priorité de `-var`
+#### Tester la priorité de `-var`
 
 Testez dans `labs/m04-variables-outputs/` :
 
@@ -403,7 +413,7 @@ terraform plan -var "warehouse_size=SMALL"
 
 ✅ **Checkpoint** : le plan propose de modifier le warehouse en `SMALL` (priorité du `-var`).
 
-### 📝 Étape 4.2 — Tester la priorité de `-var` sur `data_retention_days`
+#### Tester la priorité de `-var` sur `data_retention_days`
 
 ```powershell
 terraform plan -var "data_retention_days=7"
@@ -411,7 +421,7 @@ terraform plan -var "data_retention_days=7"
 
 ✅ **Checkpoint** : le plan propose de modifier `data_retention_time_in_days` à `7`.
 
-### 📝 Étape 4.3 — Vérifier le retour à la normale
+#### Vérifier le retour à la normale
 
 ```powershell
 terraform plan
@@ -421,9 +431,9 @@ terraform plan
 
 > 💡 **Note** : La création de fichiers `.tfvars` pour UAT et PROD se fera au **M8** (environments). Ici, vous testez uniquement la précédence avec `-var` en ligne de commande.
 
-## 📝 Partie 5 — lifecycle et depends_on
+### 📝 Étape 5.5 — lifecycle et depends_on
 
-### 📝 Étape 5.1 — Ajouter un lifecycle au warehouse
+#### Ajouter un lifecycle au warehouse
 
 Dans `labs/m04-variables-outputs/main.tf`, **ajoutez un bloc `lifecycle`** au resource `snowflake_warehouse.etl` :
 
@@ -442,7 +452,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 5.2 — Tester prevent_destroy
+#### Tester prevent_destroy
 
 ```powershell
 terraform plan -destroy
@@ -452,7 +462,7 @@ terraform plan -destroy
 
 > 💡 **Note** : En production, `prevent_destroy` protège les ressources critiques contre une destruction accidentelle.
 
-### 📝 Étape 5.3 — Retirer prevent_destroy pour la formation
+#### Retirer prevent_destroy pour la formation
 
 Retirez le bloc `lifecycle` du warehouse pour permettre le cleanup en fin de formation :
 
@@ -475,46 +485,46 @@ terraform plan
 
 ✅ **Checkpoint 5** : `No changes.` — le lifecycle est retiré, le plan est propre.
 
-## ✅ Validation finale
-
-- [ ] ressources M04 créées avec Terraform;
-- [ ] variables validées avec `validation` blocks;
-- [ ] `locals.tf` enrichi avec `retention` et `suspend`;
-- [ ] `main.tf` utilise les locals au lieu de valeurs en dur;
-- [ ] outputs structurés affichés;
-- [ ] précédence testée avec `-var`;
-- [ ] `prevent_destroy` testé puis retiré;
-- [ ] `terraform plan` affiche `No changes.`
-
----
-
-## 🐛 Chaos Lab M04 — Validation FinOps Bloquante (Arrêt Sans Appel Réseau)
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *La gouvernance FinOps exige que les tailles de warehouse soient contraintes dès la déclaration, sans jamais interroger l'API Snowflake :*
 
-1. **Injection d'une taille interdite :** Depuis le terminal, lancez la commande suivante :
-   ```powershell
-   terraform plan -var="warehouse_size=MEDIUM"
-   ```
-2. **Observation :** Terraform bloque immédiatement **avant** tout appel réseau vers Snowflake :
-   ```text
-   Error: Invalid value for variable
+### Symptôme & Injection
 
-     on variables.tf line X:
-     X: variable "warehouse_size" {
+Depuis le terminal, lancez la commande suivante :
 
-   Politique FinOps: Seules les tailles XSMALL et SMALL sont admises.
-   ```
-3. **Enseignement :** Les blocs `validation {}` agissent comme des gardes-fous locaux. Aucun crédit Snowflake n'est consommé et aucune requête API n'est émise. C'est la base de la gouvernance FinOps as-code.
-4. **Vérification complémentaire :** Testez avec un nom d'environnement invalide :
-   ```powershell
-   terraform plan -var="environment=STAGING"
-   ```
-   La regex rejette toute valeur hors de `DEV`, `UAT`, `PROD`.
+```powershell
+terraform plan -var="warehouse_size=MEDIUM"
+```
+
+### Diagnostic & Observation
+
+Terraform bloque immédiatement **avant** tout appel réseau vers Snowflake :
+
+```text
+Error: Invalid value for variable
+
+  on variables.tf line X:
+  X: variable "warehouse_size" {
+
+Politique FinOps: Seules les tailles XSMALL et SMALL sont admises.
+```
+
+Les blocs `validation {}` agissent comme des gardes-fous locaux. Aucun crédit Snowflake n'est consommé et aucune requête API n'est émise. C'est la base de la gouvernance FinOps as-code.
+
+### Remédiation & Vérification complémentaire
+
+Testez avec un nom d'environnement invalide :
+
+```powershell
+terraform plan -var="environment=STAGING"
+```
+
+La regex rejette toute valeur hors de `DEV`, `UAT`, `PROD`.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 ```powershell
 .\scripts\SelfPacedLab.ps1 -Module 4 -All -Report
@@ -532,18 +542,24 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez une variable `enable_monitoring` (booléen, défaut `false`) et un output `monitoring_enabled` qui reflète sa valeur. Ajoutez une validation qui refuse `true` en PROD si le warehouse est `X-SMALL`.
+> **Scénario :** Ajoutez une variable `enable_monitoring` (booléen, défaut `false`) et un output `monitoring_enabled` qui reflète sa valeur. Ajoutez une validation qui refuse `true` en PROD si le warehouse est `X-SMALL`.
+> **Contraintes :**
+> - `terraform validate` réussit;
+> - `terraform output monitoring_enabled` affiche `false` en DEV;
+> - `terraform plan -var enable_monitoring=true` fonctionne en DEV;
+> - la validation refuse `enable_monitoring=true` avec `warehouse_size=X-SMALL` en PROD.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform validate` réussit;
-- [ ] `terraform output monitoring_enabled` affiche `false` en DEV;
-- [ ] `terraform plan -var enable_monitoring=true` fonctionne en DEV;
-- [ ] la validation refuse `enable_monitoring=true` avec `warehouse_size=X-SMALL` en PROD.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Conservez les ressources pour inspection.
 

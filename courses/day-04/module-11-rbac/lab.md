@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m11.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 L'accès aux données doit suivre les fonctions métier sans tickets manuels. Vous allez créer une hiérarchie de rôles, appliquer le moindre privilège avec des grants ciblés et configurer des Future Grants pour les nouvelles tables.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** créer une hiérarchie de rôles Snowflake avec Future Grants  
+> **Afin de :** automatiser l'accès aux nouvelles tables selon le principe du moindre privilège
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -59,28 +65,32 @@ flowchart TD
     ROLE_RAW --> FUTURE[FUTURE GRANT on tables]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - créer une hiérarchie de rôles Snowflake avec Terraform;
 - accorder des privilèges ciblés par rôle;
 - configurer des Future Grants pour les nouvelles tables;
 - auditer les grants avec une requête SQL.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] `terraform plan` affiche `No changes` dans `labs/m11-rbac/`.
 - [ ] Le dossier `labs/m11-rbac/` contient `provider.tf`, `versions.tf`, `variables.tf` et `terraform.tfvars.example` (fournis).
 
-## 📝 Partie 1 — Créer le module RBAC
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-### 📝 Étape 1.1 — Créer la structure
+### 📝 Étape 5.1 — Créer le module RBAC
+
+#### Créer la structure
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/labs/m11-rbac
 mkdir -p modules/rbac
 ```
 
-### 📝 Étape 1.2 — Créer `modules/rbac/variables.tf`
+#### Créer `modules/rbac/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -106,7 +116,7 @@ variable "schema_name" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `modules/rbac/main.tf`
+#### Créer `modules/rbac/main.tf`
 
 ```hcl
 locals {
@@ -191,7 +201,7 @@ resource "snowflake_grant_privileges_to_account_role" "reader_future" {
 }
 ```
 
-### 📝 Étape 1.4 — Créer `modules/rbac/outputs.tf`
+#### Créer `modules/rbac/outputs.tf`
 
 ```hcl
 output "role_raw" {
@@ -207,7 +217,7 @@ output "role_reader" {
 }
 ```
 
-### 📝 Étape 1.5 — Créer `modules/rbac/versions.tf`
+#### Créer `modules/rbac/versions.tf`
 
 ```hcl
 terraform {
@@ -222,7 +232,7 @@ terraform {
 }
 ```
 
-### 📝 Étape 1.6 — Formater et valider
+#### Formater et valider
 
 ```bash
 cd modules/rbac
@@ -230,9 +240,9 @@ terraform fmt
 terraform validate
 ```
 
-## 📝 Partie 2 — Appeler le module depuis le lab
+### 📝 Étape 5.2 — Appeler le module depuis le lab
 
-### 📝 Étape 2.1 — Créer la database et le schema dans `main.tf`
+#### Créer la database et le schema dans `main.tf`
 
 Ce lab est autonome : il crée sa propre database et son schema avant d'appliquer les grants RBAC.
 
@@ -267,7 +277,7 @@ module "rbac" {
 }
 ```
 
-### 📝 Étape 2.2 — Ajouter les outputs dans `outputs.tf`
+#### Ajouter les outputs dans `outputs.tf`
 
 ```hcl
 output "rbac_roles" {
@@ -284,7 +294,7 @@ output "database_name" {
 }
 ```
 
-### 📝 Étape 2.3 — Planifier et appliquer
+#### Planifier et appliquer
 
 ```bash
 cd labs/m11-rbac
@@ -297,9 +307,9 @@ terraform apply "m11.tfplan"
 
 ✅ **Checkpoint** : 3 rôles créés + grants + database + schema.
 
-## 📝 Partie 3 — Auditer les grants
+### 📝 Étape 5.3 — Auditer les grants
 
-### 📝 Étape 3.1 — Lister les rôles
+#### Lister les rôles
 
 ```bash
 snow sql -c training -q "SHOW ROLES LIKE 'ROLE_APP01_M11_%'"
@@ -307,7 +317,7 @@ snow sql -c training -q "SHOW ROLES LIKE 'ROLE_APP01_M11_%'"
 
 Remplacez `APP01` par votre préfixe.
 
-### 📝 Étape 3.2 — Vérifier les Future Grants
+#### Vérifier les Future Grants
 
 ```bash
 snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA APP01_M11_RAW_DEV.INGESTION"
@@ -315,7 +325,7 @@ snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA APP01_M11_RAW_DEV.INGESTIO
 
 ✅ **Checkpoint** : des lignes avec `GRANT SELECT` et `GRANT INSERT` pour les futures tables.
 
-### 📝 Étape 3.3 — Tester le Future Grant
+#### Tester le Future Grant
 
 Créez une table manuellement et vérifiez que les grants s'appliquent automatiquement :
 
@@ -326,15 +336,15 @@ snow sql -c training -q "SHOW GRANTS ON TABLE APP01_M11_RAW_DEV.INGESTION.TEST_F
 
 ✅ **Checkpoint** : les grants SELECT et INSERT sont déjà présents grâce au Future Grant.
 
-### 📝 Étape 3.4 — Nettoyer la table de test
+#### Nettoyer la table de test
 
 ```bash
 snow sql -c training -q "DROP TABLE APP01_M11_RAW_DEV.INGESTION.TEST_FUTURE"
 ```
 
-## 📝 Partie 4 — Principe du moindre privilège
+### 📝 Étape 5.4 — Principe du moindre privilège
 
-### 📝 Étape 4.1 — Vérifier la séparation des rôles
+#### Vérifier la séparation des rôles
 
 | Rôle | Privilèges | Usage |
 |---|---|---|
@@ -342,7 +352,7 @@ snow sql -c training -q "DROP TABLE APP01_M11_RAW_DEV.INGESTION.TEST_FUTURE"
 | `ROLE_APP01_M11_CUR_DEV` | USAGE schema, SELECT | Transformation dbt |
 | `ROLE_APP01_M11_RDR_DEV` | USAGE schema, SELECT | Lecture BI |
 
-### 📝 Étape 4.2 — Attribuer le rôle à un utilisateur technique
+#### Attribuer le rôle à un utilisateur technique
 
 Ajoutez dans `labs/m11-rbac/main.tf` :
 
@@ -364,14 +374,14 @@ resource "snowflake_grant_account_role" "tech_raw" {
 }
 ```
 
-### 📝 Étape 4.3 — Planifier et appliquer
+#### Planifier et appliquer
 
 ```bash
 terraform plan -out "m11.tfplan"
 terraform apply "m11.tfplan"
 ```
 
-### 📝 Étape 4.4 — Vérifier
+#### Vérifier
 
 ```bash
 snow sql -c training -q "SHOW GRANTS TO USER TF_APP01_M11_SVC"
@@ -379,7 +389,7 @@ snow sql -c training -q "SHOW GRANTS TO USER TF_APP01_M11_SVC"
 
 ✅ **Checkpoint** : le rôle `ROLE_APP01_M11_RAW_DEV` est attribué à l'utilisateur technique.
 
-### 🌐 Étape 3.6 — Test Interactif des Rôles dans Snowflake Snowsight
+#### Test Interactif des Rôles dans Snowflake Snowsight
 
 Pour ressentir concrètement l'effet de votre politique de moindre privilège :
 
@@ -399,25 +409,37 @@ Pour ressentir concrètement l'effet de votre politique de moindre privilège :
 
 ---
 
-## 🐛 Chaos Lab M11 — Rupture de la Chaîne d'Héritage RBAC
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Une erreur classique en production est d'accorder des droits sur une table ou un schema sans accorder le droit USAGE sur la base de données parente.*
 
-1. **Simulation de l'incident :** Dans votre code Terraform `main.tf`, commentez temporairement le bloc attribuant le privilège `USAGE` sur la database :
-   ```hcl
-   # Privilège USAGE commenté
-   ```
-2. Appliquez la modification :
-   ```powershell
-   terraform apply -auto-approve
-   ```
-3. **Observation dans Snowsight :** Basculez sur le rôle utilisateur. Bien que le rôle possède encore des droits sur les tables, la base de données entière a disparu de l'arborescence graphique !
-   *Principe Snowflake : Sans USAGE sur le conteneur parent, aucun objet enfant n'est accessible.*
-4. **Remédiation :** Décommentez le grant `USAGE`, appliquez avec `terraform apply`, et vérifiez la réapparition instantanée de la base dans Snowsight.
+### Symptôme & Injection
+
+Dans votre code Terraform `main.tf`, commentez temporairement le bloc attribuant le privilège `USAGE` sur la database :
+
+```hcl
+# Privilège USAGE commenté
+```
+
+Appliquez la modification :
+
+```powershell
+terraform apply -auto-approve
+```
+
+### Diagnostic & Observation
+
+Dans Snowsight, basculez sur le rôle utilisateur. Bien que le rôle possède encore des droits sur les tables, la base de données entière a disparu de l'arborescence graphique !
+
+*Principe Snowflake : Sans USAGE sur le conteneur parent, aucun objet enfant n'est accessible.*
+
+### Remédiation
+
+Décommentez le grant `USAGE`, appliquez avec `terraform apply`, et vérifiez la réapparition instantanée de la base dans Snowsight.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 Exécutez le script d'auto-évaluation pour vérifier la conformité de votre modèle RBAC :
 
@@ -437,17 +459,23 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez un rôle `ROLE_APP01_M11_ADMIN_DEV` qui a le droit de créer des schemas dans la database, et attribuez-le à un utilisateur `ADMIN_APP01_M11`.
+> **Scénario :** Ajoutez un rôle `ROLE_APP01_M11_ADMIN_DEV` qui a le droit de créer des schemas dans la database, et attribuez-le à un utilisateur `ADMIN_APP01_M11`.
+> **Contraintes :**
+> - `terraform plan` crée le rôle et le grant;
+> - `SHOW GRANTS TO USER ADMIN_APP01_M11` affiche le rôle;
+> - le rôle peut créer un schema de test.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform plan` crée le rôle et le grant;
-- [ ] `SHOW GRANTS TO USER ADMIN_APP01_M11` affiche le rôle;
-- [ ] le rôle peut créer un schema de test.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées dans ce lab :
 

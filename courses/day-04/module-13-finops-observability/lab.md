@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m13.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Le propriétaire de la plateforme doit attribuer les crédits consommés, détecter les warehouses inactifs et prévenir un dépassement avant la facture. Vous allez configurer dbt avec le package `get-select/dbt_snowflake_monitoring` pour transformer la télémétrie Snowflake en indicateurs de décision.
 
-## 🏗️ Architecture
+> **En tant que :** FinOps Engineer  
+> **Je veux :** configurer dbt avec `dbt_snowflake_monitoring` pour suivre les crédits et détecter les warehouses inactifs  
+> **Afin de :** prévenir les dépassements budgétaires avant la facture
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -53,23 +59,27 @@ flowchart LR
     TF --> DB[Database FinOps]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - configurer un projet dbt avec le package `dbt_snowflake_monitoring` 4.6.0;
 - expliquer la latence de 1 à 3 heures des vues `ACCOUNT_USAGE`;
 - construire et tester les modèles FinOps;
 - interpréter crédits, requêtes coûteuses et warehouses inactifs.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] dbt installé (vérifié au Jour 0);
 - [ ] `dbt --version` affiche une version < 3.0.0;
 - [ ] accès au schema `SNOWFLAKE.ACCOUNT_USAGE` (rôle `ACCOUNTADMIN` ou équivalent).
 - [ ] Le dossier `labs/m13-finops-observability/` contient `provider.tf`, `versions.tf`, `variables.tf` et `terraform.tfvars.example` (fournis).
 
-## 📝 Partie 1 — Créer l'infrastructure FinOps avec Terraform
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-### 📝 Étape 1.1 — Créer la database et le warehouse FinOps
+### 📝 Étape 5.1 — Créer l'infrastructure FinOps avec Terraform
+
+#### Créer la database et le warehouse FinOps
 
 Ce lab est autonome : il crée sa propre database FinOps et son warehouse avec Terraform.
 
@@ -99,7 +109,7 @@ resource "snowflake_warehouse" "finops" {
 }
 ```
 
-### 📝 Étape 1.2 — Ajouter les outputs dans `outputs.tf`
+#### Ajouter les outputs dans `outputs.tf`
 
 ```hcl
 output "finops_database" {
@@ -111,7 +121,7 @@ output "finops_warehouse" {
 }
 ```
 
-### 📝 Étape 1.3 — Planifier et appliquer
+#### Planifier et appliquer
 
 ```bash
 cd labs/m13-finops-observability
@@ -124,16 +134,16 @@ terraform apply "m13.tfplan"
 
 ✅ **Checkpoint** : la database `APP01_M13_FINOPS_DEV` et le warehouse `WH_APP01_M13_FINOPS_DEV` sont créés.
 
-## 📝 Partie 2 — Créer le projet dbt FinOps
+### 📝 Étape 5.2 — Créer le projet dbt FinOps
 
-### 📝 Étape 2.1 — Créer la structure dbt
+#### Créer la structure dbt
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/labs/m13-finops-observability
 mkdir -p finops/models/staging finops/models/marts
 ```
 
-### 📝 Étape 2.2 — Créer `finops/dbt_project.yml`
+#### Créer `finops/dbt_project.yml`
 
 ```yaml
 name: finops
@@ -150,7 +160,7 @@ models:
       +schema: marts
 ```
 
-### 📝 Étape 2.3 — Créer `finops/packages.yml`
+#### Créer `finops/packages.yml`
 
 ```yaml
 packages:
@@ -160,7 +170,7 @@ packages:
     version: 1.3.3
 ```
 
-### 📝 Étape 2.4 — Créer `finops/profiles.yml.example`
+#### Créer `finops/profiles.yml.example`
 
 ```yaml
 finops:
@@ -180,7 +190,7 @@ finops:
 
 > 🔒 **SECURITY** Copiez ce fichier vers `~/.dbt/profiles.yml` et remplacez les valeurs localement. Ne commitez jamais `profiles.yml` avec des secrets.
 
-### 📝 Étape 2.5 — Créer le profil local
+#### Créer le profil local
 
 ```bash
 cp finops/profiles.yml.example ~/.dbt/profiles.yml
@@ -188,7 +198,7 @@ cp finops/profiles.yml.example ~/.dbt/profiles.yml
 
 Éditez `~/.dbt/profiles.yml` avec vos valeurs réelles.
 
-### 📝 Étape 2.6 — Installer les dépendances
+#### Installer les dépendances
 
 ```bash
 cd finops
@@ -197,7 +207,7 @@ dbt deps
 
 ✅ **Checkpoint** : les packages `dbt_snowflake_monitoring` 4.6.0 et `dbt_utils` 1.3.3 sont installés.
 
-### 📝 Étape 2.7 — Tester la connexion
+#### Tester la connexion
 
 ```bash
 dbt debug --target dev
@@ -205,9 +215,9 @@ dbt debug --target dev
 
 ✅ **Checkpoint** : `All checks passed!`
 
-## 📝 Partie 3 — Construire la couche FinOps
+### 📝 Étape 5.3 — Construire la couche FinOps
 
-### 📝 Étape 3.1 — Construire les modèles
+#### Construire les modèles
 
 ```bash
 dbt build --target dev
@@ -217,9 +227,9 @@ dbt build --target dev
 
 > Si vous obtenez `insufficient privileges`, vérifiez que votre rôle a accès à `SNOWFLAKE.ACCOUNT_USAGE`.
 
-## 📝 Partie 4 — Interpréter les indicateurs
+### 📝 Étape 5.4 — Interpréter les indicateurs
 
-### 📝 Étape 4.1 — Crédits par warehouse
+#### Crédits par warehouse
 
 ```bash
 dbt show --select snowflake_monitoring.mart_warehouse_credits_daily --limit 10
@@ -227,7 +237,7 @@ dbt show --select snowflake_monitoring.mart_warehouse_credits_daily --limit 10
 
 ✅ **Checkpoint** : une table avec les crédits consommés par warehouse et par jour.
 
-### 📝 Étape 4.2 — Warehouses inactifs
+#### Warehouses inactifs
 
 ```bash
 dbt show --select snowflake_monitoring.mart_warehouse_credits_daily --limit 10
@@ -235,7 +245,7 @@ dbt show --select snowflake_monitoring.mart_warehouse_credits_daily --limit 10
 
 Identifiez les warehouses avec 0 crédits sur les derniers jours.
 
-### 📝 Étape 4.3 — Requêtes coûteuses
+#### Requêtes coûteuses
 
 ```bash
 dbt show --select snowflake_monitoring.mart_query_history --limit 10
@@ -243,28 +253,28 @@ dbt show --select snowflake_monitoring.mart_query_history --limit 10
 
 ✅ **Checkpoint** : les requêtes triées par coût.
 
-### 📝 Étape 4.4 — Vérifier dans Snowflake
+#### Vérifier dans Snowflake
 
 ```sql
 SELECT * FROM APP01_M13_FINOPS_DEV.MARTS.MART_WAREHOUSE_CREDITS_DAILY ORDER BY USAGE_DATE DESC LIMIT 10;
 SELECT * FROM APP01_M13_FINOPS_DEV.MARTS.MART_RESOURCE_MONITOR_RISK WHERE RISK_STATUS IN ('WARNING', 'CRITICAL');
 ```
 
-## 📝 Partie 5 — Relier contrôle préventif et observation
+### 📝 Étape 5.5 — Relier contrôle préventif et observation
 
-### 📝 Étape 5.1 — Vérifier les Resource Monitors
+#### Vérifier les Resource Monitors
 
 ```bash
 snow sql -c training -q "SHOW RESOURCE MONITORS"
 ```
 
-### 📝 Étape 5.2 — Vérifier les tags
+#### Vérifier les tags
 
 ```bash
 snow sql -c training -q "SELECT * FROM APP01_M13_FINOPS_DEV.INFORMATION_SCHEMA.TAG_REFERENCES"
 ```
 
-### 📝 Étape 5.3 — Attribuer les coûts
+#### Attribuer les coûts
 
 Les marts FinOps permettent d'attribuer les coûts par :
 
@@ -273,7 +283,7 @@ Les marts FinOps permettent d'attribuer les coûts par :
 - rôle (attribution métier);
 - environnement (DEV, UAT, PROD).
 
-### 🌐 Étape 5.4 — Inspection des Resource Monitors & Cost Management dans Snowsight UI
+#### Inspection des Resource Monitors & Cost Management dans Snowsight UI
 
 1. Connectez-vous à **Snowflake Snowsight (`app.snowflake.com`)** avec le rôle `ACCOUNTADMIN` ou `SYSADMIN`.
 2. Naviguez vers **Admin > Cost Management**.
@@ -284,37 +294,47 @@ Les marts FinOps permettent d'attribuer les coûts par :
 
 ---
 
-## 🐛 Partie 6 — Chaos Lab : Dépassement budgétaire & suspension stricte
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Dans ce Chaos Lab, vous allez simuler un dépassement de quota budgétaire pour observer le blocage immédiat imposé par le Resource Monitor de Snowflake.*
 
-### Symptôme & Injection de Dérive
-1. Modifiez temporairement le quota du Resource Monitor pour lui assigner un seuil inférieur à la consommation actuelle :
-   ```sql
-   ALTER RESOURCE MONITOR RM_APP01_M13_DEV SET CREDIT_QUOTA = 1;
-   ```
-2. Tentez de démarrer le warehouse pour exécuter une requête lourde :
-   ```sql
-   ALTER WAREHOUSE WH_APP01_M13_FINOPS_DEV RESUME;
-   ```
-3. Observez l'erreur immédiate renvoyée par Snowflake :
-   ```text
-   000670 (57014): Warehouse cannot be resumed because resource monitor quota has been exceeded.
-   ```
+### Symptôme & Injection
 
-### Diagnostic & Audit
+Modifiez temporairement le quota du Resource Monitor pour lui assigner un seuil inférieur à la consommation actuelle :
+
+```sql
+ALTER RESOURCE MONITOR RM_APP01_M13_DEV SET CREDIT_QUOTA = 1;
+```
+
+Tentez de démarrer le warehouse pour exécuter une requête lourde :
+
+```sql
+ALTER WAREHOUSE WH_APP01_M13_FINOPS_DEV RESUME;
+```
+
+Observez l'erreur immédiate renvoyée par Snowflake :
+
+```text
+000670 (57014): Warehouse cannot be resumed because resource monitor quota has been exceeded.
+```
+
+### Diagnostic & Observation
+
 Dans **Snowsight UI > Admin > Cost Management > Resource Monitors**, le moniteur apparaît avec un statut d'alerte rouge `Suspended (100% reached)`.
 
 ### Remédiation
-1. Rétablissez le quota nominal avec Terraform :
-   ```bash
-   terraform apply
-   ```
-2. Le warehouse redevient immédiatement disponible pour l'ingestion et les transformations.
+
+Rétablissez le quota nominal avec Terraform :
+
+```bash
+terraform apply
+```
+
+Le warehouse redevient immédiatement disponible pour l'ingestion et les transformations.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 Validez la configuration FinOps et dbt avec le runner de formation :
 
@@ -337,17 +357,23 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Créez un mart personnalisé `mart_cost_by_environment` qui agrège les crédits par environnement en utilisant le préfixe du nom de warehouse.
+> **Scénario :** Créez un mart personnalisé `mart_cost_by_environment` qui agrège les crédits par environnement en utilisant le préfixe du nom de warehouse.
+> **Contraintes :**
+> - `dbt build` réussit;
+> - le mart contient une ligne par environnement;
+> - les coûts sont agrégés correctement.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `dbt build` réussit;
-- [ ] le mart contient une ligne par environnement;
-- [ ] les coûts sont agrégés correctement.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées dans ce lab :
 
