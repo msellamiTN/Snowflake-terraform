@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m02.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Votre state est actuellement local. En équipe, cela pose trois problèmes : pas de verrou, pas d'historique, pas de partage. Vous allez d'abord créer des ressources Snowflake avec un state local, puis migrer ce state vers Azure Blob Storage avec verrouillage natif.
 
-## 🏗️ Architecture
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** migrer le state Terraform local vers Azure Blob Storage avec verrouillage natif  
+> **Afin de :** permettre le travail en équipe avec verrou, historique et partage du state
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -52,7 +58,7 @@ flowchart LR
     B --> E[Isolation par clé]
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - ✅ créer des ressources Snowflake avec un state local;
 - ✅ créer un backend Azure Blob Storage pour le state Terraform;
@@ -62,7 +68,9 @@ flowchart LR
 - ✅ analyser la structure du fichier `terraform.tfstate`;
 - ✅ utiliser `terraform_remote_state` pour lire les outputs d'un autre projet.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
@@ -71,11 +79,13 @@ flowchart LR
 - [ ] `az account show --query 'name' -o tsv` affiche la souscription Azure;
 - [ ] les variables Azure sont dans votre `.env` (`ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_RESOURCE_GROUP`, `ARM_STORAGE_ACCOUNT`, `ARM_CONTAINER`, `ARM_LOCATION`).
 
-## � Partie 1 — Créer les ressources Snowflake (state local)
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
+
+### 📝 Étape 5.1 — Créer les ressources Snowflake (state local)
 
 Ce lab est **autonome** : il ne dépend pas de M1. Vous allez créer vos propres ressources avec un préfixe `M02`, puis migrer leur state vers Azure Blob Storage.
 
-### 📝 Étape 1.1 — Se placer dans le dossier du lab
+#### Se placer dans le dossier du lab
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -97,7 +107,7 @@ ls -la
 
 ✅ **Checkpoint** : `provider.tf`, `versions.tf`, `variables.tf`, `terraform.tfvars.example`, `main.tf` (stub), `outputs.tf` (stub), `.gitignore`.
 
-### 📝 Étape 1.2 — Ajouter `warehouse_size` dans `variables.tf`
+#### Ajouter `warehouse_size` dans `variables.tf`
 
 Le fichier `variables.tf` est pré-rempli avec les variables de base. **Ajoutez à la fin du fichier** :
 
@@ -114,7 +124,7 @@ variable "warehouse_size" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `locals.tf`
+#### Créer `locals.tf`
 
 ```powershell
 code locals.tf
@@ -131,7 +141,7 @@ locals {
 
 > 💡 **Note** : Le préfixe `M02` dans les noms isole ce lab des autres.
 
-### 📝 Étape 1.4 — Créer `terraform.tfvars`
+#### Créer `terraform.tfvars`
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -164,7 +174,7 @@ warehouse_size         = "X-SMALL"
 
 Remplacez `APP01` par votre préfixe.
 
-### 📝 Étape 1.5 — Créer `main.tf`
+#### Créer `main.tf`
 
 Remplacez le contenu du stub `main.tf` par :
 
@@ -191,7 +201,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 1.6 — Créer `outputs.tf`
+#### Créer `outputs.tf`
 
 Remplacez le contenu du stub `outputs.tf` par :
 
@@ -212,7 +222,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 1.7 — Initialiser, planifier, appliquer
+#### Initialiser, planifier, appliquer
 
 ```powershell
 terraform fmt
@@ -238,11 +248,11 @@ terraform state list
 
 > 🔒 **Security** : n'affichez jamais `ARM_CLIENT_SECRET`, `SNOWFLAKE_PASSWORD` ou `TF_VAR_snowflake_token`.
 
-## 📝 Partie 2 — Créer le backend Azure (bootstrap)
+### 📝 Étape 5.2 — Créer le backend Azure (bootstrap)
 
 Le backend Azure est créé manuellement avec Azure CLI, pas avec Terraform. C'est le paradoxe du bootstrapping : Terraform a besoin d'un backend pour stocker son state, mais ce backend ne peut pas être créé par Terraform lui-même.
 
-### 📝 Étape 2.1 — Définir les variables
+#### Définir les variables
 
 Les variables Azure ont été définies par `Learner-Login.ps1` (Windows) ou `learner-login.sh` (Linux/macOS).
 
@@ -277,7 +287,7 @@ echo "Location: $ARM_LOCATION"
 ```
 </details>
 
-### 📝 Étape 2.2 — Créer le Resource Group
+#### Créer le Resource Group
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -311,7 +321,7 @@ az group create \
 
 ✅ **Checkpoint** : une table avec `provisioningState : Succeeded`.
 
-### 📝 Étape 2.3 — Créer le Storage Account
+#### Créer le Storage Account
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -347,7 +357,7 @@ az storage account create \
 
 > 💰 **COST** : `Standard_LRS` est le SKU le moins coûteux. Le state est petit; ce n'est pas une charge significative.
 
-### 📝 Étape 2.4 — Créer le conteneur
+#### Créer le conteneur
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -380,7 +390,7 @@ az storage container create \
 
 > 💡 **Note** : La commande est idempotente. La relancer ne supprime ni le conteneur ni le state existant.
 
-### 📝 Étape 2.5 — Vérifier
+#### Vérifier
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -406,7 +416,7 @@ az storage account show \
 
 ✅ **Checkpoint** : le nom du storage account.
 
-## 📝 Partie 3 — Configurer le backend Terraform
+### 📝 Étape 5.3 — Configurer le backend Terraform
 
 > ⚠️ **IMPORTANT** : Choisissez **une seule méthode** :
 >
@@ -415,7 +425,7 @@ az storage account show \
 >
 > Ne mélangez pas les deux méthodes.
 
-### 📝 Étape 3.1 — Se placer dans le dossier du lab
+#### Se placer dans le dossier du lab
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -439,7 +449,7 @@ ls -l backend.tf terraform.tfstate 2>/dev/null
 
 ✅ **Checkpoint** : le répertoire courant se termine par `labs/m02-state-management` et le state local `terraform.tfstate` est présent avant la migration.
 
-### 📝 Étape 3.2 — Méthode A recommandée : configurer `backend.tf`
+#### Méthode A recommandée : configurer `backend.tf`
 
 Créez `backend.tf` :
 
@@ -533,7 +543,7 @@ terraform init -migrate-state -backend-config="backend.hcl"
 > 🔒 **SECURITY** : `backend.hcl` est gitignored. Ne le commitez jamais.
 </details>
 
-### 📝 Étape 3.3 — Formater avant l'initialisation
+#### Formater avant l'initialisation
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -557,9 +567,9 @@ terraform fmt -check
 
 > 💡 **Note** : N'exécutez pas encore `terraform validate`. Après l'ajout ou la modification d'un backend, Terraform doit d'abord exécuter `terraform init`.
 
-## 📝 Partie 4 — Migrer le state local vers Azure
+### 📝 Étape 5.4 — Migrer le state local vers Azure
 
-### 📝 Étape 4.1 — Initialiser avec la méthode choisie
+#### Initialiser avec la méthode choisie
 
 Pour la **méthode A recommandée**, exécutez uniquement :
 
@@ -612,7 +622,7 @@ terraform validate
 
 ✅ **Checkpoint** : `Success! The configuration is valid.`
 
-### 📝 Étape 4.2 — Inspecter les anciens fichiers de state local
+#### Inspecter les anciens fichiers de state local
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -634,7 +644,7 @@ ls terraform.tfstate* 2>/dev/null
 
 ✅ **Checkpoint** : la migration s'est terminée sans erreur. La preuve définitive est obtenue avec `terraform state list` puis avec la présence du blob Azure.
 
-### 📝 Étape 4.3 — Vérifier le state distant
+#### Vérifier le state distant
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -660,7 +670,7 @@ snowflake_schema.ingestion
 snowflake_warehouse.etl
 ```
 
-### 📝 Étape 4.4 — Vérifier dans Azure
+#### Vérifier dans Azure
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -690,7 +700,7 @@ az storage blob list \
 
 > 💡 **Note** : `--auth-mode login` force Azure CLI à utiliser la session ouverte par `Learner-Login.ps1`. Sans cette option, Azure CLI affiche un avertissement puis tente de récupérer une account key. Si la commande retourne `AuthorizationPermissionMismatch`, demandez au formateur d'attribuer au service principal le rôle `Storage Blob Data Reader` ou `Storage Blob Data Contributor`.
 
-### 🌐 Étape 4.5 — Vérification Visuelle dans le Portail Microsoft Azure
+#### Vérification Visuelle dans le Portail Microsoft Azure
 
 Pour ancrer votre compréhension de l'infrastructure cloud :
 
@@ -704,7 +714,7 @@ Pour ancrer votre compréhension de l'infrastructure cloud :
 
 ---
 
-## � Partie 5 — Chaos Lab : Tester le verrouillage (State Lock Concurrency)
+## 🐛 6. Chaos Lab : Tester le verrouillage (State Lock Concurrency)
 
 *Dans ce Chaos Lab, vous allez provoquer intentionnellement un conflit de verrouillage de state pour observer le mécanisme de bail exclusif (Blob Lease) d'Azure Storage.*
 
@@ -734,7 +744,7 @@ cd ./labs/m02-state-management
 
 Remplacez `APP01` par votre préfixe.
 
-### 📝 Étape 5.2 — Maintenir le verrou dans le terminal 1
+### Diagnostic & Observation : Maintenir le verrou dans le terminal 1
 
 Dans le terminal 1, lancez `terraform plan` **sans répondre à la confirmation** :
 
@@ -758,7 +768,7 @@ Quand Terraform affiche `Enter a value:` ou commence à rafraîchir le state, la
 
 > ⚠️ **IMPORTANT** : Ne saisissez pas `yes` et ne fermez pas le terminal. Ce test ne doit appliquer aucun changement.
 
-### 📝 Étape 5.3 — Vérifier le verrou dans le terminal 2
+### Confirmation : Vérifier le verrou dans le terminal 2
 
 Pendant que le terminal 1 attend toujours, exécutez dans le terminal 2 :
 
@@ -786,7 +796,7 @@ Error: Error acquiring the state lock
 
 C'est le comportement normal : le Blob Lease empêche les opérations concurrentes.
 
-### 📝 Étape 5.4 — Libérer le verrou normalement
+### Remédiation : Libérer le verrou normalement
 
 Retournez dans le terminal 1 et utilisez `Ctrl+C` pour annuler le plan. Attendez le retour du prompt, puis vérifiez dans le terminal 2 :
 
@@ -810,9 +820,9 @@ terraform plan
 
 > ⚠️ **SECURITY** : N'utilisez `terraform force-unlock <LOCK_ID>` que si le processus du terminal 1 est réellement arrêté et que le verrou reste présent. Forcer l'unlock pendant une opération active peut corrompre le state.
 
-## 📝 Partie 6 — Analyser le state
+### 📝 Étape 5.5 — Analyser le state
 
-### 📝 Étape 6.1 — Lister les ressources
+#### Lister les ressources
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -830,7 +840,7 @@ terraform state list
 ```
 </details>
 
-### 📝 Étape 6.2 — Afficher le détail d'une ressource
+#### Afficher le détail d'une ressource
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -848,7 +858,7 @@ terraform state show snowflake_database.raw
 ```
 </details>
 
-### 📝 Étape 6.3 — Voir la structure JSON du state
+#### Voir la structure JSON du state
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -878,9 +888,9 @@ Le state contient :
 
 > 🔒 **SECURITY** : Le state peut contenir des données sensibles. Ne le commitez jamais. `state.json` est ignoré par Git.
 
-## 📝 Partie 7 — terraform_remote_state
+### 📝 Étape 5.6 — terraform_remote_state
 
-### 📝 Étape 7.1 — Créer un dossier reader
+#### Créer un dossier reader
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -902,7 +912,7 @@ cd labs/m02-state-management/reader
 ```
 </details>
 
-### 📝 Étape 7.2 — Créer `main.tf`
+#### Créer `main.tf`
 
 ```hcl
 terraform {
@@ -940,7 +950,7 @@ output "raw_database_name" {
 }
 ```
 
-### 📝 Étape 7.3 — Initialiser et appliquer
+#### Initialiser et appliquer
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -962,7 +972,7 @@ terraform apply -auto-approve
 
 ✅ **Checkpoint** : `raw_database_name` affiche le nom de la database créée dans ce lab (par exemple `APP01_M02_RAW_DEV`).
 
-### 📝 Étape 7.4 — Nettoyer le dossier reader
+#### Nettoyer le dossier reader
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -984,7 +994,7 @@ rm -rf labs/m02-state-management/reader
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 Exécutez le script d'évaluation pour valider la configuration du state distant Azure :
 
@@ -1005,9 +1015,16 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez un output `state_metadata` dans `labs/m02-state-management/outputs.tf` qui expose :
+> **Scénario :** Ajoutez un output `state_metadata` dans `labs/m02-state-management/outputs.tf` qui expose les informations du backend.
+> **Contraintes :**
+> - `terraform fmt -check` réussit;
+> - `terraform validate` réussit;
+> - `terraform output state_metadata` affiche les informations du backend;
+> - `terraform plan` reste sans changement;
+> - le blob `training/APP01/m02/terraform.tfstate` existe dans Azure (avec votre préfixe);
+> - Terraform utilise le backend distant après réouverture du terminal.
 
 ```hcl
 output "state_metadata" {
@@ -1019,16 +1036,15 @@ output "state_metadata" {
 }
 ```
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform fmt -check` réussit;
-- [ ] `terraform validate` réussit;
-- [ ] `terraform output state_metadata` affiche les informations du backend;
-- [ ] `terraform plan` reste sans changement;
-- [ ] le blob `training/APP01/m02/terraform.tfstate` existe dans Azure (avec votre préfixe);
-- [ ] Terraform utilise le backend distant après réouverture du terminal.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Conservez les ressources pour inspecter le state distant.
 

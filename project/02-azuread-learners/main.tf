@@ -11,6 +11,7 @@
 provider "azuread" {}
 
 provider "azurerm" {
+  subscription_id = var.subscription_id
   features {}
 }
 
@@ -23,10 +24,10 @@ locals {
     for i in range(1, var.learner_count + 1) :
     format("APP%02d", i) => {
       index        = i
-      username     = format(var.username_pattern, format("%02d", i))
-      display_name = format(var.display_name_pattern, format("%02d", i))
-      upn          = "${format(var.username_pattern, format("%02d", i))}@${var.domain}"
-      password     = format(var.password_pattern, format("%02d", i))
+      username     = replace(var.username_pattern, "{i}", format("%02d", i))
+      display_name = replace(var.display_name_pattern, "{i}", format("%02d", i))
+      upn          = "${replace(var.username_pattern, "{i}", format("%02d", i))}@${var.domain}"
+      password     = replace(var.password_pattern, "{i}", format("%02d", i))
     }
   }
 }

@@ -1,32 +1,67 @@
-# Lab Jour 0 — Préparer votre environnement
+# 🧪 Lab M00 — Préparer votre environnement de formation
 
 > [<- Jour 0](../README.md) · **M00 Setup** · [Jour 1 ->](../../day-01/module-01-iac-workflow/lab.md)
 
-**Duree cible : 1 h 30**
+| Élément | Valeur |
+|---|---|
+| **Durée** | 1 h 30 |
+| **Piste** | `[CORE]` |
+| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone du projet type) |
+| **Coût Estimé** | $0 (aucune ressource cloud créée) |
+| **Certifications** | HashiCorp Terraform Associate · Snowflake SnowPro · Azure AZ-104 |
+| **Cleanup** | Conservation obligatoire — base de tous les modules suivants |
 
-## Resultat attendu
+---
 
-A la fin de ce lab :
+## 🎯 1. Mission Métier & User Story
 
-- le **projet type** est clone sous `$HOME/Data2AI-Labs/data-platform`;
-- Git, Terraform, Snowflake CLI, Azure CLI et dbt sont disponibles dans le terminal;
-- la connexion Snowflake `training` repond a `snow sql -q 'SELECT 1' -c training`;
-- Azure est authentifie via le service principal partage;
-- la validation finale affiche `Toolchain status: READY`.
+> **En tant que :** Cloud Data Engineer en formation
+> **Je veux :** préparer et valider mon environnement de travail (toolchain, credentials, connexions)
+> **Afin de :** garantir que tous les labs M01 à M14 s'exécutent sans friction technique
 
-> **Toutes les commandes s'executent depuis la racine du clone** (`$HOME/Data2AI-Labs/data-platform`).
+---
 
-## Ordre d'execution des scripts
+## 🏗️ 2. Architecture & Modèle Mental
 
-> `[IMPORTANT]` L'ordre des scripts est important. Suivez cette sequence exacte.
+```mermaid
+flowchart LR
+    DEV["🧑‍💻 Apprenant"] -->|"1. git clone"| REPO["📦 data-platform-starter"]
+    REPO -->|"2. Install-Tools"| TOOLS["⚙️ Toolchain: Terraform, Snow CLI, Azure CLI, dbt"]
+    REPO -->|"3. New-SnowflakeConnection"| SNOW["❄️ Snowflake CLI -c training"]
+    REPO -->|"4. Learner-Login"| AZURE["☁️ Azure SP + Key Vault PAT"]
+    TOOLS --> VERIFY["✅ Test-LabConnectivity: READY"]
+    SNOW --> VERIFY
+    AZURE --> VERIFY
+```
+
+---
+
+## 🎯 3. Objectifs Pédagogiques Vérifiables
+
+- ✅ le **projet type** est cloné sous `$HOME/Data2AI-Labs/data-platform`;
+- ✅ Git, Terraform, Snowflake CLI, Azure CLI et dbt sont disponibles dans le terminal;
+- ✅ la connexion Snowflake `training` répond à `snow sql -q 'SELECT 1' -c training`;
+- ✅ Azure est authentifié via le service principal partagé;
+- ✅ la connexion aux consoles web (Snowsight + Azure Portal) est confirmée;
+- ✅ la validation finale affiche `Toolchain status: READY`.
+
+---
+
+## 🚀 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+> **Toutes les commandes s'exécutent depuis la racine du clone** (`$HOME/Data2AI-Labs/data-platform`).
+
+### Ordre d'exécution des scripts
+
+> `[IMPORTANT]` L'ordre des scripts est important. Suivez cette séquence exacte.
 
 | # | Script | Quand | Action |
 |---|---|---|---|
 | 0 | `Set-ExecutionPolicy` | Une seule fois | Autorise les scripts PowerShell (Windows) |
 | 1 | `Install-Tools.ps1` | Une seule fois | Installe Terraform, Snow CLI, dbt, tflint |
-| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + ecrit le PAT dans `secrets/snowflake_pat.txt` (fallback) |
-| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + recupere le PAT depuis Key Vault + set `TF_VAR_snowflake_token` |
-| 4 | `Test-LabConnectivity.ps1` | Verification | Valide tous les acces (Snowflake + Azure + Git + Terraform) |
+| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + écrit le PAT dans `secrets/snowflake_pat.txt` (fallback) |
+| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + récupère le PAT depuis Key Vault + set `TF_VAR_snowflake_token` |
+| 4 | `Test-LabConnectivity.ps1` | Vérification | Valide tous les accès (Snowflake + Azure + Git + Terraform) |
 
 ```powershell
 # 0. Autoriser les scripts (une seule fois, Windows seulement)
@@ -38,28 +73,26 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 # 2. Configurer Snowflake (une seule fois)
 .\scripts\New-SnowflakeConnection.ps1
 
-# 3. Login Azure + variables Terraform (CHaque session)
+# 3. Login Azure + variables Terraform (Chaque session)
 .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
 
-# 4. Verifier tout
+# 4. Vérifier tout
 .\scripts\Test-LabConnectivity.ps1 -SkipDevOps
 ```
 
-> `[IMPORTANT]` `Learner-Login.ps1` recupere le PAT depuis **Azure Key Vault**
+> `[IMPORTANT]` `Learner-Login.ps1` récupère le PAT depuis **Azure Key Vault**
 > (secret `SnowflakePAT-APP01` pour l'apprenant APP01). Si Key Vault est inaccessible,
-> il utilise `secrets/snowflake_pat.txt` comme fallback (cree par `New-SnowflakeConnection.ps1`).
+> il utilise `secrets/snowflake_pat.txt` comme fallback (créé par `New-SnowflakeConnection.ps1`).
 > Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
 
----
+### Cloner le projet type (5 min)
 
-## Etape 1 — Cloner le projet type (5 min)
+Le projet type est le dépôt `data-platform-starter`. Il contient les scripts d'installation, la structure de gouvernance et les validateurs. **C'est votre racine de travail pour toute la formation.**
 
-Le projet type est le depot `data-platform-starter`. Il contient les scripts d'installation, la structure de gouvernance et les validateurs. **C'est votre racine de travail pour toute la formation.**
-
-Le depot du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
+Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 New-Item -ItemType Directory -Path "$HOME\Data2AI-Labs" -Force | Out-Null
@@ -82,13 +115,13 @@ cd "$HOME/Data2AI-Labs/data-platform"
 ```
 </details>
 
-### 1.1 — Verifier que les scripts sont presents
+### Vérifier que les scripts sont présents
 
 ```bash
 ls scripts/
 ```
 
-**Checkpoint** :
+✅ **Checkpoint 0 :**
 
 ```text
 Install-Tools.ps1
@@ -103,35 +136,37 @@ validate.ps1
 validate.sh
 ```
 
-> A partir d'ici, **toutes les commandes s'executent depuis la racine du clone**.
+> À partir d'ici, **toutes les commandes s'exécutent depuis la racine du clone**.
 
-> `[WINDOWS]` Si vous obtenez l'erreur `l'execution de scripts est desactivee`,
+> `[WINDOWS]` Si vous obtenez l'erreur `l'exécution de scripts est désactivée`,
 > autorisez les scripts locaux une seule fois :
 >
 > ```powershell
 > Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 > ```
 >
-> `RemoteSigned` est le parametre standard pour un poste de formation.
-> Il autorise les scripts locaux mais bloque les scripts telecharges non signes.
+> `RemoteSigned` est le paramètre standard pour un poste de formation.
+> Il autorise les scripts locaux mais bloque les scripts téléchargés non signés.
 
 ---
 
-## Etape 2 — Installer et verifier les outils (20 min)
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
+
+### 📝 Étape 5.1 — Installer et vérifier les outils (20 min)
 
 Le Jour 0 est **automatise**. Vous executez les scripts qui se trouvent dans le clone, puis vous lisez le rapport.
 
 - **Windows** : `scripts/Install-Tools.ps1`
 - **Linux/macOS** : `scripts/install-tools.sh`
 
-Les deux scripts ont le meme contrat : memes versions, memes verifications, meme format de rapport.
+Les deux scripts ont le même contrat : mêmes versions, mêmes vérifications, même format de rapport.
 
-### 2.1 — Diagnostic initial
+#### Diagnostic initial
 
 Executez le script en mode `Check` pour voir l'etat actuel sans rien installer :
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check -ReportPath .\preflight
@@ -139,7 +174,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check -Rep
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 chmod +x scripts/install-tools.sh
@@ -149,10 +184,10 @@ chmod +x scripts/install-tools.sh
 
 **Checkpoint** : un rapport s'affiche et deux fichiers sont crees (`preflight.md` et `preflight.json`). Les outils deja installes sont en `PASS`, les autres en `FAIL` ou `WARN`.
 
-### 2.2 — Installation
+#### Installation
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -ReportPath .\preflight
@@ -160,7 +195,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -ReportPath
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 ./scripts/install-tools.sh --report-path ./preflight
@@ -169,12 +204,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -ReportPath
 
 **Checkpoint** : le script installe les outils manquants sous `$HOME/.data2ai`. Les outils Python (Snow CLI, dbt) sont installes dans un environnement virtuel isole. Le rapport final indique `Toolchain status: READY`.
 
-### 2.3 — Corriger les echecs
+#### Corriger les échecs
 
 Si un outil est en `FAIL`, le rapport affiche la procedure manuelle officielle. Suivez-la, puis relancez :
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
@@ -182,19 +217,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 ./scripts/install-tools.sh --check
 ```
 </details>
 
-### 2.4 — Rouvrir le terminal
+#### Rouvrir le terminal
 
 Si une commande reste introuvable apres l'installation, fermez et rouvrez le terminal pour rafraichir le `PATH`.
 
 <details>
-<summary>Linux/macOS — si le PATH ne persiste pas</summary>
+<summary>🐧 <b>Linux/macOS — si le PATH ne persiste pas</b></summary>
 
 ```bash
 export PATH="$HOME/.data2ai/bin:$HOME/.data2ai/venv/bin:$PATH"
@@ -203,10 +238,10 @@ export PATH="$HOME/.data2ai/bin:$HOME/.data2ai/venv/bin:$PATH"
 Ajoutez cette ligne a votre `~/.bashrc` ou `~/.zshrc` pour la persistence.
 </details>
 
-### 2.5 — Verifier les versions
+#### Vérifier les versions
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform version
@@ -218,7 +253,7 @@ dbt --version
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 terraform version
@@ -231,7 +266,7 @@ dbt --version
 
 **Checkpoint** : chaque commande retourne une version. Les versions doivent correspondre a la [politique de versions](../../docs/version-policy.md).
 
-### 2.6 — Comprendre ce que le script a fait
+#### Comprendre ce que le script a fait
 
 Repondez a ces questions pour valider votre comprehension :
 
@@ -251,14 +286,14 @@ Repondez a ces questions pour valider votre comprehension :
 
 ---
 
-## Etape 3 — Configurer votre fichier `.env` (10 min)
+### 📝 Étape 5.2 — Configurer votre fichier `.env` (10 min)
 
 Le formateur a pre-rempli `.env.example` avec les parametres d'acces Snowflake, Azure et Azure DevOps. Vous copiez ce fichier en `.env` et vous ajoutez uniquement vos valeurs personnelles.
 
-### 3.1 — Copier `.env.example`
+#### Copier `.env.example`
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 cp .env.example .env
@@ -266,14 +301,14 @@ cp .env.example .env
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 cp .env.example .env
 ```
 </details>
 
-### 3.2 — Mettre a jour vos valeurs personnelles
+#### Mettre à jour vos valeurs personnelles
 
 Ouvrez `.env` dans votre editeur. Mettez a jour uniquement :
 
@@ -292,7 +327,7 @@ Le PAT n'est **pas** dans `.env` — il est recupere depuis Azure Key Vault par 
 
 > `.env` est gitignored. Il ne sera jamais commite.
 
-### 3.3 — Verifier que `.env` est ignore
+#### Vérifier que `.env` est ignoré
 
 ```bash
 git check-ignore .env
@@ -302,7 +337,7 @@ git check-ignore .env
 
 ---
 
-## Etape 4 — Configurer la connexion Snowflake (20 min)
+### 📝 Étape 5.3 — Configurer la connexion Snowflake (20 min)
 
 > `[IMPORTANT]` Cette etape configure Snow CLI et cree un fichier PAT local.
 > Le PAT est ensuite stocke dans **Azure Key Vault** par le formateur
@@ -311,10 +346,10 @@ git check-ignore .env
 
 Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de facon masquee.
 
-### 4.1 — Lancer le script
+#### Lancer le script
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 .\scripts\New-SnowflakeConnection.ps1
@@ -322,7 +357,7 @@ Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide d
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 chmod +x scripts/new-snowflake-connection.sh
@@ -355,7 +390,7 @@ Snowflake PAT (token): ********
 
 Saisissez votre PAT. Il ne s'affiche pas a l'ecran.
 
-### 4.2 — Verifier la connexion
+#### Vérifier la connexion
 
 ```bash
 snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
@@ -363,7 +398,7 @@ snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c traini
 
 **Checkpoint** : une ligne avec votre utilisateur, votre role et votre compte.
 
-### 4.3 — Acceder a l'interface web Snowflake (optionnel)
+#### Accéder à l'interface web Snowflake (optionnel)
 
 Le formateur vous a fourni un **identifiant Snowflake individuel** (username + password)
 pour acceder a l'interface web.
@@ -379,7 +414,7 @@ pour acceder a l'interface web.
 
 ---
 
-## Etape 5 — Authentifier Azure avec le service principal partage (10 min)
+### 📝 Étape 5.4 — Authentifier Azure avec le service principal partagé (10 min)
 
 > `[IMPORTANT]` Cette etape doit etre executee **apres** l'etape 4 (Snowflake).
 > Le script `Learner-Login.ps1` recupere le PAT depuis **Azure Key Vault**
@@ -392,10 +427,10 @@ d'un **service principal partage**. Ce SP contourne l'authentification MFA d'Azu
 
 > `secrets/shared-sp.txt` est gitignored. Ne le commitez jamais.
 
-### 5.1 — Lancer le script de login
+#### Lancer le script de login
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
@@ -403,7 +438,7 @@ d'un **service principal partage**. Ce SP contourne l'authentification MFA d'Azu
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 chmod +x scripts/learner-login.sh
@@ -449,7 +484,7 @@ Le script :
 ============================================================
 ```
 
-### 5.2 — Verifier la connexion Azure
+#### Vérifier la connexion Azure
 
 ```bash
 az account show --query 'name' -o tsv
@@ -457,7 +492,7 @@ az account show --query 'name' -o tsv
 
 **Checkpoint** : le nom de la souscription Azure.
 
-### 5.3 — Verifier le prefixe apprenant
+#### Vérifier le préfixe apprenant
 
 ```bash
 echo $LEARNER_PREFIX       # Linux/macOS
@@ -472,9 +507,9 @@ echo $env:LEARNER_PREFIX   # Windows PowerShell
 
 ---
 
-## Etape 6 — Inspecter la structure du projet type (10 min)
+### 📝 Étape 5.5 — Inspecter la structure du projet type (10 min)
 
-### 6.1 — Lister les dossiers
+#### Lister les dossiers
 
 ```bash
 ls -la
@@ -512,7 +547,7 @@ CODEOWNERS
 .tflint.hcl
 ```
 
-### 6.2 — Verifier l'absence de code de ressource
+#### Vérifier l'absence de code de ressource
 
 ```bash
 find . -name '*.tf' -type f
@@ -520,7 +555,7 @@ find . -name '*.tf' -type f
 
 **Checkpoint** : aucun resultat. Le squelette ne contient aucun fichier `.tf`. Vous les creerez a partir du Jour 1.
 
-### 6.3 — Comprendre le role du squelette
+#### Comprendre le rôle du squelette
 
 | Element | Role |
 |---|---|
@@ -535,7 +570,7 @@ find . -name '*.tf' -type f
 | `CODEOWNERS` | Propriete du code et revue obligatoire |
 | `scripts/` | Installation, connexion, validation et `Reset-Lab.ps1` |
 
-### 6.4 — Renommer l'origine (optionnel)
+#### Renommer l'origine (optionnel)
 
 Pour eviter d'ecraser le template, renommez l'origine et ajoutez votre propre depot apprenant :
 
@@ -548,12 +583,12 @@ git remote add origin <VOTRE_REPO_APPRENANT>
 
 ---
 
-## Etape 7 — Validation finale (10 min)
+### 📝 Étape 5.6 — Validation finale (10 min)
 
-### 7.1 — Relancer le diagnostic
+#### Relancer le diagnostic
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
@@ -561,7 +596,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 ./scripts/install-tools.sh --check
@@ -570,7 +605,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 
 **Checkpoint** : `Toolchain status: READY`.
 
-### 7.2 — Verifier la connexion Snowflake
+#### Vérifier la connexion Snowflake
 
 ```bash
 snow sql -q 'SELECT 1' -c training
@@ -578,7 +613,7 @@ snow sql -q 'SELECT 1' -c training
 
 **Checkpoint** : un resultat contenant `1`.
 
-### 7.3 — Verifier le projet
+#### Vérifier le projet
 
 ```bash
 git status
@@ -586,10 +621,10 @@ git status
 
 **Checkpoint** : branche propre, aucun fichier modifie (sauf `preflight.md` et `preflight.json` qui sont ignores).
 
-### 7.4 — Lancer le test de connectivite complet
+#### Lancer le test de connectivité complet
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 .\scripts\Test-LabConnectivity.ps1 -SkipDevOps
@@ -597,7 +632,7 @@ git status
 </details>
 
 <details>
-<summary>Linux/macOS (Bash)</summary>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
 ./scripts/test-lab-connectivity.sh --skip-devops
@@ -613,11 +648,11 @@ git status
 
 ---
 
-## Etape 6 — Première Connexion aux Consoles Web (Snowsight & Azure Portal)
+### 🌐 Étape 5.7 — Vérification Graphique via les Consoles Web
 
 L'apprentissage professionnel associe les commandes du terminal à la maîtrise des interfaces graphiques d'administration.
 
-### 6.1 — Connexion à Snowflake Snowsight Web UI
+#### ❄️ Console Snowflake Snowsight (`https://app.snowflake.com`)
 
 1. Ouvrez votre navigateur et accédez à : `https://app.snowflake.com`
 2. Saisissez votre identifiant de compte Snowflake : `<ORGANIZATION>-<ACCOUNT>` (valeur présente dans votre `.env`).
@@ -631,7 +666,7 @@ L'apprentissage professionnel associe les commandes du terminal à la maîtrise 
    ```
 6. Vous devez voir votre identifiant apprenant et le rôle `SYSADMIN`.
 
-### 6.2 — Vérification du Portail Microsoft Azure
+#### 🔵 Portail Microsoft Azure (`https://portal.azure.com`)
 
 1. Accédez au portail officiel : `https://portal.azure.com`
 2. Vérifiez votre accès à la souscription de formation indiquée par :
@@ -644,33 +679,76 @@ L'apprentissage professionnel associe les commandes du terminal à la maîtrise 
 
 ---
 
-## 🐛 Chaos Lab M00 — Diagnostic d'une Panne d'Environnement
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Pour apprendre à dépanner sans stress, simulez une anomalie courante de configuration :*
 
-1. **Injection de l'anomalie :** Ouvrez votre `.env` et modifiez temporairement `LEARNER_PREFIX` avec un nom non conforme contenant un tiret et des minuscules :
+### Symptôme & Injection de l'Anomalie
+1. Ouvrez votre `.env` et modifiez temporairement `LEARNER_PREFIX` avec un nom non conforme contenant un tiret et des minuscules :
    ```text
    LEARNER_PREFIX=app-01-test
    ```
-2. **Observation du diagnostic :** Lancez la vérification d'environnement :
-   ```powershell
-   .\scripts\SelfPacedLab.ps1 -Module 0 -All
-   ```
-3. **Résultat :** Le validateur signale un échec immédiat sur la conformité de l'identifiant (la regex de validation impose `^[A-Z0-9]{2,10}$`).
-4. **Remédiation :** Restaurez votre préfixe officiel (ex: `APP01`), ré-exécutez le script et vérifiez le retour au statut `PASS`.
+
+### Diagnostic & Observation
+Lancez la vérification d'environnement :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 0 -All
+```
+
+```bash
+./scripts/self-paced-lab.sh --module 0 --all
+```
+
+Le validateur signale un échec immédiat sur la conformité de l'identifiant (la regex de validation impose `^[A-Z0-9]{2,10}$`).
+
+### Remédiation
+Restaurez votre préfixe officiel (ex: `APP01`), ré-exécutez le script et vérifiez le retour au statut `PASS`.
 
 ---
 
-## Checkpoint final
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
-Le Jour 0 est termine uniquement lorsque les conditions suivantes sont reunies :
+Validez votre avancement avec le moteur d'auto-évaluation du cours :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 0 -All -Report
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+./scripts/self-paced-lab.sh --module 0 --all --report
+```
+</details>
+
+<details>
+<summary>✅ <b>Exemple de Rapport de Validation</b></summary>
+
+```text
+[PASS] T1 Git installed and configured
+[PASS] T2 Terraform installed and pinned correctly
+[PASS] T3 Snow CLI connection 'training' operational
+[PASS] T4 Azure CLI authenticated with service principal
+[PASS] T5 Project structure validated (no .tf files)
+Result: 5/5 Tasks Passed.
+Report written to: student-track/_reports/module-00-APP01.md
+```
+</details>
+
+✅ **Checkpoint Final :** Les conditions suivantes doivent être réunies :
 
 1. `Toolchain status: READY`
 2. `az account show --query 'name' -o tsv` affiche la souscription Azure
-3. `snow sql -q 'SELECT 1' -c training` retourne un resultat
+3. `snow sql -q 'SELECT 1' -c training` retourne un résultat
 4. Connexion confirmée dans **Snowflake Snowsight Web UI** avec le rôle `SYSADMIN`
 5. `Test-LabConnectivity.ps1` affiche `Status: READY` (0 FAIL)
-6. Le projet type est clone et ne contient aucun fichier `.tf`
+6. Le projet type est cloné et ne contient aucun fichier `.tf`
 
 ```text
 Ready for Day 1
@@ -678,24 +756,49 @@ Ready for Day 1
 
 ---
 
-## La suite : votre racine de travail
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-A partir du Jour 1, **tous les fichiers `.tf` que vous creerez** iront dans le dossier du lab correspondant :
+> **Scénario :** Votre équipe vous demande de préparer un second environnement de test avec un préfixe différent.
+> **Contraintes :**
+> - Créez un fichier `.env.test` avec un préfixe `APP01TEST` (conforme à la regex);
+> - Vérifiez que `git check-ignore .env.test` confirme l'ignorance du fichier;
+> - Lancez `Learner-Login.ps1 -LearnerPrefix APP01TEST` et vérifiez que les variables d'environnement sont correctement définies;
+> - Ne modifiez jamais le fichier `.env` principal.
+
+| Critère d'Évaluation | Points |
+|---|---:|
+| Fichier `.env.test` créé avec préfixe conforme | 30 pts |
+| `git check-ignore` confirme l'ignorance | 20 pts |
+| `Learner-Login` réussit avec le nouveau préfixe | 30 pts |
+| Aucune modification du `.env` principal | 20 pts |
+| **Total** | **100 pts** |
+
+---
+
+## 🧹 9. Conservation & Point de Reprise (*FinOps Teardown*)
+
+> **M00 est un module de conservation obligatoire.** Ne détruisez rien — l'environnement est la base de tous les labs M01 à M14.
+
+### Point de reprise pour les sessions suivantes
+
+À partir du Jour 1, **tous les fichiers `.tf` que vous créerez** iront dans le dossier du lab correspondant :
 
 - `labs/m01-iac-workflow/main.tf`, `locals.tf`, `outputs.tf`... pour M1;
 - `labs/m05-modules/modules/landing-zone/` pour M5;
 - `labs/m08-environments/dev/`, `uat/`, `prod/` pour M8;
 - etc.
 
-Chaque lab est **isole** : il a son propre dossier, son propre state et ses propres ressources (prefixees par le numero de module, ex. `APP01_M01_RAW_DEV`). Utilisez `Reset-Lab.ps1` pour nettoyer avant/apres un lab :
+Chaque lab est **isolé** : il a son propre dossier, son propre state et ses propres ressources (préfixées par le numéro de module, ex. `APP01_M01_RAW_DEV`). Utilisez `Reset-Lab.ps1` pour nettoyer avant/après un lab :
 
 ```powershell
 .\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M01
 ```
 
-Les scripts `validate.ps1` et `validate.sh` dans `scripts/` verifient votre travail localement avant de pousser.
+Les scripts `validate.ps1` et `validate.sh` dans `scripts/` vérifient votre travail localement avant de pousser.
 
-Passez a [M1 — Premier deploiement Terraform Snowflake](../../day-01/module-01-iac-workflow/lab.md).
+> ⚠️ **WARNING** : Vous devez relancer `Learner-Login` au début de chaque session (nouveau terminal, redémarrage VM). Les variables d'environnement ne persistent pas entre les sessions.
+
+Passez à [M1 — Premier déploiement Terraform Snowflake](../../day-01/module-01-iac-workflow/lab.md).
 
 ---
 

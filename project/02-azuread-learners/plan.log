@@ -1,0 +1,465 @@
+﻿[0m[1mdata.azuread_client_config.current: Reading...[0m[0m
+[0m[1mdata.azuread_client_config.current: Read complete after 0s [id=55fca982-2372-4352-8b7e-c28ac00ae8e3-04b07795-8ddb-461a-bbee-02f9e1bf7b46-95f2a05e-553b-440c-8741-c05e57dfe070][0m
+
+[0m[1m[31mPlanning failed.[0m[1m Terraform encountered an error while generating this plan.[0m
+
+terraform : [31mΓò╖[0m[0m
+At line:2 char:1
++ terraform plan -compact-warnings 2>&1 | Out-File plan.log -Encoding u ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([31mΓò╖[0m[0m:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mbuilding account: unable to configure ResourceManagerAccount: 
+subscription ID could not be determined and was not specified[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  with provider["registry.terraform.io/hashicorp/azurerm"],
+[31mΓöé[0m [0m  on main.tf line 13, in provider "azurerm":
+[31mΓöé[0m [0m  13: provider "azurerm" [4m{[0m[0m
+[31mΓöé[0m [0m
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 26, in locals:
+[31mΓöé[0m [0m  26:       username     = format(var.username_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 27, in locals:
+[31mΓöé[0m [0m  27:       display_name = format(var.display_name_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 28, in locals:
+[31mΓöé[0m [0m  28:       upn          = "${format(var.username_pattern, [4mformat([0m"%02d", 
+i))}@${var.domain}"[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[31mΓò╖[0m[0m
+[31mΓöé[0m [0m[1m[31mError: [0m[0m[1mInvalid function argument[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0m[0m  on main.tf line 29, in locals:
+[31mΓöé[0m [0m  29:       password     = format(var.password_pattern, [4mformat([0m"%02d", i))[0m
+[31mΓöé[0m [0m
+[31mΓöé[0m [0mInvalid value for "args" parameter: too many arguments; no verbs in format
+[31mΓöé[0m [0mstring.
+[31mΓò╡[0m[0m
+[0m

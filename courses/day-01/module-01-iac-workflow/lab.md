@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m01.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Vous êtes Data Platform Engineer. Votre équipe vous demande une zone RAW minimale composée d'une database, d'un schema d'ingestion et d'un warehouse économique. Le changement doit être relisible avant exécution et reproductible sans exposer de credential.
 
-## 🏗️ Architecture finale
+> **En tant que :** Data Platform Engineer  
+> **Je veux :** créer une zone RAW minimale (database + schema + warehouse) via Terraform  
+> **Afin de :** garantir un déploiement reproductible, relisible et sans credential exposé
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -59,7 +65,7 @@ flowchart LR
 
 ![Architecture Atelier](assets/lab-architecture.png)
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - ✅ créer une configuration Terraform depuis le clone du projet type;
 - ✅ authentifier le provider Snowflake avec un PAT sans placer de secret dans le code;
@@ -68,14 +74,24 @@ flowchart LR
 - ✅ prouver la création des trois ressources;
 - ✅ vérifier l'idempotence avec un second plan.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] `snow sql -q 'SELECT 1' -c training` réussit;
 - [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`;
 - [ ] vous connaissez votre préfixe unique (variable `LEARNER_PREFIX` dans `.env`).
 
-## 📝 Partie 1 — Se placer dans le bon dossier
+### Initialisation de session
+
+✅ **Checkpoint 0 :** La commande affiche `Toolchain: READY`, `Snowflake Connection: READY`, `Workspace: CLEAN`.
+
+---
+
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
+
+### 📝 Étape 5.1 — Se placer dans le bon dossier
 
 Tous les fichiers de M1 vont dans `labs/m01-iac-workflow/` du clone. Ce dossier contient déjà des fichiers modèle (`provider.tf`, `versions.tf`, `variables.tf`, `terraform.tfvars.example`) que vous n'avez **pas** à créer — vous les examinerez à la Partie 2.
 
@@ -117,11 +133,11 @@ ls -la
 
 ✅ **Checkpoint 1** : `provider.tf`, `versions.tf`, `variables.tf`, `terraform.tfvars.example`, `main.tf` (stub), `outputs.tf` (stub), `.gitignore`. Les fichiers `provider.tf`, `versions.tf` et `variables.tf` sont **pré-remplis** — vous ne les créez pas.
 
-## 📝 Partie 2 — Examiner les fichiers modèle
+### 📝 Étape 5.2 — Examiner les fichiers modèle
 
 Le dossier `labs/m01-iac-workflow/` contient déjà trois fichiers Terraform pré-remplis. Vous allez les examiner, puis initialiser Terraform.
 
-### 📝 Étape 2.1 — Examiner `versions.tf`
+#### Examiner `versions.tf`
 
 Ouvrez `versions.tf` :
 
@@ -150,7 +166,7 @@ terraform {
 
 > 💡 **Note** : Pourquoi pas `~> 2.14.0` ? Voir [docs/version-policy.md](../../docs/version-policy.md). Une contrainte souple autorise des versions différentes entre apprenants.
 
-### 📝 Étape 2.2 — Examiner `provider.tf`
+#### Examiner `provider.tf`
 
 Ouvrez `provider.tf` :
 
@@ -181,7 +197,7 @@ provider "snowflake" {
 
 > 🔒 **Security** : Le PAT est lu depuis le fichier `secrets/snowflake_pat.txt` créé au Jour 0. Le chemin `${path.module}/../../secrets/snowflake_pat.txt` remonte depuis `labs/m01-iac-workflow/` jusqu'à la racine du projet. Vous n'avez **pas** à charger le PAT manuellement — `provider.tf` s'en charge.
 
-### 📝 Étape 2.3 — Examiner `variables.tf`
+#### Examiner `variables.tf`
 
 Ouvrez `variables.tf` :
 
@@ -198,7 +214,7 @@ Il contient les variables de base partagées entre tous les labs :
 
 > 💡 **Note** : Ce fichier est **pré-rempli**. Vous n'avez pas à le recréer, mais vous y ajouterez des variables spécifiques au lab (voir Étape 3.1).
 
-### 📝 Étape 2.4 — Initialiser et valider
+#### Initialiser et valider
 
 ```powershell
 terraform fmt
@@ -208,9 +224,9 @@ terraform validate
 
 ✅ **Checkpoint 2** : `The configuration is valid.`
 
-## 📝 Partie 3 — Créer les variables et les noms
+### 📝 Étape 5.3 — Créer les variables et les noms
 
-### 📝 Étape 3.1 — Ajouter `warehouse_size` dans `variables.tf`
+#### Ajouter `warehouse_size` dans `variables.tf`
 
 Le fichier `variables.tf` est pré-rempli avec les variables de base. **Ajoutez à la fin du fichier** la variable `warehouse_size` (ne modifiez pas les variables existantes) :
 
@@ -229,7 +245,7 @@ variable "warehouse_size" {
 
 Les validations empêchent les warehouses trop grands pour ce lab.
 
-### 📝 Étape 3.2 — Créer `locals.tf`
+#### Créer `locals.tf`
 
 ```powershell
 code locals.tf
@@ -248,7 +264,7 @@ locals {
 
 > 💡 **Note** : Le préfixe `M01` dans les noms de ressources isole ce lab des autres. Chaque lab utilise son propre préfixe (`M02`, `M03`, etc.) pour éviter les conflits.
 
-### 📝 Étape 3.3 — Créer `terraform.tfvars`
+#### Créer `terraform.tfvars`
 
 Copiez le fichier d'exemple puis complétez-le :
 
@@ -289,7 +305,7 @@ Remplacez `APP01` par votre préfixe (celui de votre `.env`). Adaptez les valeur
 
 > 💡 **Note** : La variable `snowflake_token` (le PAT) n'est **pas** dans `terraform.tfvars`. Elle est lue automatiquement par `provider.tf` depuis `secrets/snowflake_pat.txt`.
 
-### 📝 Étape 3.4 — Formater et valider
+#### Formater et valider
 
 ```powershell
 terraform fmt
@@ -298,9 +314,9 @@ terraform validate
 
 ✅ **Checkpoint 3** : `The configuration is valid.`
 
-## 📝 Partie 4 — Créer les ressources
+### 📝 Étape 5.4 — Créer les ressources
 
-### 📝 Étape 4.1 — Créer `main.tf`
+#### Créer `main.tf`
 
 Remplacez le contenu du stub `main.tf` par :
 
@@ -329,7 +345,7 @@ resource "snowflake_warehouse" "etl" {
 
 La référence `snowflake_database.raw.name` crée une dépendance implicite : Terraform doit créer la database avant son schema. Le warehouse est indépendant et peut être créé en parallèle.
 
-### 📝 Étape 4.2 — Créer `outputs.tf`
+#### Créer `outputs.tf`
 
 Remplacez le contenu du stub `outputs.tf` par :
 
@@ -350,7 +366,7 @@ output "warehouse_name" {
 }
 ```
 
-### 📝 Étape 4.3 — Formater et valider
+#### Formater et valider
 
 ```powershell
 terraform fmt
@@ -359,9 +375,9 @@ terraform validate
 
 ✅ **Checkpoint 4** : `The configuration is valid.`
 
-## 📝 Partie 5 — Planifier sans modifier
+### 📝 Étape 5.5 — Planifier sans modifier
 
-### 📝 Étape 5.1 — Vérifier le pre-flight
+#### Vérifier le pre-flight
 
 Le PAT est lu automatiquement par `provider.tf` — vous n'avez pas à le charger manuellement. Vérifiez simplement que tout est prêt :
 
@@ -373,7 +389,7 @@ Le PAT est lu automatiquement par `provider.tf` — vous n'avez pas à le charge
 
 > 🔒 **Security** : Le PAT est lu depuis `secrets/snowflake_pat.txt` par `provider.tf`. Il n'apparaît ni dans le code, ni dans les logs, ni dans le state.
 
-### 📝 Étape 5.2 — Planifier
+#### Planifier
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -405,7 +421,7 @@ Il doit afficher `3 to add`, aucune modification et aucune destruction.
 
 ✅ **Checkpoint 5** : `Plan: 3 to add, 0 to change, 0 to destroy.`
 
-## 📝 Partie 6 — Appliquer après revue
+### 📝 Étape 5.6 — Appliquer après revue
 
 Avant de continuer, relisez le plan et confirmez votre préfixe. L'application crée trois objets dans le compte Snowflake.
 
@@ -419,9 +435,9 @@ terraform apply m01.tfplan
 Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ```
 
-## 📝 Partie 7 — Prouver le résultat
+### 📝 Étape 5.7 — Prouver le résultat & Vérification Graphique
 
-### 🔍 Preuve Terraform
+#### Preuve Terraform
 
 ```powershell
 terraform output
@@ -430,7 +446,7 @@ terraform state list
 
 ✅ **Checkpoint** : 3 ressources listées.
 
-### 🔍 Preuve Snowflake (CLI)
+#### Preuve Snowflake (CLI)
 
 La connexion `training` lit le PAT depuis le fichier automatiquement (configuré au Jour 0). Remplacez `APP01` par votre préfixe :
 
@@ -440,7 +456,7 @@ snow sql -c training -q "SHOW SCHEMAS LIKE 'INGESTION' IN DATABASE APP01_M01_RAW
 snow sql -c training -q "SHOW WAREHOUSES LIKE 'WH_APP01_M01_ETL_DEV'"
 ```
 
-### 🔍 Preuve Snowflake (interface web)
+#### Preuve Snowflake (interface web)
 
 Connectez-vous à l'interface Snowflake (https://app.snowflake.com) avec votre
 **username + password individuel** (fourni par le formateur, différent du PAT).
@@ -467,7 +483,7 @@ Vérifiez que vos ressources apparaissent dans chaque section :
 
 > 💡 **Note** : Remplacez `APP01` par votre `LEARNER_PREFIX`. Si les ressources n'apparaissent pas, vérifiez que vous êtes sur le bon compte Snowflake (organisation + account).
 
-### 🔍 Preuve d'idempotence
+#### Preuve d'idempotence
 
 ```powershell
 terraform plan
@@ -475,17 +491,17 @@ terraform plan
 
 ✅ **Checkpoint 7** : `No changes. Your infrastructure matches the configuration.`
 
-## 🐛 Chaos Lab M01 — Dérive Manuelle via Snowsight & Auto-Remédiation
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *En entreprise, des modifications manuelles hors Terraform sont parfois faites par erreur dans l'interface graphique. Vous allez simuler ce scénario réel.*
 
-### Étape 1 : Injection de dérive dans Snowflake Snowsight
+### Symptôme & Injection de Dérive Manuelle (via Snowsight UI)
 1. Dans votre navigateur sur **Snowflake Snowsight**, rendez-vous dans **Admin > Warehouses**.
 2. Cliquez sur votre warehouse `WH_APP01_M01_ETL_DEV` > **... (Options)** > **Edit**.
 3. Modifiez le champ **Comment** en saisissant : `'Modifié manuellement hors Terraform'`.
 4. Cliquez sur **Save**.
 
-### Étape 2 : Détection automatique par Terraform
+### Diagnostic & Observation
 1. Revenez dans votre terminal et exécutez un plan de détection :
    ```powershell
    terraform plan
@@ -497,7 +513,7 @@ terraform plan
    ```
    Terraform a détecté que l'état réel ne correspond plus au code versionné !
 
-### Étape 3 : Remédiation automatique
+### Remédiation
 1. Exécutez :
    ```powershell
    terraform apply -auto-approve
@@ -506,7 +522,7 @@ terraform plan
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 Exécutez le script d'évaluation pour valider toutes les étapes du module :
 
@@ -530,18 +546,15 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## ✅ Validation finale
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-- [ ] structure conforme;
-- [ ] formatage et syntaxe valides;
-- [ ] plan conforme aux ressources annoncées;
-- [ ] preuve fonctionnelle obtenue dans le terminal et visualisée dans Snowsight;
-- [ ] second plan sans modification inattendue;
-- [ ] aucun secret ou artefact interdit dans Git.
-
-## 🏆 Challenge
-
-Ajoutez un output `resource_summary` contenant les trois noms dans un objet :
+> **Scénario :** Ajoutez un output `resource_summary` contenant les trois noms dans un objet.
+> **Contraintes :**
+> - `terraform fmt -check` réussit;
+> - `terraform validate` réussit;
+> - `terraform output resource_summary` affiche vos trois noms;
+> - `terraform plan` reste sans changement;
+> - aucun credential n'est présent dans les fichiers `.tf` ou `.tfvars`.
 
 ```hcl
 output "resource_summary" {
@@ -553,15 +566,19 @@ output "resource_summary" {
 }
 ```
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform fmt -check` réussit;
-- [ ] `terraform validate` réussit;
-- [ ] `terraform output resource_summary` affiche vos trois noms;
-- [ ] `terraform plan` reste sans changement;
-- [ ] aucun credential n'est présent dans les fichiers `.tf` ou `.tfvars`.
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
-## 🎯 Point de reprise
+> **M01 est un module de conservation.** Les ressources créées servent de base pour M02 (State Management). N'exécutez pas `terraform destroy` maintenant.
+
+### Point de reprise
 
 Conservez le workspace et les ressources. Pour reprendre :
 
