@@ -2,14 +2,14 @@
 
 > [<- Jour 4](../README.md) · [<- Module precedent](../module-13-finops-observability/lab.md) · **Module 14** · [Fin ->](../../README.md)
 
-| Élément | Valeur |
-|---|---|
-| **Durée** | 120 min |
-| **Piste** | `[EXTENSION]` |
-| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
-| **Dossier de travail** | `modules/data-product/` et `environments/dev/` |
-| **Coût** | Warehouses X-SMALL |
-| **Cleanup** | Détruire à la fin |
+|| Élément | Valeur |
+||---|---|
+|| **Durée** | 120 min |
+|| **Piste** | `[EXTENSION]` |
+|| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
+|| **Dossier de travail** | `labs/m14-data-products/` |
+|| **Coût** | Warehouses X-SMALL |
+|| **Cleanup** | `terraform destroy -auto-approve` à la fin |
 
 > `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
 > et avoir execute `Learner-Login.ps1` dans **cette session** :
@@ -22,14 +22,20 @@
 > Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
 > et les variables `ARM_*` pour Terraform.
 >
-> Avant `terraform plan`, verifiez que tout est pret :
+> Ensuite, réinitialisez le lab pour partir d'un état propre :
 >
 > ```powershell
-> cd environments\dev
+> .\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M14
+> ```
+>
+> Puis placez-vous dans le dossier du lab et vérifiez que tout est pret :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform\labs\m14-data-products"
 > ..\..\scripts\Test-TerraformReady.ps1
 > ```
 >
-> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m01.tfplan"`.
+> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m14.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
 ## 🎯 Mission
@@ -40,12 +46,9 @@ Les domaines SALES et FINANCE doivent livrer des données avec autonomie sans co
 
 ```mermaid
 flowchart LR
-    ADO[Azure DevOps] --> TF[Terraform]
-    TF --> STRUCT[Database, RAW/SILVER/GOLD, RBAC, Stage]
-    ADO --> SNOW[Snow CLI]
-    SNOW --> SQL[Tables et vues produit]
+    TF[Terraform] --> STRUCT[Database, RAW/SILVER/GOLD, RBAC, Stage]
+    SNOW[Snow CLI] --> SQL[Tables et vues produit]
     STRUCT --> SQL
-    SQL --> FINOPS[M13 FinOps]
 ```
 
 ## 🎯 Objectifs
@@ -58,16 +61,16 @@ flowchart LR
 
 ## 📋 Prérequis
 
-- [ ] M12 terminé : la plateforme est déployée;
-- [ ] M13 terminé (recommandé) : FinOps est configuré;
 - [ ] `snow sql -c training` fonctionne.
+- [ ] Le dossier `labs/m14-data-products/` contient `provider.tf`, `versions.tf`, `variables.tf` et `terraform.tfvars.example` (fournis).
+- [ ] Le sous-dossier `labs/m14-data-products/modules/data-product/` existe (avec `versions.tf` fourni).
 
 ## 📝 Partie 1 — Créer le module data-product
 
 ### 📝 Étape 1.1 — Créer la structure
 
 ```bash
-cd $HOME/Data2AI-Labs/data-platform
+cd $HOME/Data2AI-Labs/data-platform/labs/m14-data-products
 mkdir -p modules/data-product
 ```
 
@@ -105,10 +108,10 @@ variable "warehouse_size" {
 
 ```hcl
 locals {
-  db_name   = "${var.learner_prefix}_${var.domain}_${var.environment}"
-  wh_name   = "WH_${var.learner_prefix}_${var.domain}_${var.environment}"
-  role_prod = "ROLE_${var.learner_prefix}_${var.domain}_PROD_${var.environment}"
-  role_read = "ROLE_${var.learner_prefix}_${var.domain}_RDR_${var.environment}"
+  db_name   = "${var.learner_prefix}_M14_${var.domain}_${var.environment}"
+  wh_name   = "WH_${var.learner_prefix}_M14_${var.domain}_${var.environment}"
+  role_prod = "ROLE_${var.learner_prefix}_M14_${var.domain}_PROD_${var.environment}"
+  role_read = "ROLE_${var.learner_prefix}_M14_${var.domain}_RDR_${var.environment}"
   comment   = "Data Product | ${var.domain} | Owner: ${var.owner}"
 }
 
@@ -227,22 +230,7 @@ output "stage_name" {
 }
 ```
 
-### 📝 Étape 1.5 — Créer `modules/data-product/versions.tf`
-
-```hcl
-terraform {
-  required_version = ">= 1.14.0, < 2.0.0"
-
-  required_providers {
-    snowflake = {
-      source  = "snowflakedb/snowflake"
-      version = "= 2.14.0"
-    }
-  }
-}
-```
-
-### 📝 Étape 1.6 — Formater et valider
+### 📝 Étape 1.5 — Formater et valider
 
 ```bash
 cd modules/data-product
@@ -252,7 +240,7 @@ terraform validate
 
 ## 📝 Partie 2 — Déployer deux domaines avec for_each
 
-### 📝 Étape 2.1 — Ajouter l'appel dans `environments/dev/main.tf`
+### 📝 Étape 2.1 — Écrire `labs/m14-data-products/main.tf`
 
 ```hcl
 locals {
@@ -267,7 +255,7 @@ locals {
 }
 
 module "data_product" {
-  source   = "../../modules/data-product"
+  source   = "./modules/data-product"
   for_each = local.data_products
 
   learner_prefix = var.learner_prefix
@@ -278,7 +266,7 @@ module "data_product" {
 }
 ```
 
-### 📝 Étape 2.2 — Ajouter les outputs
+### 📝 Étape 2.2 — Ajouter les outputs dans `outputs.tf`
 
 ```hcl
 output "data_products" {
@@ -297,12 +285,12 @@ output "data_products" {
 ### 📝 Étape 2.3 — Planifier et appliquer
 
 ```bash
-cd environments/dev
+cd labs/m14-data-products
 terraform fmt
 terraform init
 terraform validate
-terraform plan
-terraform apply
+terraform plan -out "m14.tfplan"
+terraform apply "m14.tfplan"
 ```
 
 ✅ **Checkpoint** : 2 databases, 6 schemas, 2 warehouses, 4 rôles, 2 stages, grants.
@@ -310,9 +298,9 @@ terraform apply
 ### 📝 Étape 2.4 — Vérifier
 
 ```bash
-snow sql -c training -q "SHOW DATABASES LIKE 'ABC_SALES_DEV'"
-snow sql -c training -q "SHOW DATABASES LIKE 'ABC_FINANCE_DEV'"
-snow sql -c training -q "SHOW SCHEMAS IN DATABASE ABC_SALES_DEV"
+snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M14_SALES_DEV'"
+snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M14_FINANCE_DEV'"
+snow sql -c training -q "SHOW SCHEMAS IN DATABASE APP01_M14_SALES_DEV"
 ```
 
 ## 📝 Partie 3 — Publier le contenu SQL avec Snow CLI
@@ -320,13 +308,14 @@ snow sql -c training -q "SHOW SCHEMAS IN DATABASE ABC_SALES_DEV"
 ### 📝 Étape 3.1 — Créer les fichiers SQL
 
 ```bash
+cd labs/m14-data-products
 mkdir -p sql/sales sql/finance
 ```
 
 `sql/sales/orders.sql` :
 
 ```sql
-CREATE OR REPLACE TABLE ABC_SALES_DEV.SILVER.ORDERS AS
+CREATE OR REPLACE TABLE APP01_M14_SALES_DEV.SILVER.ORDERS AS
 SELECT
   1 AS ORDER_ID,
   '2026-01-01' AS ORDER_DATE,
@@ -334,18 +323,18 @@ SELECT
 UNION ALL
 SELECT 2, '2026-01-02', 200.00;
 
-CREATE OR REPLACE VIEW ABC_SALES_DEV.GOLD.DAILY_REVENUE AS
+CREATE OR REPLACE VIEW APP01_M14_SALES_DEV.GOLD.DAILY_REVENUE AS
 SELECT
   ORDER_DATE,
   SUM(AMOUNT) AS TOTAL_REVENUE
-FROM ABC_SALES_DEV.SILVER.ORDERS
+FROM APP01_M14_SALES_DEV.SILVER.ORDERS
 GROUP BY ORDER_DATE;
 ```
 
 `sql/finance/ledger.sql` :
 
 ```sql
-CREATE OR REPLACE TABLE ABC_FINANCE_DEV.SILVER.LEDGER AS
+CREATE OR REPLACE TABLE APP01_M14_FINANCE_DEV.SILVER.LEDGER AS
 SELECT
   1 AS ENTRY_ID,
   '2026-01-01' AS ENTRY_DATE,
@@ -363,8 +352,8 @@ snow sql -c training -f sql/finance/ledger.sql
 ### 📝 Étape 3.3 — Vérifier
 
 ```bash
-snow sql -c training -q "SELECT * FROM ABC_SALES_DEV.GOLD.DAILY_REVENUE"
-snow sql -c training -q "SELECT * FROM ABC_FINANCE_DEV.SILVER.LEDGER"
+snow sql -c training -q "SELECT * FROM APP01_M14_SALES_DEV.GOLD.DAILY_REVENUE"
+snow sql -c training -q "SELECT * FROM APP01_M14_FINANCE_DEV.SILVER.LEDGER"
 ```
 
 ### 📝 Étape 3.4 — Prouver le zero-drift
@@ -382,18 +371,18 @@ terraform plan -detailed-exitcode
 ### 📝 Étape 4.1 — Lister les Future Grants
 
 ```bash
-snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA ABC_SALES_DEV.GOLD"
+snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA APP01_M14_SALES_DEV.GOLD"
 ```
 
-✅ **Checkpoint** : `GRANT SELECT ON FUTURE TABLES TO ROLE ROLE_ABC_SALES_RDR_DEV`.
+✅ **Checkpoint** : `GRANT SELECT ON FUTURE TABLES TO ROLE ROLE_APP01_M14_SALES_RDR_DEV`.
 
 ### 📝 Étape 4.2 — Tester le Future Grant
 
 Créez une table manuellement dans GOLD :
 
 ```bash
-snow sql -c training -q "CREATE TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE (ID INT)"
-snow sql -c training -q "SHOW GRANTS ON TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE"
+snow sql -c training -q "CREATE TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTURE (ID INT)"
+snow sql -c training -q "SHOW GRANTS ON TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTURE"
 ```
 
 ✅ **Checkpoint** : le rôle reader a déjà SELECT grâce au Future Grant.
@@ -401,7 +390,7 @@ snow sql -c training -q "SHOW GRANTS ON TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE"
 ### 📝 Étape 4.3 — Nettoyer
 
 ```bash
-snow sql -c training -q "DROP TABLE ABC_SALES_DEV.GOLD.TEST_FUTURE"
+snow sql -c training -q "DROP TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTURE"
 ```
 
 ## 🏆 Challenge
@@ -417,15 +406,14 @@ Critères :
 
 ## 🧹 Cleanup
 
-```bash
-cd environments/dev
-terraform destroy
-```
+Détruisez toutes les ressources créées dans ce lab :
 
 ```bash
-snow sql -c training -q "DROP DATABASE ABC_SALES_DEV"
-snow sql -c training -q "DROP DATABASE ABC_FINANCE_DEV"
+cd labs/m14-data-products
+terraform destroy -auto-approve
 ```
+
+> Vous pouvez aussi utiliser `.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M14` depuis la racine du clone pour nettoyer automatiquement.
 
 ---
 

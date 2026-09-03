@@ -1,0 +1,15 @@
+# Terraform variable file template
+#
+# Copy this file to terraform.tfvars (gitignored) and fill in the values.
+# terraform.tfvars is never committed to Git.
+#
+# Never put passwords, PATs or private keys in this file.
+# The PAT is read automatically from secrets/snowflake_pat.txt by provider.tf.
+
+learner_prefix         = "APP01"
+environment            = "DEV"
+
+# Snowflake connection (from .env)
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"

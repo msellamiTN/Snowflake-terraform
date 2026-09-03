@@ -16,12 +16,12 @@ flowchart LR
 
 ## Modules
 
-| Module | Duree | Lab | Course | Troubleshooting | Resultat attendu |
-|---|---:|---|---|---|---|
-| [M11 — RBAC as Code](module-11-rbac/lab.md) | 2h15 | [lab](module-11-rbac/lab.md) | [cours](module-11-rbac/course.md) | [guide](module-11-rbac/troubleshooting.md) | [output](module-11-rbac/expected-output.md) |
-| [M12 — Capstone](module-12-capstone/lab.md) | 2h15 | [lab](module-12-capstone/lab.md) | [cours](module-12-capstone/course.md) | [guide](module-12-capstone/troubleshooting.md) | [output](module-12-capstone/expected-output.md) |
-| [M13 — FinOps & Observabilite](module-13-finops-observability/lab.md) | 0h45 | [lab](module-13-finops-observability/lab.md) | [cours](module-13-finops-observability/course.md) | [guide](module-13-finops-observability/troubleshooting.md) | [output](module-13-finops-observability/expected-output.md) |
-| [M14 — Data Products](module-14-data-products/lab.md) | 0h45 | [lab](module-14-data-products/lab.md) | [cours](module-14-data-products/course.md) | [guide](module-14-data-products/troubleshooting.md) | [output](module-14-data-products/expected-output.md) |
+| Module | Duree | Repertoire de travail | Lab | Course | Troubleshooting | Resultat attendu |
+|---|---:|---|---|---|---|---|
+| [M11 — RBAC as Code](module-11-rbac/lab.md) | 2h15 | `labs/m11-rbac/` | [lab](module-11-rbac/lab.md) | [cours](module-11-rbac/course.md) | [guide](module-11-rbac/troubleshooting.md) | [output](module-11-rbac/expected-output.md) |
+| [M12 — Capstone](module-12-capstone/lab.md) | 2h15 | `labs/m12-capstone/` | [lab](module-12-capstone/lab.md) | [cours](module-12-capstone/course.md) | [guide](module-12-capstone/troubleshooting.md) | [output](module-12-capstone/expected-output.md) |
+| [M13 — FinOps & Observabilite](module-13-finops-observability/lab.md) | 0h45 | `labs/m13-finops-observability/` | [lab](module-13-finops-observability/lab.md) | [cours](module-13-finops-observability/course.md) | [guide](module-13-finops-observability/troubleshooting.md) | [output](module-13-finops-observability/expected-output.md) |
+| [M14 — Data Products](module-14-data-products/lab.md) | 0h45 | `labs/m14-data-products/` | [lab](module-14-data-products/lab.md) | [cours](module-14-data-products/course.md) | [guide](module-14-data-products/troubleshooting.md) | [output](module-14-data-products/expected-output.md) |
 
 ## Workflow du jour
 
@@ -30,6 +30,8 @@ flowchart LR
 3. **Comparez** avec `expected-output.md`
 4. **Consultez** `troubleshooting.md` en cas d'erreur
 5. **Passez** au module suivant
+
+> Chaque module possede son propre repertoire de travail sous `labs/mXX-name/` (ex. `labs/m11-rbac/` pour M11). Chaque lab est **autonome** : il demarre par `Reset-Lab.ps1` pour un environnement propre, possede ses propres fichiers template et se termine par `terraform destroy`. Les ressources sont nommees par module (ex. `APP01_M11_RAW_DEV`).
 
 > `[WINDOWS]` Si l'execution de scripts `.ps1` est bloquee, autorisez les scripts locaux :
 > ```powershell

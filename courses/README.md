@@ -37,6 +37,38 @@
 
 Exemples : `ABC_RAW_DEV`, `ABC_ETL_UAT`. Les environnements sont **DEV**, **UAT** et **PROD** dans un compte Snowflake unique.
 
+## Architecture des labs — isolation par module
+
+Chaque module possede son **propre repertoire de travail** sous `labs/`. Cette architecture remplace l'ancien repertoire partage `environments/dev/` et garantit que chaque lab est **autonome** (aucune dependance entre labs).
+
+```text
+labs/
+  m01-iac-workflow/         # M1: Premieres ressources Terraform
+  m02-state-management/     # M2: Migration du state distant
+  m03-import-brownfield/    # M3: Import de ressources existantes
+  m04-variables-outputs/    # M4: Variables, validations, outputs
+  m05-modules/              # M5: Extraction de module
+  m06-dynamic-logic/        # M6: for_each, dynamic blocks
+  m07-cicd-pipeline/        # M7: Pipeline Azure DevOps
+  m08-environments/         # M8: Deploiement multi-environnement
+  m09-snowflake-advanced/   # M9: Stages, file formats, COPY
+  m10-security-auth/        # M10: Authentification JWT key-pair
+  m11-rbac/                 # M11: Roles et grants RBAC
+  m12-capstone/             # M12: Assemblage capstone
+  m13-finops-observability/ # M13: FinOps avec dbt
+  m14-data-products/        # M14: Data products
+```
+
+### Proprietes de chaque lab
+
+- **Repertoire dedie** avec fichiers template (`provider.tf`, `versions.tf`, `variables.tf`, `terraform.tfvars.example`).
+- **Nommage des ressources par module** : `APP01_M01_RAW_DEV`, `APP01_M05_RAW_DEV`, etc. — chaque lab cree des ressources uniques, sans collision avec les autres labs.
+- **Demarrage propre** : executez `Reset-Lab.ps1` avant de commencer pour repartir d'un environnement sain (supprime le state, les ressources et les fichiers generes du lab precedent).
+- **Cleanup final** : chaque lab se termine par `terraform destroy` pour nettoyer les ressources Snowflake et Azure.
+- **Autonome** : aucun lab ne depend d'un autre — vous pouvez realiser les modules dans l'ordre ou reprendre un module isole.
+
+> `[CLEANUP]` `Reset-Lab.ps1` (dans `scripts/`) est l'outil de nettoyage officiel. Il reinitialise un lab donne avant de commencer ou pour repartir a zero.
+
 ---
 
 ## Jour 0 — Preparer votre environnement (1 h 30)
@@ -115,8 +147,10 @@ Le Jour 0 est **automatise** : clonez le projet type, executez les scripts, conf
 
 ## Structure standard d'un module
 
+Chaque module du catalogue (`courses/day-XX/module-XX-name/`) contient la **pedagogie** (cours, lab, troubleshooting, solution). Le **code de travail** de l'apprenant vit dans le repertoire dedie `labs/mXX-name/` du projet type clone.
+
 ```text
-module-XX-name/
+courses/day-XX/module-XX-name/      # pedagogie (lecture)
 ├── course.md           ← concepts (lire avant le lab)
 ├── lab.md              ← atelier pratique pas a pas
 ├── expected-output.md  ← resultats attendus pour comparaison
@@ -125,9 +159,17 @@ module-XX-name/
 ├── starter/            ← squelette (sans code de ressource)
 ├── solution/           ← solution de reference (ne pas copier)
 └── assets/             ← diagrammes et captures
+
+labs/mXX-name/                      # code de travail (execution)
+├── provider.tf         ← provider Terraform
+├── versions.tf         ← contraintes de versions
+├── variables.tf        ← variables du lab
+├── terraform.tfvars.example  ← valeurs d'exemple
+├── main.tf             ← ecrit par l'apprenant pendant le lab
+└── outputs.tf          ← outputs du lab
 ```
 
-Le `starter/` ne contient pas le code que l'apprenant doit apprendre a ecrire. Il peut contenir des donnees, validateurs et assets non pedagogiques. La solution est separee et n'est jamais copiee automatiquement dans le workspace.
+Le `starter/` ne contient pas le code que l'apprenant doit apprendre a ecrire. Il peut contenir des donnees, validateurs et assets non pedagogiques. La solution est separee et n'est jamais copiee automatiquement dans le workspace. Le repertoire `labs/mXX-name/` fournit les fichiers template (provider, versions, variables) et l'apprenant y ecrit son `main.tf` pendant le lab.
 
 ## Navigation rapide
 

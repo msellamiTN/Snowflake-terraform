@@ -2,14 +2,14 @@
 
 > [<- Jour 4](../README.md) · [<- Module precedent](../module-11-rbac/lab.md) · **Module 12** · [Module suivant ->](../module-13-finops-observability/lab.md)
 
-| Élément | Valeur |
-|---|---|
-| **Durée** | 120 min |
-| **Piste** | `[CORE]` |
-| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
-| **Dossier de travail** | `environments/dev/` |
-| **Coût** | Warehouses X-SMALL |
-| **Cleanup** | Détruire à la fin |
+|| Élément | Valeur |
+||---|---|
+|| **Durée** | 120 min |
+|| **Piste** | `[CORE]` |
+|| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
+|| **Dossier de travail** | `labs/m12-capstone/` |
+|| **Coût** | Warehouses X-SMALL |
+|| **Cleanup** | `terraform destroy -auto-approve` à la fin |
 
 > `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
 > et avoir execute `Learner-Login.ps1` dans **cette session** :
@@ -22,25 +22,31 @@
 > Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
 > et les variables `ARM_*` pour Terraform.
 >
-> Avant `terraform plan`, verifiez que tout est pret :
+> Ensuite, réinitialisez le lab pour partir d'un état propre :
 >
 > ```powershell
-> cd environments\dev
+> .\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M12
+> ```
+>
+> Puis placez-vous dans le dossier du lab et vérifiez que tout est pret :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform\labs\m12-capstone"
 > ..\..\scripts\Test-TerraformReady.ps1
 > ```
 >
-> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m01.tfplan"`.
+> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m12.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
 ## 🎯 Mission
 
-Le comité d'architecture attend une plateforme gouvernée, exploitable et auditable. Vous allez assembler tous les modules créés (landing-zone, ingestion, security, RBAC) dans une configuration complète et prouver le zero-drift.
+Le comité d'architecture attend une plateforme gouvernée, exploitable et auditable. Vous allez assembler tous les modules (landing-zone, ingestion, security, RBAC) dans une configuration complète et prouver le zero-drift.
 
 ## 🏗️ Architecture
 
 ```mermaid
 flowchart TD
-    ENV[environments/dev/main.tf] --> LZ[module.landing_zone]
+    ENV[labs/m12-capstone/main.tf] --> LZ[module.landing_zone]
     ENV --> ING[module.ingestion]
     ENV --> SEC[module.security]
     ENV --> RBAC[module.rbac]
@@ -64,23 +70,376 @@ flowchart TD
 
 ## 📋 Prérequis
 
-- [ ] M5 à M11 terminés : tous les modules existent;
-- [ ] `terraform plan` affiche `No changes` dans `environments/dev/`.
+- [ ] Le dossier `labs/m12-capstone/` contient `provider.tf`, `versions.tf`, `variables.tf` et `terraform.tfvars.example` (fournis).
+- [ ] Les sous-dossiers `labs/m12-capstone/modules/landing-zone/`, `modules/ingestion/`, `modules/security/` et `modules/rbac/` existent (avec `versions.tf` fourni).
 
-## 📝 Partie 1 — Composez la configuration finale
+## 📝 Partie 1 — Créer les modules
 
-### 📝 Étape 1.1 — Vérifier `environments/dev/main.tf`
+Ce lab est autonome : les 4 modules sont créés dans `labs/m12-capstone/modules/` puis assemblés dans `main.tf`.
 
-Ouvrez `environments/dev/main.tf` et vérifiez qu'il contient les 4 modules :
+### 📝 Étape 1.1 — Créer `modules/landing-zone/`
+
+`modules/landing-zone/variables.tf` :
+
+```hcl
+variable "learner_prefix" {
+  type        = string
+  description = "Learner prefix"
+}
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment"
+  default     = "DEV"
+}
+
+variable "warehouse_size" {
+  type        = string
+  default     = "X-SMALL"
+}
+
+variable "data_retention_days" {
+  type        = number
+  default     = 1
+}
+
+variable "auto_suspend_seconds" {
+  type        = number
+  default     = 60
+}
+
+variable "schemas" {
+  type = map(object({
+    name    = string
+    comment = string
+  }))
+}
+
+variable "warehouses" {
+  type = map(object({
+    size        = string
+    auto_suspend = number
+    comment      = string
+  }))
+}
+```
+
+`modules/landing-zone/main.tf` :
+
+```hcl
+locals {
+  db_name = "${var.learner_prefix}_M12_RAW_${var.environment}"
+}
+
+resource "snowflake_database" "this" {
+  name    = local.db_name
+  comment = "Landing zone database for ${var.learner_prefix} M12"
+}
+
+resource "snowflake_schema" "this" {
+  for_each = var.schemas
+
+  database = snowflake_database.this.name
+  name     = each.value.name
+  comment  = each.value.comment
+}
+
+resource "snowflake_warehouse" "this" {
+  for_each = var.warehouses
+
+  name                = "WH_${var.learner_prefix}_M12_${upper(each.key)}_${var.environment}"
+  warehouse_size      = each.value.size
+  auto_suspend        = each.value.auto_suspend
+  auto_resume         = true
+  initially_suspended = true
+  comment             = each.value.comment
+}
+```
+
+`modules/landing-zone/outputs.tf` :
+
+```hcl
+output "database_name" {
+  value = snowflake_database.this.name
+}
+
+output "schema_names" {
+  value = { for k, v in snowflake_schema.this : k => v.name }
+}
+
+output "warehouse_names" {
+  value = { for k, v in snowflake_warehouse.this : k => v.name }
+}
+```
+
+### 📝 Étape 1.2 — Créer `modules/ingestion/`
+
+`modules/ingestion/variables.tf` :
+
+```hcl
+variable "database" {
+  type        = string
+  description = "Target database name"
+}
+
+variable "schema" {
+  type        = string
+  description = "Target schema name"
+  default     = "INGESTION"
+}
+
+variable "table_name" {
+  type        = string
+  description = "RAW table name"
+}
+
+variable "stage_name" {
+  type        = string
+  description = "Internal stage name"
+}
+```
+
+`modules/ingestion/main.tf` :
+
+```hcl
+resource "snowflake_file_format" "csv" {
+  database  = var.database
+  schema    = var.schema
+  name      = "FF_CSV"
+  format_type = "CSV"
+}
+
+resource "snowflake_stage" "this" {
+  database  = var.database
+  schema    = var.schema
+  name      = var.stage_name
+  file_format = snowflake_file_format.csv.name
+}
+
+resource "snowflake_table" "this" {
+  database = var.database
+  schema   = var.schema
+  name     = var.table_name
+
+  column {
+    name = "ID"
+    type = "NUMBER(38,0)"
+  }
+
+  column {
+    name = "NAME"
+    type = "VARCHAR(16777216)"
+  }
+}
+```
+
+`modules/ingestion/outputs.tf` :
+
+```hcl
+output "table_name" {
+  value = snowflake_table.this.name
+}
+
+output "stage_name" {
+  value = snowflake_stage.this.name
+}
+```
+
+### 📝 Étape 1.3 — Créer `modules/security/`
+
+`modules/security/variables.tf` :
+
+```hcl
+variable "user_name" {
+  type        = string
+  description = "Snowflake technical user name"
+}
+
+variable "default_role" {
+  type        = string
+  description = "Default role for the technical user"
+  default     = "SYSADMIN"
+}
+
+variable "default_warehouse" {
+  type        = string
+  description = "Default warehouse for the technical user"
+}
+
+variable "rsa_public_key" {
+  type        = string
+  description = "RSA public key content (PEM format)"
+  sensitive   = true
+  default     = null
+}
+```
+
+`modules/security/main.tf` :
+
+```hcl
+resource "snowflake_user" "technical" {
+  name                 = var.user_name
+  default_role         = var.default_role
+  default_warehouse    = var.default_warehouse
+  must_change_password = false
+  rsa_public_key       = var.rsa_public_key
+  rsa_public_key_2     = null
+}
+```
+
+`modules/security/outputs.tf` :
+
+```hcl
+output "user_name" {
+  value       = snowflake_user.technical.name
+  description = "Technical user name"
+}
+```
+
+### 📝 Étape 1.4 — Créer `modules/rbac/`
+
+`modules/rbac/variables.tf` :
+
+```hcl
+variable "learner_prefix" {
+  type        = string
+  description = "Learner prefix for role naming"
+}
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment"
+  default     = "DEV"
+}
+
+variable "database_name" {
+  type        = string
+  description = "RAW database name"
+}
+
+variable "schema_name" {
+  type        = string
+  description = "Schema name for grants"
+  default     = "INGESTION"
+}
+```
+
+`modules/rbac/main.tf` :
+
+```hcl
+locals {
+  role_raw     = "ROLE_${var.learner_prefix}_M12_RAW_${var.environment}"
+  role_curated = "ROLE_${var.learner_prefix}_M12_CUR_${var.environment}"
+  role_reader  = "ROLE_${var.learner_prefix}_M12_RDR_${var.environment}"
+}
+
+resource "snowflake_account_role" "raw" {
+  name    = local.role_raw
+  comment = "RAW access role for ${var.learner_prefix} M12"
+}
+
+resource "snowflake_account_role" "curated" {
+  name    = local.role_curated
+  comment = "Curated access role for ${var.learner_prefix} M12"
+}
+
+resource "snowflake_account_role" "reader" {
+  name    = local.role_reader
+  comment = "Read-only role for ${var.learner_prefix} M12"
+}
+
+resource "snowflake_grant_privileges_to_account_role" "curated_to_raw" {
+  privileges        = ["USAGE"]
+  account_role_name = snowflake_account_role.raw.name
+  on_account_role   = snowflake_account_role.curated.name
+}
+
+resource "snowflake_grant_privileges_to_account_role" "reader_to_curated" {
+  privileges        = ["USAGE"]
+  account_role_name = snowflake_account_role.curated.name
+  on_account_role   = snowflake_account_role.reader.name
+}
+
+resource "snowflake_grant_privileges_to_account_role" "raw_db" {
+  privileges        = ["USAGE"]
+  account_role_name = snowflake_account_role.raw.name
+
+  on_schema {
+    schema_name = "${var.database_name}.${var.schema_name}"
+  }
+}
+
+resource "snowflake_grant_privileges_to_account_role" "future_tables" {
+  privileges        = ["SELECT", "INSERT", "UPDATE"]
+  account_role_name = snowflake_account_role.raw.name
+
+  on_schema_object {
+    future {
+      database_name = var.database_name
+      schema_name   = var.schema_name
+      object_type   = "TABLE"
+    }
+  }
+}
+
+resource "snowflake_grant_privileges_to_account_role" "reader_future" {
+  privileges        = ["SELECT"]
+  account_role_name = snowflake_account_role.reader.name
+
+  on_schema_object {
+    future {
+      database_name = var.database_name
+      schema_name   = var.schema_name
+      object_type   = "TABLE"
+    }
+  }
+}
+```
+
+`modules/rbac/outputs.tf` :
+
+```hcl
+output "role_raw" {
+  value = snowflake_account_role.raw.name
+}
+
+output "role_curated" {
+  value = snowflake_account_role.curated.name
+}
+
+output "role_reader" {
+  value = snowflake_account_role.reader.name
+}
+```
+
+### 📝 Étape 1.5 — Formater et valider chaque module
+
+```bash
+cd labs/m12-capstone/modules/landing-zone
+terraform fmt && terraform validate
+
+cd ../ingestion
+terraform fmt && terraform validate
+
+cd ../security
+terraform fmt && terraform validate
+
+cd ../rbac
+terraform fmt && terraform validate
+```
+
+## 📝 Partie 2 — Composez la configuration finale
+
+### 📝 Étape 2.1 — Écrire `labs/m12-capstone/main.tf`
 
 ```hcl
 module "landing_zone" {
-  source              = "../../modules/landing-zone"
-  learner_prefix      = var.learner_prefix
-  environment         = var.environment
-  warehouse_size      = var.warehouse_size
-  data_retention_days = var.data_retention_days
-  auto_suspend_seconds = var.auto_suspend_seconds
+  source               = "./modules/landing-zone"
+  learner_prefix       = var.learner_prefix
+  environment          = var.environment
+  warehouse_size       = "X-SMALL"
+  data_retention_days  = 1
+  auto_suspend_seconds = 60
 
   schemas = {
     ingestion = { name = "INGESTION", comment = "Ingestion schema" }
@@ -93,7 +452,7 @@ module "landing_zone" {
 }
 
 module "ingestion" {
-  source     = "../../modules/ingestion"
+  source     = "./modules/ingestion"
   database   = module.landing_zone.database_name
   schema     = "INGESTION"
   table_name = "RAW_CUSTOMERS"
@@ -101,30 +460,41 @@ module "ingestion" {
 }
 
 module "security" {
-  source            = "../../modules/security"
-  user_name         = "TF_${var.learner_prefix}_SVC"
+  source            = "./modules/security"
+  user_name         = "TF_${var.learner_prefix}_M12_SVC"
   default_role      = "SYSADMIN"
   default_warehouse = module.landing_zone.warehouse_names.etl
   rsa_public_key    = var.rsa_public_key
 }
 
 module "rbac" {
-  source        = "../../modules/rbac"
+  source         = "./modules/rbac"
   learner_prefix = var.learner_prefix
-  environment   = var.environment
-  database_name = module.landing_zone.database_name
-  schema_name   = "INGESTION"
+  environment    = var.environment
+  database_name  = module.landing_zone.database_name
+  schema_name    = "INGESTION"
 }
 
 resource "snowflake_grant_account_role" "tech_raw" {
-  role_name  = module.rbac.role_raw
-  user_name  = module.security.user_name
+  role_name = module.rbac.role_raw
+  user_name = module.security.user_name
 }
 ```
 
-### 📝 Étape 1.2 — Vérifier les outputs
+### 📝 Étape 2.2 — Ajouter la variable `rsa_public_key`
 
-`environments/dev/outputs.tf` doit exposer :
+Dans `labs/m12-capstone/variables.tf`, ajoutez :
+
+```hcl
+variable "rsa_public_key" {
+  type        = string
+  description = "RSA public key for the technical user (PEM, no headers/newlines)"
+  sensitive   = true
+  default     = null
+}
+```
+
+### 📝 Étape 2.3 — Écrire les outputs dans `outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -162,25 +532,25 @@ output "platform_summary" {
 }
 ```
 
-### 📝 Étape 1.3 — Formater et valider
+### 📝 Étape 2.4 — Formater et valider
 
 ```bash
-cd environments/dev
+cd labs/m12-capstone
 terraform fmt
 terraform validate
 ```
 
 ✅ **Checkpoint** : `The configuration is valid.`
 
-## 📝 Partie 2 — Déployer la plateforme
+## 📝 Partie 3 — Déployer la plateforme
 
-### 📝 Étape 2.1 — Planifier
+### 📝 Étape 3.1 — Planifier
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-terraform plan -out "capstone.tfplan"
+terraform plan -out "m12.tfplan"
 ```
 </details>
 
@@ -188,21 +558,19 @@ terraform plan -out "capstone.tfplan"
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-terraform plan -out=capstone.tfplan
+terraform plan -out=m12.tfplan
 ```
 </details>
 
-✅ **Checkpoint** : `No changes.` si tous les modules sont déjà déployés.
+✅ **Checkpoint** : le plan affiche les ressources à créer (database, schemas, warehouse, table, stage, user, rôles, grants).
 
-Si des changements apparaissent, relisez le plan avant d'appliquer.
-
-### 📝 Étape 2.2 — Appliquer
+### 📝 Étape 3.2 — Appliquer
 
 ```bash
-terraform apply capstone.tfplan
+terraform apply "m12.tfplan"
 ```
 
-### 📝 Étape 2.3 — Vérifier les outputs
+### 📝 Étape 3.3 — Vérifier les outputs
 
 ```bash
 terraform output platform_summary
@@ -210,9 +578,9 @@ terraform output platform_summary
 
 ✅ **Checkpoint** : un objet avec la database, les schemas, les warehouses, l'utilisateur et les rôles.
 
-## 📝 Partie 3 — Prouver le zero-drift
+## 📝 Partie 4 — Prouver le zero-drift
 
-### 📝 Étape 3.1 — Plan avec detailed-exitcode
+### 📝 Étape 4.1 — Plan avec detailed-exitcode
 
 ```bash
 terraform plan -detailed-exitcode
@@ -226,15 +594,15 @@ terraform plan -detailed-exitcode
 
 ✅ **Checkpoint** : code 0 (no changes).
 
-### 📝 Étape 3.2 — Simuler une dérive
+### 📝 Étape 4.2 — Simuler une dérive
 
 Modifiez une ressource hors Terraform :
 
 ```bash
-snow sql -c training -q "ALTER DATABASE ABC_RAW_DEV SET COMMENT = 'Drift test'"
+snow sql -c training -q "ALTER DATABASE APP01_M12_RAW_DEV SET COMMENT = 'Drift test'"
 ```
 
-### 📝 Étape 3.3 — Détecter la dérive
+### 📝 Étape 4.3 — Détecter la dérive
 
 ```bash
 terraform plan -detailed-exitcode
@@ -242,13 +610,13 @@ terraform plan -detailed-exitcode
 
 ✅ **Checkpoint** : code 2 (changes detected).
 
-### 📝 Étape 3.4 — Corriger la dérive
+### 📝 Étape 4.4 — Corriger la dérive
 
 ```bash
 terraform apply
 ```
 
-### 📝 Étape 3.5 — Vérifier le retour à zero-drift
+### 📝 Étape 4.5 — Vérifier le retour à zero-drift
 
 ```bash
 terraform plan -detailed-exitcode
@@ -256,27 +624,27 @@ terraform plan -detailed-exitcode
 
 ✅ **Checkpoint** : code 0.
 
-## 📝 Partie 4 — Documenter l'architecture
+## 📝 Partie 5 — Documenter l'architecture
 
-### 📝 Étape 4.1 — Générer un diagramme
+### 📝 Étape 5.1 — Générer un diagramme
 
 Dans `docs/architecture.md`, ajoutez un diagramme Mermaid qui reflète votre déploiement réel :
 
 ```mermaid
 flowchart TD
     subgraph Snowflake
-        DB[ABC_RAW_DEV]
+        DB[APP01_M12_RAW_DEV]
         DB --> SC1[INGESTION]
         DB --> SC2[STAGING]
         SC1 --> TBL[RAW_CUSTOMERS]
         SC1 --> STG[STG_RAW_CUSTOMERS]
         SC1 --> FF[FF_CSV]
-        WH[WH_ABC_ETL_DEV]
+        WH[WH_APP01_M12_ETL_DEV]
     end
 
     subgraph Security
-        USER[TF_ABC_SVC]
-        USER --> ROLE[ROLE_ABC_RAW_DEV]
+        USER[TF_APP01_M12_SVC]
+        USER --> ROLE[ROLE_APP01_M12_RAW_DEV]
     end
 
     subgraph Azure
@@ -287,17 +655,17 @@ flowchart TD
     TF --> Snowflake
 ```
 
-### 📝 Étape 4.2 — Capturer les outputs
+### 📝 Étape 5.2 — Capturer les outputs
 
 ```bash
-terraform output -json > docs/dev-outputs.json
+terraform output -json > docs/m12-outputs.json
 ```
 
 > 🔒 **SECURITY** Vérifiez qu'aucun secret n'apparaît dans le JSON avant de commiter.
 
 ## 🏆 Challenge
 
-Ajoutez un module `monitoring` qui crée une database `ABC_MONITORING_DEV` avec un schema `METRICS` et une table `WAREHOUSE_USAGE`. Configurez un Future Grant pour que le rôle `ROLE_ABC_RDR_DEV` puisse lire cette table.
+Ajoutez un module `monitoring` qui crée une database `APP01_M12_MONITORING_DEV` avec un schema `METRICS` et une table `WAREHOUSE_USAGE`. Configurez un Future Grant pour que le rôle `ROLE_APP01_M12_RDR_DEV` puisse lire cette table.
 
 Critères :
 
@@ -308,23 +676,14 @@ Critères :
 
 ## 🧹 Cleanup
 
-À la fin de la formation, détruisez toutes les ressources :
+Détruisez toutes les ressources créées dans ce lab :
 
 ```bash
-cd environments/dev
-terraform destroy
-cd ../uat
-terraform destroy
-cd ../prod
-terraform destroy
+cd labs/m12-capstone
+terraform destroy -auto-approve
 ```
 
-Et supprimez le backend Azure :
-
-```bash
-az storage account delete --name "$ARM_STORAGE_ACCOUNT" --resource-group "$ARM_RESOURCE_GROUP" --yes
-az group delete --name "$ARM_RESOURCE_GROUP" --yes
-```
+> Vous pouvez aussi utiliser `.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M12` depuis la racine du clone pour nettoyer automatiquement.
 
 ---
 

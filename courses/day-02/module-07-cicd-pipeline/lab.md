@@ -7,9 +7,9 @@
 | **Durée** | 75 min |
 | **Piste** | `[CORE]` |
 | **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
-| **Dossier de travail** | `azure-pipelines.yml` à la racine |
+| **Dossier de travail** | `labs/m07-cicd-pipeline/` |
 | **Coût** | Aucun (pipeline gratuit avec agent Microsoft) |
-| **Cleanup** | Conserver jusqu'au Jour 5 |
+| **Cleanup** | Aucune ressource à détruire |
 
 > `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
 > et avoir execute `Learner-Login.ps1` dans **cette session** :
@@ -22,15 +22,17 @@
 > Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
 > et les variables `ARM_*` pour Terraform.
 >
-> Avant `terraform plan`, verifiez que tout est pret :
+> Réinitialisez le lab pour nettoyer d'éventuels restes d'un précédent passage :
 >
 > ```powershell
-> cd environments\dev
-> ..\..\scripts\Test-TerraformReady.ps1
+> .\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M07
 > ```
 >
-> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m01.tfplan"`.
-> Sinon, suivez les corrections indiquees.
+> Puis placez-vous dans le dossier du lab :
+>
+> ```powershell
+> cd labs\m07-cicd-pipeline
+> ```
 
 ## 🎯 Mission
 
@@ -55,7 +57,7 @@ flowchart TD
 
 ## 🎯 Objectifs
 
-- comprendre le pipeline `azure-pipelines.yml` du projet type;
+- créer et comprendre le pipeline `azure-pipelines.yml`;
 - configurer un service connection Azure DevOps;
 - exécuter un plan sur une PR;
 - appliquer après approbation;
@@ -63,17 +65,158 @@ flowchart TD
 
 ## 📋 Prérequis
 
-- [ ] M5 et M6 terminés : les modules existent et fonctionnent;
+- [ ] Jour 0 terminé : `Toolchain status: READY`;
 - [ ] un projet Azure DevOps avec accès au repository;
 - [ ] un service connection Azure DevOps pour Snowflake (ou PAT en variable group).
 
-## 📝 Partie 1 — Lire le pipeline existant
+## 📝 Partie 1 — Créer le pipeline
 
-### 📝 Étape 1.1 — Ouvrir `azure-pipelines.yml`
+### 📝 Étape 1.1 — Créer `azure-pipelines.yml`
 
-```bash
-cd $HOME/Data2AI-Labs/data-platform
-code azure-pipelines.yml
+Ce lab ne crée **aucune ressource Snowflake**. Il s'agit uniquement de configurer
+le pipeline CI/CD qui orchestrera vos déploiements Terraform.
+
+Créez le fichier `azure-pipelines.yml` dans `labs/m07-cicd-pipeline/` :
+
+```yaml
+# Azure DevOps pipeline for Terraform CI/CD
+# This pipeline validates, plans, applies and audits Terraform changes.
+#
+# In a real project, this file would live at the repository root.
+# For this lab, we create it in labs/m07-cicd-pipeline/ to keep it self-contained.
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: data-platform-secrets
+  - name: TF_VERSION
+    value: '1.14.5'
+
+stages:
+  - stage: Validate
+    jobs:
+      - job: Validate
+        steps:
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: '$(TF_VERSION)'
+
+          - script: |
+              cd labs/m06-dynamic-logic
+              terraform fmt -check -recursive
+            displayName: 'terraform fmt -check'
+
+          - script: |
+              cd labs/m06-dynamic-logic
+              terraform init -backend=false
+              terraform validate
+            displayName: 'terraform validate'
+
+          - script: |
+              sudo apt-get update && sudo apt-get install -y tflint
+              cd labs/m06-dynamic-logic
+              tflint --recursive
+            displayName: 'tflint'
+            continueOnError: true
+
+  - stage: Plan
+    dependsOn: Validate
+    jobs:
+      - job: Plan
+        steps:
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: '$(TF_VERSION)'
+
+          - script: |
+              cd labs/m06-dynamic-logic
+              terraform init
+              terraform plan -out=tfplan -input=false
+            displayName: 'Terraform Plan'
+            env:
+              TF_VAR_snowflake_token: $(SNOWFLAKE_PAT)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish tfplan'
+            inputs:
+              targetPath: 'labs/m06-dynamic-logic/tfplan'
+              artifact: tfplan
+
+  - stage: Approval
+    dependsOn: Plan
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: Approval
+        environment: Approval
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo "Waiting for manual approval"
+                  displayName: 'Manual approval gate'
+
+  - stage: Apply
+    dependsOn: Approval
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: Apply
+        steps:
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: '$(TF_VERSION)'
+
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download tfplan'
+            inputs:
+              artifact: tfplan
+              targetPath: 'labs/m06-dynamic-logic/'
+
+          - script: |
+              cd labs/m06-dynamic-logic
+              terraform init
+              terraform apply tfplan -input=false
+            displayName: 'Terraform Apply'
+            env:
+              TF_VAR_snowflake_token: $(SNOWFLAKE_PAT)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
+
+  - stage: Audit
+    dependsOn: Apply
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: Audit
+        steps:
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: '$(TF_VERSION)'
+
+          - script: |
+              cd labs/m06-dynamic-logic
+              terraform init
+              terraform plan -detailed-exitcode -input=false
+            displayName: 'Drift detection (terraform plan -detailed-exitcode)'
+            env:
+              TF_VAR_snowflake_token: $(SNOWFLAKE_PAT)
+              ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+              ARM_TENANT_ID: $(ARM_TENANT_ID)
 ```
 
 ### 📝 Étape 1.2 — Comprendre les stages
@@ -117,7 +260,7 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 1. Dans **Pipelines > Pipelines**, cliquez **New Pipeline**;
 2. sélectionnez votre repository Git;
 3. choisissez **Existing Azure Pipelines YAML file**;
-4. sélectionnez `/azure-pipelines.yml`;
+4. sélectionnez `/labs/m07-cicd-pipeline/azure-pipelines.yml`;
 5. exécutez le pipeline.
 
 ## 📝 Partie 3 — Tester le pipeline sur une PR
@@ -125,12 +268,13 @@ Le pipeline utilise des variables stockées dans un Variable Group Azure DevOps 
 ### 📝 Étape 3.1 — Créer une branche
 
 ```bash
-git checkout -b feature/add-staging-schema
+cd "$HOME/Data2AI-Labs/data-platform"
+git checkout -b feature/add-archive-schema
 ```
 
 ### 📝 Étape 3.2 — Faire un changement mineur
 
-Dans `environments/dev/main.tf`, ajoutez un schema supplémentaire :
+Dans `labs/m06-dynamic-logic/main.tf`, ajoutez un schema supplémentaire dans le bloc `schemas` :
 
 ```hcl
   schemas = {
@@ -143,9 +287,9 @@ Dans `environments/dev/main.tf`, ajoutez un schema supplémentaire :
 ### 📝 Étape 3.3 — Commit et push
 
 ```bash
-git add environments/dev/main.tf
+git add labs/m06-dynamic-logic/main.tf
 git commit -m "Add ARCHIVE schema to landing zone"
-git push origin feature/add-staging-schema
+git push origin feature/add-archive-schema
 ```
 
 ### 📝 Étape 3.4 — Créer une PR
@@ -198,7 +342,7 @@ Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
   - job: PlanUAT
     steps:
     - script: |
-        cd environments/uat
+        cd labs/m08-environments/uat
         terraform init
         terraform plan -out=tfplan
       displayName: 'Terraform Plan UAT'
@@ -214,13 +358,13 @@ Le pipeline peut être étendu pour gérer DEV, UAT et PROD avec des gates :
         deploy:
           steps:
           - script: |
-              cd environments/uat
+              cd labs/m08-environments/uat
               terraform apply tfplan
 ```
 
 ## 🏆 Challenge
 
-Ajoutez un stage `tflint` au pipeline qui échoue si `tflint` détecte des problèmes dans `modules/`.
+Ajoutez un stage `tflint` au pipeline qui échoue si `tflint` détecte des problèmes dans `labs/m06-dynamic-logic/modules/`.
 
 Critères :
 
@@ -230,7 +374,10 @@ Critères :
 
 ## 🧹 Cleanup
 
-Conservez le pipeline pour le capstone.
+Ce lab ne crée **aucune ressource Snowflake**. Il n'y a pas de `terraform destroy` à exécuter.
+
+> 💡 **Note** : Si vous avez appliqué des changements via le pipeline (Partie 3),
+> nettoyez les ressources du lab M06 avec `.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M06`.
 
 ---
 

@@ -16,12 +16,12 @@ flowchart LR
 
 ## Modules
 
-| Module | Duree | Lab | Course | Troubleshooting | Resultat attendu |
-|---|---:|---|---|---|---|
-| [M1 — IaC Workflow](module-01-iac-workflow/lab.md) | 1h30 | [lab](module-01-iac-workflow/lab.md) | [cours](module-01-iac-workflow/course.md) | [guide](module-01-iac-workflow/troubleshooting.md) | [output](module-01-iac-workflow/expected-output.md) |
-| [M2 — State Management](module-02-state-management/lab.md) | 2h | [lab](module-02-state-management/lab.md) | [cours](module-02-state-management/course.md) | [guide](module-02-state-management/troubleshooting.md) | [output](module-02-state-management/expected-output.md) |
-| [M3 — Import Brownfield](module-03-import-brownfield/lab.md) | 2h | [lab](module-03-import-brownfield/lab.md) | [cours](module-03-import-brownfield/course.md) | [guide](module-03-import-brownfield/troubleshooting.md) | [output](module-03-import-brownfield/expected-output.md) |
-| [M4 — Variables & Outputs](module-04-variables-outputs/lab.md) | 1h30 | [lab](module-04-variables-outputs/lab.md) | [cours](module-04-variables-outputs/course.md) | [guide](module-04-variables-outputs/troubleshooting.md) | [output](module-04-variables-outputs/expected-output.md) |
+| Module | Duree | Repertoire de travail | Lab | Course | Troubleshooting | Resultat attendu |
+|---|---:|---|---|---|---|---|
+| [M1 — IaC Workflow](module-01-iac-workflow/lab.md) | 1h30 | `labs/m01-iac-workflow/` | [lab](module-01-iac-workflow/lab.md) | [cours](module-01-iac-workflow/course.md) | [guide](module-01-iac-workflow/troubleshooting.md) | [output](module-01-iac-workflow/expected-output.md) |
+| [M2 — State Management](module-02-state-management/lab.md) | 2h | `labs/m02-state-management/` | [lab](module-02-state-management/lab.md) | [cours](module-02-state-management/course.md) | [guide](module-02-state-management/troubleshooting.md) | [output](module-02-state-management/expected-output.md) |
+| [M3 — Import Brownfield](module-03-import-brownfield/lab.md) | 2h | `labs/m03-import-brownfield/` | [lab](module-03-import-brownfield/lab.md) | [cours](module-03-import-brownfield/course.md) | [guide](module-03-import-brownfield/troubleshooting.md) | [output](module-03-import-brownfield/expected-output.md) |
+| [M4 — Variables & Outputs](module-04-variables-outputs/lab.md) | 1h30 | `labs/m04-variables-outputs/` | [lab](module-04-variables-outputs/lab.md) | [cours](module-04-variables-outputs/course.md) | [guide](module-04-variables-outputs/troubleshooting.md) | [output](module-04-variables-outputs/expected-output.md) |
 
 ## Workflow du jour
 
@@ -31,7 +31,7 @@ flowchart LR
 4. **Consultez** `troubleshooting.md` en cas d'erreur
 5. **Passez** au module suivant
 
-> Tous les fichiers `.tf` que vous crerez iront dans `$HOME/Data2AI-Labs/data-platform/environments/dev/`.
+> Chaque module possede son propre repertoire de travail sous `labs/mXX-name/` (ex. `labs/m01-iac-workflow/` pour M1). Chaque lab est **autonome** : il demarre par `Reset-Lab.ps1` pour un environnement propre, possede ses propres fichiers template (`provider.tf`, `versions.tf`, `variables.tf`) et se termine par `terraform destroy`. Les ressources sont nommees par module (ex. `APP01_M01_RAW_DEV`, `APP01_M05_RAW_DEV`).
 
 > `[WINDOWS]` Si l'execution de scripts `.ps1` est bloquee, autorisez les scripts locaux :
 > ```powershell

@@ -38,3 +38,71 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
 ```
 
+---
+
+## ❌ `Object already exists` in Snowflake
+
+**Symptom** : `terraform plan` ou `terraform apply` échoue avec :
+
+```
+Error: Object does not exist or not authorized
+```
+
+ou
+
+```
+Error: Object already exists
+```
+
+**Cause** : Une exécution précédente du lab a créé des ressources qui n'ont pas été nettoyées.
+
+**Fix** :
+
+🪟 **Windows (PowerShell)** :
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M06
+```
+
+🐧 **Linux/macOS (Bash)** :
+
+```bash
+cd "$HOME/Data2AI-Labs/data-platform"
+./scripts/reset-lab.sh --learner-prefix APP01 --lab M06
+```
+
+Remplacez `M06` par le numéro du lab (M01, M05, etc.) et `APP01` par votre préfixe.
+
+> 💡 **Note** : `Reset-Lab.ps1` ne détruit que les ressources du lab spécifié. Les autres labs ne sont pas affectés.
+
+---
+
+## ❌ `Duplicate output/variable/resource definition`
+
+**Symptom** : `terraform validate` ou `terraform plan` échoue avec :
+
+```
+Error: Duplicate output definition
+```
+
+ou
+
+```
+Error: Duplicate variable definition
+```
+
+**Cause** : Vous avez ajouté un bloc qui existe déjà, ou vous travaillez dans le mauvais répertoire.
+
+**Fix** :
+
+1. Vérifiez que vous êtes dans le bon répertoire :
+
+   ```powershell
+   pwd  # doit afficher labs/m06-name/
+   ```
+
+2. Si vous êtes dans `environments/dev/`, vous êtes dans l'ancienne structure. Déplacez-vous vers `labs/m06-name/`.
+
+3. Si le fichier contient des doublons, **remplacez tout le contenu** au lieu d'ajouter à la fin.
+

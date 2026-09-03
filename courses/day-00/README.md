@@ -20,7 +20,7 @@ A la fin du Jour 0, vous devez disposer de :
 Le projet type `data-platform-starter` contient :
 
 - les **scripts** d'installation, de connexion et de validation;
-- la **structure** de dossiers (`environments/`, `modules/`, `docs/`);
+- la **structure** de dossiers (`labs/`, `modules/`, `docs/`);
 - la **gouvernance** (`.gitignore`, `.tflint.hcl`, `azure-pipelines.yml`, `CODEOWNERS`).
 
 Il **ne contient pas** de fichiers `.tf` de ressource. Vous les creerez au fil des modules.
@@ -51,7 +51,7 @@ Le lab est un seul module avec 7 etapes :
 | 3 | 10 min | Configurer `.env` | `git check-ignore .env` retourne `.env` |
 | 4 | 10 min | Authentifier Azure avec le SP partage | `az account show` affiche la souscription |
 | 5 | 20 min | Configurer la connexion Snowflake | `snow sql -q 'SELECT 1' -c training` retourne un resultat |
-| 6 | 10 min | Inspecter la structure du projet type | Dossiers `environments/`, `modules/`, `docs/` presents |
+| 6 | 10 min | Inspecter la structure du projet type | Dossiers `labs/`, `modules/`, `docs/` presents |
 | 7 | 10 min | Validation finale | `Toolchain status: READY` + Snowflake + Azure |
 | **Total** | **1 h 30** | | |
 
@@ -157,4 +157,4 @@ et que la connexion Snowflake repond a `snow sql -q 'SELECT 1' -c training`.
 
 ## Suite
 
-Passez a [M1 — Premier deploiement Terraform Snowflake](../day-01/module-01-iac-workflow/lab.md). M1 vous fera creer chaque fichier Terraform depuis le projet type clone, en mode manuel pas a pas. **Tous les fichiers `.tf` que vous creerez iront dans le clone** sous `environments/dev/`.
+Passez a [M1 — Premier deploiement Terraform Snowflake](../day-01/module-01-iac-workflow/lab.md). M1 vous fera creer chaque fichier Terraform depuis le projet type clone, en mode manuel pas a pas. **Chaque module possede son propre repertoire de travail** sous `labs/mXX-name/` (ex. `labs/m01-iac-workflow/` pour M1). Chaque lab est autonome, possede ses propres fichiers template (`provider.tf`, `versions.tf`, `variables.tf`) et commence par `Reset-Lab.ps1` pour un environnement propre.

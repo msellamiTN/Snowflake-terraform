@@ -515,14 +515,16 @@ find . -name '*.tf' -type f
 
 | Element | Role |
 |---|---|
-| `environments/dev/`, `uat/`, `prod/` | Racines Terraform pour chaque environnement |
-| `modules/` | Modules reutilisables que vous creerez |
+| `labs/m01-iac-workflow/` ... `m14-data-products/` | Chaque lab a son propre dossier isole |
+| `labs/_templates/` | Modeles de fichiers (provider.tf, versions.tf, variables.tf) |
+| `environments/` | Reserve pour M8 (deploiement multi-environnement) |
+| `modules/` | Modules reutilisables (cree dans M5, M12, M14) |
 | `docs/` | Architecture, conventions de nommage, runbook, decisions |
 | `azure-pipelines.yml` | Pipeline CI/CD Azure DevOps |
 | `.gitignore` | Exclut state, plans, secrets, tfvars |
 | `.tflint.hcl` | Configuration du linter |
 | `CODEOWNERS` | Propriete du code et revue obligatoire |
-| `scripts/` | Installation, connexion et validation locale |
+| `scripts/` | Installation, connexion, validation et `Reset-Lab.ps1` |
 
 ### 6.4 — Renommer l'origine (optionnel)
 
@@ -620,14 +622,20 @@ Ready for Day 1
 
 ## La suite : votre racine de travail
 
-A partir du Jour 1, **tous les fichiers `.tf` que vous creerez** iront dans ce clone :
+A partir du Jour 1, **tous les fichiers `.tf` que vous creerez** iront dans le dossier du lab correspondant :
 
-- `environments/dev/versions.tf`, `provider.tf`, `main.tf`... pour M1;
-- `modules/landing-zone/` pour M5;
-- `environments/uat/` et `environments/prod/` pour M8;
+- `labs/m01-iac-workflow/main.tf`, `locals.tf`, `outputs.tf`... pour M1;
+- `labs/m05-modules/modules/landing-zone/` pour M5;
+- `labs/m08-environments/dev/`, `uat/`, `prod/` pour M8;
 - etc.
 
-Chaque atelier indique le chemin exact depuis la racine du clone. Les scripts `validate.ps1` et `validate.sh` dans `scripts/` verifient votre travail localement avant de pousser.
+Chaque lab est **isole** : il a son propre dossier, son propre state et ses propres ressources (prefixees par le numero de module, ex. `APP01_M01_RAW_DEV`). Utilisez `Reset-Lab.ps1` pour nettoyer avant/apres un lab :
+
+```powershell
+.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M01
+```
+
+Les scripts `validate.ps1` et `validate.sh` dans `scripts/` verifient votre travail localement avant de pousser.
 
 Passez a [M1 — Premier deploiement Terraform Snowflake](../../day-01/module-01-iac-workflow/lab.md).
 

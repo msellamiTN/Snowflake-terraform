@@ -16,12 +16,12 @@ flowchart LR
 
 ## Modules
 
-| Module | Duree | Lab | Course | Troubleshooting | Resultat attendu |
-|---|---:|---|---|---|---|
-| [M5 — Modules reutilisables](module-05-modules/lab.md) | 2h | [lab](module-05-modules/lab.md) | [cours](module-05-modules/course.md) | [guide](module-05-modules/troubleshooting.md) | [output](module-05-modules/expected-output.md) |
-| [M6 — Logique dynamique](module-06-dynamic-logic/lab.md) | 1h30 | [lab](module-06-dynamic-logic/lab.md) | [cours](module-06-dynamic-logic/course.md) | [guide](module-06-dynamic-logic/troubleshooting.md) | [output](module-06-dynamic-logic/expected-output.md) |
-| [M7 — CI/CD Pipeline](module-07-cicd-pipeline/lab.md) | 2h | [lab](module-07-cicd-pipeline/lab.md) | [cours](module-07-cicd-pipeline/course.md) | [guide](module-07-cicd-pipeline/troubleshooting.md) | [output](module-07-cicd-pipeline/expected-output.md) |
-| [M8 — Environnements](module-08-environments/lab.md) | 1h30 | [lab](module-08-environments/lab.md) | [cours](module-08-environments/course.md) | [guide](module-08-environments/troubleshooting.md) | [output](module-08-environments/expected-output.md) |
+| Module | Duree | Repertoire de travail | Lab | Course | Troubleshooting | Resultat attendu |
+|---|---:|---|---|---|---|---|
+| [M5 — Modules reutilisables](module-05-modules/lab.md) | 2h | `labs/m05-modules/` | [lab](module-05-modules/lab.md) | [cours](module-05-modules/course.md) | [guide](module-05-modules/troubleshooting.md) | [output](module-05-modules/expected-output.md) |
+| [M6 — Logique dynamique](module-06-dynamic-logic/lab.md) | 1h30 | `labs/m06-dynamic-logic/` | [lab](module-06-dynamic-logic/lab.md) | [cours](module-06-dynamic-logic/course.md) | [guide](module-06-dynamic-logic/troubleshooting.md) | [output](module-06-dynamic-logic/expected-output.md) |
+| [M7 — CI/CD Pipeline](module-07-cicd-pipeline/lab.md) | 2h | `labs/m07-cicd-pipeline/` | [lab](module-07-cicd-pipeline/lab.md) | [cours](module-07-cicd-pipeline/course.md) | [guide](module-07-cicd-pipeline/troubleshooting.md) | [output](module-07-cicd-pipeline/expected-output.md) |
+| [M8 — Environnements](module-08-environments/lab.md) | 1h30 | `labs/m08-environments/` | [lab](module-08-environments/lab.md) | [cours](module-08-environments/course.md) | [guide](module-08-environments/troubleshooting.md) | [output](module-08-environments/expected-output.md) |
 
 ## Workflow du jour
 
@@ -30,6 +30,8 @@ flowchart LR
 3. **Comparez** avec `expected-output.md`
 4. **Consultez** `troubleshooting.md` en cas d'erreur
 5. **Passez** au module suivant
+
+> Chaque module possede son propre repertoire de travail sous `labs/mXX-name/` (ex. `labs/m05-modules/` pour M5). Chaque lab est **autonome** : il demarre par `Reset-Lab.ps1` pour un environnement propre, possede ses propres fichiers template et se termine par `terraform destroy`. Les ressources sont nommees par module (ex. `APP01_M05_RAW_DEV`).
 
 > `[WINDOWS]` Si l'execution de scripts `.ps1` est bloquee, autorisez les scripts locaux :
 > ```powershell

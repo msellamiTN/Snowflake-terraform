@@ -2,14 +2,14 @@
 
 > [<- Jour 4](../README.md) · [<- Jour 3](../../day-03/README.md) · **Module 11** · [Module suivant ->](../module-12-capstone/lab.md)
 
-| Élément | Valeur |
-|---|---|
-| **Durée** | 60 min |
-| **Piste** | `[CORE]` |
-| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
-| **Dossier de travail** | `modules/rbac/` et `environments/dev/` |
-| **Coût** | Aucun |
-| **Cleanup** | Conserver jusqu'au Jour 5 |
+|| Élément | Valeur |
+||---|---|
+|| **Durée** | 60 min |
+|| **Piste** | `[CORE]` |
+|| **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
+|| **Dossier de travail** | `labs/m11-rbac/` |
+|| **Coût** | Aucun |
+|| **Cleanup** | `terraform destroy -auto-approve` à la fin |
 
 > `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
 > et avoir execute `Learner-Login.ps1` dans **cette session** :
@@ -22,14 +22,20 @@
 > Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
 > et les variables `ARM_*` pour Terraform.
 >
-> Avant `terraform plan`, verifiez que tout est pret :
+> Ensuite, réinitialisez le lab pour partir d'un état propre :
 >
 > ```powershell
-> cd environments\dev
+> .\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M11
+> ```
+>
+> Puis placez-vous dans le dossier du lab et vérifiez que tout est pret :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform\labs\m11-rbac"
 > ..\..\scripts\Test-TerraformReady.ps1
 > ```
 >
-> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m01.tfplan"`.
+> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m11.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
 ## 🎯 Mission
@@ -40,8 +46,7 @@ L'accès aux données doit suivre les fonctions métier sans tickets manuels. Vo
 
 ```mermaid
 flowchart LR
-    M10[M10 — Security] --> M11[M11 — RBAC]
-    M11 --> M12[M12 — Capstone]
+    M11[M11 — RBAC] --> M12[M12 — Capstone]
 ```
 
 ```mermaid
@@ -63,15 +68,15 @@ flowchart TD
 
 ## 📋 Prérequis
 
-- [ ] M10 terminé : l'utilisateur technique existe;
-- [ ] `terraform plan` affiche `No changes` dans `environments/dev/`.
+- [ ] `terraform plan` affiche `No changes` dans `labs/m11-rbac/`.
+- [ ] Le dossier `labs/m11-rbac/` contient `provider.tf`, `versions.tf`, `variables.tf` et `terraform.tfvars.example` (fournis).
 
 ## 📝 Partie 1 — Créer le module RBAC
 
 ### 📝 Étape 1.1 — Créer la structure
 
 ```bash
-cd $HOME/Data2AI-Labs/data-platform
+cd $HOME/Data2AI-Labs/data-platform/labs/m11-rbac
 mkdir -p modules/rbac
 ```
 
@@ -105,9 +110,9 @@ variable "schema_name" {
 
 ```hcl
 locals {
-  role_raw     = "ROLE_${var.learner_prefix}_RAW_${var.environment}"
-  role_curated = "ROLE_${var.learner_prefix}_CUR_${var.environment}"
-  role_reader  = "ROLE_${var.learner_prefix}_RDR_${var.environment}"
+  role_raw     = "ROLE_${var.learner_prefix}_M11_RAW_${var.environment}"
+  role_curated = "ROLE_${var.learner_prefix}_M11_CUR_${var.environment}"
+  role_reader  = "ROLE_${var.learner_prefix}_M11_RDR_${var.environment}"
 }
 
 # ------------------------------------------------------------------
@@ -116,17 +121,17 @@ locals {
 
 resource "snowflake_account_role" "raw" {
   name    = local.role_raw
-  comment = "RAW access role for ${var.learner_prefix}"
+  comment = "RAW access role for ${var.learner_prefix} M11"
 }
 
 resource "snowflake_account_role" "curated" {
   name    = local.role_curated
-  comment = "Curated access role for ${var.learner_prefix}"
+  comment = "Curated access role for ${var.learner_prefix} M11"
 }
 
 resource "snowflake_account_role" "reader" {
   name    = local.role_reader
-  comment = "Read-only role for ${var.learner_prefix}"
+  comment = "Read-only role for ${var.learner_prefix} M11"
 }
 
 # Grant hierarchy
@@ -225,21 +230,44 @@ terraform fmt
 terraform validate
 ```
 
-## 📝 Partie 2 — Appeler le module depuis DEV
+## 📝 Partie 2 — Appeler le module depuis le lab
 
-### 📝 Étape 2.1 — Ajouter l'appel dans `environments/dev/main.tf`
+### 📝 Étape 2.1 — Créer la database et le schema dans `main.tf`
+
+Ce lab est autonome : il crée sa propre database et son schema avant d'appliquer les grants RBAC.
+
+Éditez `labs/m11-rbac/main.tf` :
 
 ```hcl
+# ------------------------------------------------------------------
+# Database and schema (self-contained for this lab)
+# ------------------------------------------------------------------
+
+resource "snowflake_database" "raw" {
+  name    = "${var.learner_prefix}_M11_RAW_${var.environment}"
+  comment = "RAW database for M11 RBAC lab"
+}
+
+resource "snowflake_schema" "ingestion" {
+  database = snowflake_database.raw.name
+  name     = "INGESTION"
+  comment  = "Ingestion schema for M11 RBAC lab"
+}
+
+# ------------------------------------------------------------------
+# RBAC module
+# ------------------------------------------------------------------
+
 module "rbac" {
-  source        = "../../modules/rbac"
+  source         = "./modules/rbac"
   learner_prefix = var.learner_prefix
-  environment   = "DEV"
-  database_name = module.landing_zone.database_name
-  schema_name   = "INGESTION"
+  environment    = var.environment
+  database_name  = snowflake_database.raw.name
+  schema_name    = "INGESTION"
 }
 ```
 
-### 📝 Étape 2.2 — Ajouter les outputs
+### 📝 Étape 2.2 — Ajouter les outputs dans `outputs.tf`
 
 ```hcl
 output "rbac_roles" {
@@ -250,35 +278,39 @@ output "rbac_roles" {
   }
   description = "RBAC role hierarchy"
 }
+
+output "database_name" {
+  value = snowflake_database.raw.name
+}
 ```
 
 ### 📝 Étape 2.3 — Planifier et appliquer
 
 ```bash
-cd environments/dev
+cd labs/m11-rbac
 terraform fmt
 terraform init
 terraform validate
-terraform plan
-terraform apply
+terraform plan -out "m11.tfplan"
+terraform apply "m11.tfplan"
 ```
 
-✅ **Checkpoint** : 3 rôles créés + grants.
+✅ **Checkpoint** : 3 rôles créés + grants + database + schema.
 
 ## 📝 Partie 3 — Auditer les grants
 
 ### 📝 Étape 3.1 — Lister les rôles
 
 ```bash
-snow sql -c training -q "SHOW ROLES LIKE 'ROLE_ABC_%'"
+snow sql -c training -q "SHOW ROLES LIKE 'ROLE_APP01_M11_%'"
 ```
 
-Remplacez `ABC` par votre préfixe.
+Remplacez `APP01` par votre préfixe.
 
 ### 📝 Étape 3.2 — Vérifier les Future Grants
 
 ```bash
-snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA ABC_RAW_DEV.INGESTION"
+snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA APP01_M11_RAW_DEV.INGESTION"
 ```
 
 ✅ **Checkpoint** : des lignes avec `GRANT SELECT` et `GRANT INSERT` pour les futures tables.
@@ -288,8 +320,8 @@ snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA ABC_RAW_DEV.INGESTION"
 Créez une table manuellement et vérifiez que les grants s'appliquent automatiquement :
 
 ```bash
-snow sql -c training -q "CREATE TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE (ID INT)"
-snow sql -c training -q "SHOW GRANTS ON TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE"
+snow sql -c training -q "CREATE TABLE APP01_M11_RAW_DEV.INGESTION.TEST_FUTURE (ID INT)"
+snow sql -c training -q "SHOW GRANTS ON TABLE APP01_M11_RAW_DEV.INGESTION.TEST_FUTURE"
 ```
 
 ✅ **Checkpoint** : les grants SELECT et INSERT sont déjà présents grâce au Future Grant.
@@ -297,7 +329,7 @@ snow sql -c training -q "SHOW GRANTS ON TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE"
 ### 📝 Étape 3.4 — Nettoyer la table de test
 
 ```bash
-snow sql -c training -q "DROP TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE"
+snow sql -c training -q "DROP TABLE APP01_M11_RAW_DEV.INGESTION.TEST_FUTURE"
 ```
 
 ## 📝 Partie 4 — Principe du moindre privilège
@@ -306,49 +338,67 @@ snow sql -c training -q "DROP TABLE ABC_RAW_DEV.INGESTION.TEST_FUTURE"
 
 | Rôle | Privilèges | Usage |
 |---|---|---|
-| `ROLE_ABC_RAW_DEV` | USAGE schema, INSERT, UPDATE, SELECT | Ingestion ETL |
-| `ROLE_ABC_CUR_DEV` | USAGE schema, SELECT | Transformation dbt |
-| `ROLE_ABC_RDR_DEV` | USAGE schema, SELECT | Lecture BI |
+| `ROLE_APP01_M11_RAW_DEV` | USAGE schema, INSERT, UPDATE, SELECT | Ingestion ETL |
+| `ROLE_APP01_M11_CUR_DEV` | USAGE schema, SELECT | Transformation dbt |
+| `ROLE_APP01_M11_RDR_DEV` | USAGE schema, SELECT | Lecture BI |
 
-### 📝 Étape 4.2 — Attribuer le rôle à l'utilisateur technique
+### 📝 Étape 4.2 — Attribuer le rôle à un utilisateur technique
 
-Ajoutez dans `environments/dev/main.tf` :
+Ajoutez dans `labs/m11-rbac/main.tf` :
 
 ```hcl
+# ------------------------------------------------------------------
+# Technical user (self-contained for this lab)
+# ------------------------------------------------------------------
+
+resource "snowflake_user" "tech" {
+  name              = "TF_${var.learner_prefix}_M11_SVC"
+  default_role      = module.rbac.role_raw
+  default_warehouse = null
+  must_change_password = false
+}
+
 resource "snowflake_grant_account_role" "tech_raw" {
-  role_name  = module.rbac.role_raw
-  user_name  = module.security.user_name
+  role_name = module.rbac.role_raw
+  user_name = snowflake_user.tech.name
 }
 ```
 
 ### 📝 Étape 4.3 — Planifier et appliquer
 
 ```bash
-terraform plan
-terraform apply
+terraform plan -out "m11.tfplan"
+terraform apply "m11.tfplan"
 ```
 
 ### 📝 Étape 4.4 — Vérifier
 
 ```bash
-snow sql -c training -q "SHOW GRANTS TO USER TF_ABC_SVC"
+snow sql -c training -q "SHOW GRANTS TO USER TF_APP01_M11_SVC"
 ```
 
-✅ **Checkpoint** : le rôle `ROLE_ABC_RAW_DEV` est attribué à l'utilisateur technique.
+✅ **Checkpoint** : le rôle `ROLE_APP01_M11_RAW_DEV` est attribué à l'utilisateur technique.
 
 ## 🏆 Challenge
 
-Ajoutez un rôle `ROLE_ABC_ADMIN_DEV` qui a le droit de créer des schemas dans la database, et attribuez-le à un utilisateur `ADMIN_ABC`.
+Ajoutez un rôle `ROLE_APP01_M11_ADMIN_DEV` qui a le droit de créer des schemas dans la database, et attribuez-le à un utilisateur `ADMIN_APP01_M11`.
 
 Critères :
 
 - [ ] `terraform plan` crée le rôle et le grant;
-- [ ] `SHOW GRANTS TO USER ADMIN_ABC` affiche le rôle;
+- [ ] `SHOW GRANTS TO USER ADMIN_APP01_M11` affiche le rôle;
 - [ ] le rôle peut créer un schema de test.
 
 ## 🧹 Cleanup
 
-Conservez les ressources pour le Jour 5.
+Détruisez toutes les ressources créées dans ce lab :
+
+```bash
+cd labs/m11-rbac
+terraform destroy -auto-approve
+```
+
+> Vous pouvez aussi utiliser `.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M11` depuis la racine du clone pour nettoyer automatiquement.
 
 ---
 

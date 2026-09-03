@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M4 — Variables, locals, outputs et multi-environnement
+﻿# 🧪 Lab M4 — Variables, locals, outputs et lifecycle
 
 > [<- Jour 1](../README.md) · [<- Module precedent](../module-03-import-brownfield/lab.md) · **Module 4** · [Jour 2 ->](../../day-02/README.md)
 
@@ -7,9 +7,9 @@
 | **Durée** | 50 min |
 | **Piste** | `[CORE]` |
 | **Workspace** | `$HOME/Data2AI-Labs/data-platform` (le clone) |
-| **Dossier de travail** | `environments/dev/` dans le clone |
-| **Coût** | Aucune nouvelle ressource |
-| **Cleanup** | Conserver jusqu'au Jour 3 |
+| **Dossier de travail** | `labs/m04-variables-outputs/` dans le clone |
+| **Coût** | Aucune nouvelle ressource persistante |
+| **Cleanup** | Conserver — `Reset-Lab.ps1` nettoie au redémarrage |
 
 > `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
 > et avoir execute `Learner-Login.ps1` dans **cette session** :
@@ -22,10 +22,16 @@
 > Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
 > et les variables `ARM_*` pour Terraform.
 >
+> Ensuite, réinitialisez le lab pour partir d'un état propre :
+>
+> ```powershell
+> .\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M04
+> ```
+>
 > Avant `terraform plan`, verifiez que tout est pret :
 >
 > ```powershell
-> cd environments\dev
+> cd labs\m04-variables-outputs
 > ..\..\scripts\Test-TerraformReady.ps1
 > ```
 >
@@ -34,43 +40,47 @@
 
 ## 🎯 Mission
 
-Des valeurs dispersées et non validées rendent les environnements incohérents. Vous allez structurer les variables, ajouter des validations, créer des outputs exploitables et préparer la configuration pour DEV, UAT et PROD.
+Des valeurs dispersées et non validées rendent les environnements incohérents. Vous allez structurer les variables, ajouter des validations, créer des outputs exploitables et tester la précédence des variables.
 
 ## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
-    M3[M3 — Brownfield] --> M4[M4 — Contrats typés]
-    M4 --> M5[M5 — Modules Landing Zone]
+    TFVARS[terraform.tfvars] --> VARS[variables.tf<br/>+ validations]
+    VARS --> LOCALS[locals.tf<br/>conventions de nommage]
+    LOCALS --> MAIN[main.tf<br/>ressources M04]
+    MAIN --> OUT[outputs.tf<br/>structurés]
+    CLI[-var en CLI] -->|priorité max| VARS
 ```
 
 ## 🎯 Objectifs
 
-- ✅ nettoyer le state des ressources brownfield de M3;
+- ✅ créer des ressources Snowflake avec Terraform (state local);
 - ✅ ajouter des validations de variables pour rejeter les configurations invalides;
 - ✅ utiliser des `locals` pour centraliser les conventions de nommage;
 - ✅ exposer des outputs exploitables par d'autres modules;
-- ✅ créer des fichiers `.tfvars` par environnement;
-- ✅ comprendre la précédence des variables.
+- ✅ comprendre la précédence des variables avec `-var`;
+- ✅ tester `lifecycle` et `prevent_destroy`.
 
 ## 📋 Prérequis
 
-- [ ] M3 terminé;
-- [ ] `terraform state list` affiche les ressources M1 + `snowflake_database.imported` (brownfield).
+- [ ] Jour 0 terminé : `Toolchain status: READY`;
+- [ ] `snow sql -q 'SELECT 1' -c training` réussit;
+- [ ] le clone `data-platform-starter` existe sous `$HOME/Data2AI-Labs/data-platform`;
+- [ ] vous connaissez votre préfixe unique (variable `LEARNER_PREFIX` dans `.env`).
 
-## 📝 Partie 0 — Nettoyer le brownfield de M3
+## 📝 Partie 1 — Créer les ressources Snowflake (state local)
 
-> `[IMPORTANT]` À la fin de M3, votre state contient `snowflake_database.imported`
-> (la database brownfield). M4 se concentre sur les ressources M1 (raw, ingestion, etl).
-> Vous allez retirer proprement le brownfield du state et de la configuration.
+Ce lab est **autonome** : il ne dépend pas de M1, M2 ou M3. Vous allez créer vos propres ressources avec un préfixe `M04`, puis les enrichir avec des variables validées et des outputs structurés.
 
-### 📝 Étape 0.1 — Supprimer la database brownfield de Snowflake
+### 📝 Étape 1.1 — Se placer dans le dossier du lab
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-snow sql -c training -q "DROP DATABASE IF EXISTS DB_${env:LEARNER_PREFIX}_BROWNFIELD_DEV"
+cd "$HOME\Data2AI-Labs\data-platform\labs\m04-variables-outputs"
+Get-ChildItem -Force
 ```
 </details>
 
@@ -78,25 +88,81 @@ snow sql -c training -q "DROP DATABASE IF EXISTS DB_${env:LEARNER_PREFIX}_BROWNF
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-snow sql -c training -q "DROP DATABASE IF EXISTS DB_${LEARNER_PREFIX}_BROWNFIELD_DEV"
+cd "$HOME/Data2AI-Labs/data-platform/labs/m04-variables-outputs"
+ls -la
 ```
 </details>
 
-✅ **Checkpoint** : `Database DB_APP01_BROWNFIELD_DEV successfully dropped.`
+✅ **Checkpoint** : `provider.tf`, `versions.tf`, `variables.tf`, `terraform.tfvars.example`, `main.tf` (stub), `outputs.tf` (stub), `.gitignore`.
 
-### 📝 Étape 0.2 — Retirer la ressource du state Terraform
+### 📝 Étape 1.2 — Ajouter `warehouse_size` dans `variables.tf`
 
-```powershell
-terraform state rm snowflake_database.imported
+Le fichier `variables.tf` est pré-rempli avec les variables de base. **Ajoutez à la fin du fichier** :
+
+```hcl
+variable "warehouse_size" {
+  type        = string
+  description = "Training warehouse size"
+  default     = "X-SMALL"
+
+  validation {
+    condition     = contains(["X-SMALL", "SMALL"], var.warehouse_size)
+    error_message = "Training warehouses must be X-SMALL or SMALL."
+  }
+}
 ```
 
-✅ **Checkpoint** : `Removed snowflake_database.imported.`
+### 📝 Étape 1.3 — Créer `locals.tf`
 
-### 📝 Étape 0.3 — Retirer le bloc resource de main.tf
+```powershell
+code locals.tf
+```
 
-Ouvrez `environments/dev/main.tf` et supprimez le bloc `resource "snowflake_database" "imported"` ainsi que le bloc `moved` (s'il est toujours présent).
+```hcl
+locals {
+  database_name  = "${var.learner_prefix}_M04_RAW_${var.environment}"
+  schema_name    = "INGESTION"
+  warehouse_name = "WH_${var.learner_prefix}_M04_ETL_${var.environment}"
+  common_comment = "Managed by Terraform | Training | ${var.learner_prefix}"
+}
+```
 
-Votre `main.tf` doit maintenant contenir uniquement les 3 ressources M1 :
+### 📝 Étape 1.4 — Créer `terraform.tfvars`
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+Copy-Item terraform.tfvars.example terraform.tfvars
+code terraform.tfvars
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+code terraform.tfvars
+```
+</details>
+
+Ajoutez la ligne `warehouse_size` à la fin :
+
+```hcl
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"
+learner_prefix         = "APP01"
+environment            = "DEV"
+warehouse_size         = "X-SMALL"
+```
+
+Remplacez `APP01` par votre préfixe.
+
+### 📝 Étape 1.5 — Créer `main.tf`
+
+Remplacez le contenu du stub `main.tf` par :
 
 ```hcl
 resource "snowflake_database" "raw" {
@@ -121,23 +187,54 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 0.4 — Vérifier l'état propre
+### 📝 Étape 1.6 — Créer `outputs.tf`
+
+Remplacez le contenu du stub `outputs.tf` par :
+
+```hcl
+output "database_name" {
+  value       = snowflake_database.raw.name
+  description = "Database created by the learner"
+}
+
+output "schema_name" {
+  value       = snowflake_schema.ingestion.name
+  description = "Schema created inside the database"
+}
+
+output "warehouse_name" {
+  value       = snowflake_warehouse.etl.name
+  description = "Cost-controlled training warehouse"
+}
+```
+
+### 📝 Étape 1.7 — Initialiser, planifier, appliquer
 
 ```powershell
 terraform fmt
+terraform init
 terraform validate
-terraform plan
+terraform plan -out "m04.tfplan"
+terraform apply m04.tfplan
 ```
 
-✅ **Checkpoint 0** : `No changes. Your infrastructure matches the configuration.`
+✅ **Checkpoint 1** :
 
-> Si le plan montre encore des changements, vérifiez que le bloc `moved` a bien été supprimé et que `terraform state list` ne contient plus `snowflake_database.imported`.
+```text
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+```
 
-## 📝 Partie 1 — Enrichir les variables
+```powershell
+terraform state list
+```
 
-### 📝 Étape 1.1 — Ajouter des variables dans `variables.tf`
+✅ **Checkpoint** : 3 ressources listées (`snowflake_database.raw`, `snowflake_schema.ingestion`, `snowflake_warehouse.etl`).
 
-Ouvrez `environments/dev/variables.tf` et **ajoutez à la fin du fichier** ces nouvelles variables (ne modifiez pas les variables existantes) :
+## 📝 Partie 2 — Enrichir les variables
+
+### 📝 Étape 2.1 — Ajouter des variables dans `variables.tf`
+
+Ouvrez `labs/m04-variables-outputs/variables.tf` et **ajoutez à la fin du fichier** ces nouvelles variables (ne modifiez pas les variables existantes) :
 
 ```hcl
 variable "data_retention_days" {
@@ -173,15 +270,15 @@ variable "tags" {
 }
 ```
 
-### 📝 Étape 1.2 — Remplacer le contenu de `locals.tf`
+### 📝 Étape 2.2 — Remplacer le contenu de `locals.tf`
 
-**Remplacez tout le contenu** de `environments/dev/locals.tf` par :
+**Remplacez tout le contenu** de `labs/m04-variables-outputs/locals.tf` par :
 
 ```hcl
 locals {
-  database_name  = "${var.learner_prefix}_RAW_${var.environment}"
+  database_name  = "${var.learner_prefix}_M04_RAW_${var.environment}"
   schema_name    = "INGESTION"
-  warehouse_name = "WH_${var.learner_prefix}_ETL_${var.environment}"
+  warehouse_name = "WH_${var.learner_prefix}_M04_ETL_${var.environment}"
   common_comment = "Managed by Terraform | Training | ${var.learner_prefix}"
 
   retention = var.data_retention_days
@@ -191,9 +288,9 @@ locals {
 
 > Les deux nouveaux locals (`retention` et `suspend`) référencent les nouvelles variables validées.
 
-### 📝 Étape 1.3 — Remplacer le contenu de `main.tf`
+### 📝 Étape 2.3 — Remplacer le contenu de `main.tf`
 
-**Remplacez tout le contenu** de `environments/dev/main.tf` par :
+**Remplacez tout le contenu** de `labs/m04-variables-outputs/main.tf` par :
 
 ```hcl
 resource "snowflake_database" "raw" {
@@ -220,7 +317,7 @@ resource "snowflake_warehouse" "etl" {
 
 > Les valeurs en dur (`data_retention_time_in_days = 1` et `auto_suspend = 60`) sont remplacées par les locals `retention` et `suspend`.
 
-### 📝 Étape 1.4 — Formater, valider, planifier
+### 📝 Étape 2.4 — Formater, valider, planifier
 
 ```powershell
 terraform fmt
@@ -228,17 +325,32 @@ terraform validate
 terraform plan
 ```
 
-✅ **Checkpoint 1** : `No changes.` — les valeurs par défaut (`data_retention_days = 1`, `auto_suspend_seconds = 60`) correspondent aux valeurs précédentes.
+✅ **Checkpoint 2** : `No changes.` — les valeurs par défaut (`data_retention_days = 1`, `auto_suspend_seconds = 60`) correspondent aux valeurs précédentes.
 
 > Si le plan montre des changements, vérifiez que les `default` des nouvelles variables correspondent aux anciennes valeurs en dur (1 et 60).
 
-## 📝 Partie 2 — Enrichir les outputs
+## 📝 Partie 3 — Enrichir les outputs
 
-### 📝 Étape 2.1 — Créer le contenu de `outputs.tf`
+### 📝 Étape 3.1 — Remplacer le contenu de `outputs.tf`
 
-Le fichier `environments/dev/outputs.tf` est vide. **Créez son contenu** avec :
+**Remplacez tout le contenu** de `labs/m04-variables-outputs/outputs.tf` par :
 
 ```hcl
+output "database_name" {
+  value       = snowflake_database.raw.name
+  description = "Database created by the learner"
+}
+
+output "schema_name" {
+  value       = snowflake_schema.ingestion.name
+  description = "Schema created inside the database"
+}
+
+output "warehouse_name" {
+  value       = snowflake_warehouse.etl.name
+  description = "Cost-controlled training warehouse"
+}
+
 output "resource_summary" {
   value = {
     database  = snowflake_database.raw.name
@@ -260,7 +372,7 @@ output "connection_info" {
 }
 ```
 
-### 📝 Étape 2.2 — Formater et valider
+### 📝 Étape 3.2 — Formater et valider
 
 ```powershell
 terraform fmt
@@ -268,107 +380,9 @@ terraform validate
 terraform output
 ```
 
-✅ **Checkpoint 2** : `resource_summary` et `connection_info` s'affichent avec les valeurs de vos ressources.
+✅ **Checkpoint 3** : `resource_summary` et `connection_info` s'affichent avec les valeurs de vos ressources.
 
-## 📝 Partie 3 — Préparer les environnements
-
-> `[IMPORTANT]` Les dossiers `environments/uat/` et `environments/prod/` sont vides
-> (aucun fichier `.tf`). Vous allez copier la configuration depuis `dev/`, puis créer
-> les fichiers `.tfvars` spécifiques à chaque environnement.
->
-> Le déploiement réel en UAT/PROD se fera au **M8** (environments). Ici, vous préparez
-> uniquement les fichiers `.tfvars` et testez la précédence des variables dans `dev/`.
-
-### 📝 Étape 3.1 — Copier la configuration Terraform vers UAT et PROD
-
-<details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
-
-```powershell
-cd "$HOME\Data2AI-Labs\data-platform\environments"
-
-# Copier les fichiers .tf de dev/ vers uat/ et prod/
-Copy-Item dev\*.tf uat\
-Copy-Item dev\*.tf prod\
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
-
-```bash
-cd "$HOME/Data2AI-Labs/data-platform/environments"
-
-# Copier les fichiers .tf de dev/ vers uat/ et prod/
-cp dev/*.tf uat/
-cp dev/*.tf prod/
-```
-</details>
-
-> Ne copiez **pas** `terraform.tfvars` — chaque environnement a son propre fichier.
-
-### 📝 Étape 3.2 — Créer `terraform.tfvars` pour UAT
-
-Dans `environments/uat/`, créez `terraform.tfvars` (remplacez `APP01` par votre préfixe) :
-
-```hcl
-snowflake_organization = "ZVFXOZW"
-snowflake_account      = "PM71247"
-snowflake_user         = "DATA2AI"
-learner_prefix         = "APP01"
-environment            = "UAT"
-warehouse_size         = "X-SMALL"
-data_retention_days    = 7
-auto_suspend_seconds   = 120
-```
-
-### 📝 Étape 3.3 — Créer `terraform.tfvars` pour PROD
-
-Dans `environments/prod/`, créez `terraform.tfvars` (remplacez `APP01` par votre préfixe) :
-
-```hcl
-snowflake_organization = "ZVFXOZW"
-snowflake_account      = "PM71247"
-snowflake_user         = "DATA2AI"
-learner_prefix         = "APP01"
-environment            = "PROD"
-warehouse_size         = "SMALL"
-data_retention_days    = 30
-auto_suspend_seconds   = 300
-```
-
-> 💰 **COST** : PROD utilise un warehouse `SMALL` et une rétention plus longue. En formation, ces valeurs restent économiques.
-
-### 📝 Étape 3.4 — Initialiser Terraform dans UAT (optionnel)
-
-> `[NOTE]` Cette étape est **optionnelle**. Le déploiement UAT réel se fait au M8.
-> Ici, vous pouvez vérifier que la configuration est valide.
-
-<details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
-
-```powershell
-cd "$HOME\Data2AI-Labs\data-platform\environments\uat"
-terraform init
-terraform validate
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
-
-```bash
-cd "$HOME/Data2AI-Labs/data-platform/environments/uat"
-terraform init
-terraform validate
-```
-</details>
-
-✅ **Checkpoint** : `Success! The configuration is valid.`
-
-> Ne lancez **pas** `terraform apply` en UAT maintenant. Vous le ferez au M8.
-
-### 📝 Étape 3.5 — Vérifier la précédence des variables dans DEV
+## 📝 Partie 4 — Tester la précédence des variables
 
 La précédence des variables Terraform est :
 
@@ -379,26 +393,39 @@ La précédence des variables Terraform est :
 5. Variables d'environnement `TF_VAR_*`;
 6. `default` dans la déclaration (le plus faible).
 
-Testez dans `environments/dev/` :
+### 📝 Étape 4.1 — Tester la priorité de `-var`
+
+Testez dans `labs/m04-variables-outputs/` :
 
 ```powershell
-cd environments/dev
 terraform plan -var "warehouse_size=SMALL"
 ```
 
 ✅ **Checkpoint** : le plan propose de modifier le warehouse en `SMALL` (priorité du `-var`).
 
+### 📝 Étape 4.2 — Tester la priorité de `-var` sur `data_retention_days`
+
+```powershell
+terraform plan -var "data_retention_days=7"
+```
+
+✅ **Checkpoint** : le plan propose de modifier `data_retention_time_in_days` à `7`.
+
+### 📝 Étape 4.3 — Vérifier le retour à la normale
+
 ```powershell
 terraform plan
 ```
 
-✅ **Checkpoint 3** : le plan revient à `X-SMALL` (valeur du fichier `terraform.tfvars` de DEV).
+✅ **Checkpoint 4** : le plan revient à `No changes` (valeurs du fichier `terraform.tfvars` de DEV).
 
-## 📝 Partie 4 — lifecycle et depends_on
+> 💡 **Note** : La création de fichiers `.tfvars` pour UAT et PROD se fera au **M8** (environments). Ici, vous testez uniquement la précédence avec `-var` en ligne de commande.
 
-### 📝 Étape 4.1 — Ajouter un lifecycle au warehouse
+## 📝 Partie 5 — lifecycle et depends_on
 
-Dans `environments/dev/main.tf`, **ajoutez un bloc `lifecycle`** au resource `snowflake_warehouse.etl` :
+### 📝 Étape 5.1 — Ajouter un lifecycle au warehouse
+
+Dans `labs/m04-variables-outputs/main.tf`, **ajoutez un bloc `lifecycle`** au resource `snowflake_warehouse.etl` :
 
 ```hcl
 resource "snowflake_warehouse" "etl" {
@@ -415,7 +442,7 @@ resource "snowflake_warehouse" "etl" {
 }
 ```
 
-### 📝 Étape 4.2 — Tester prevent_destroy
+### 📝 Étape 5.2 — Tester prevent_destroy
 
 ```powershell
 terraform plan -destroy
@@ -425,7 +452,7 @@ terraform plan -destroy
 
 > 💡 **Note** : En production, `prevent_destroy` protège les ressources critiques contre une destruction accidentelle.
 
-### 📝 Étape 4.3 — Retirer prevent_destroy pour la formation
+### 📝 Étape 5.3 — Retirer prevent_destroy pour la formation
 
 Retirez le bloc `lifecycle` du warehouse pour permettre le cleanup en fin de formation :
 
@@ -446,19 +473,18 @@ terraform validate
 terraform plan
 ```
 
-✅ **Checkpoint 4** : `No changes.` — le lifecycle est retiré, le plan est propre.
+✅ **Checkpoint 5** : `No changes.` — le lifecycle est retiré, le plan est propre.
 
 ## ✅ Validation finale
 
-- [ ] brownfield nettoyé (state + Snowflake + main.tf);
+- [ ] ressources M04 créées avec Terraform;
 - [ ] variables validées avec `validation` blocks;
 - [ ] `locals.tf` enrichi avec `retention` et `suspend`;
 - [ ] `main.tf` utilise les locals au lieu de valeurs en dur;
 - [ ] outputs structurés affichés;
-- [ ] fichiers `.tfvars` pour DEV, UAT, PROD;
 - [ ] précédence testée avec `-var`;
 - [ ] `prevent_destroy` testé puis retiré;
-- [ ] `terraform plan` affiche `No changes.` dans `environments/dev/`.
+- [ ] `terraform plan` affiche `No changes.`
 
 ## 🏆 Challenge
 
@@ -473,7 +499,14 @@ Critères :
 
 ## 🧹 Cleanup
 
-> ⚠️ **WARNING** : Conservez les ressources pour le Jour 3.
+Conservez les ressources pour inspection.
+
+Pour repartir d'un état propre au début du lab, utilisez :
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Reset-Lab.ps1 -LearnerPrefix APP01 -Lab M04
+```
 
 ---
 
