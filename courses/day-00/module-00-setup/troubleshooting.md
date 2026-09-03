@@ -360,6 +360,99 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPre
 
 ---
 
+### 15. `Blob write access` FAIL dans le rapport de connectivite
+
+**Symptome :**
+
+```text
+[FAIL] Blob write access
+       Cannot write to container - check RBAC or access keys
+```
+
+ou :
+
+```text
+This endpoint - does not have BlobServices getProperties permission
+```
+
+**Cause :**
+
+Le service principal partage n'a pas le role **Storage Blob Data Contributor**
+sur le compte de stockage. Le role `Contributor` (management-plane) ne suffit pas
+pour acceder aux blobs (data-plane). Il faut un role data-plane explicite.
+
+**Diagnostic :**
+
+```powershell
+# Verifier les roles attribues au SP sur le storage account
+$scope = az storage account show --name sadata2aitfstatemsn --resource-group rg-data2ai-tf-state --query id -o tsv
+az role assignment list --scope $scope --query "[].{principal:principalId,role:roleDefinitionName}" -o table
+```
+
+**Attendu :** une ligne avec `Storage Blob Data Contributor` pour le principal du SP.
+
+**Si le role est absent :**
+
+C'est une action **formateur**. L'apprenant ne peut pas attribuer de role
+(le SP n'a pas les droits `Microsoft.Authorization/roleAssignments/write`).
+
+Le formateur doit :
+
+```powershell
+# Login avec un compte Owner (pas le SP)
+az login
+
+# Recuperer l'object ID du SP (PAS l'appId)
+$spAppId = az ad sp list --display-name "sp-data2ai-learners" --query "[0].appId" -o tsv
+$spObjectId = az ad sp show --id $spAppId --query id -o tsv
+
+# Attribuer le role
+az role assignment create `
+  --role "Storage Blob Data Contributor" `
+  --assignee-object-id $spObjectId `
+  --assignee-principal-type ServicePrincipal `
+  --scope (az storage account show --name sadata2aitfstatemsn --resource-group rg-data2ai-tf-state --query id -o tsv)
+```
+
+> `[IMPORTANT]` L'attribution de role utilise l'**object ID** du SP, pas l'appId.
+> Ces deux valeurs sont differentes. Si vous utilisez l'appId, le role sera
+> attribue au mauvais principal et le test echouera toujours.
+
+**Si le role est present mais le test echoue encore :**
+
+La propagation RBAC peut prendre **jusqu'a 10 minutes**. Attendez, puis :
+
+```powershell
+# Re-login pour rafraichir le token
+powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+.\scripts\Test-LabConnectivity.ps1 -SkipDevOps
+```
+
+---
+
+### 16. `az ad sp show` retourne `Insufficient privileges`
+
+**Symptome :**
+
+```text
+Insufficient privileges to complete the operation.
+```
+
+**Cause :**
+
+Le service principal partage n'a pas les permissions Entra ID (Graph API)
+necessaires pour lire l'annuaire. C'est normal : le SP a uniquement `Contributor`
+sur la subscription Azure, pas de droits directory.
+
+**Correction :**
+
+Aucune action necessaire. Le script `Test-LabConnectivity.ps1` ne verifie plus
+le SP via `az ad sp show`. La presence des variables `ARM_CLIENT_ID` et
+`ARM_TENANT_ID` dans `.env` et le succes du login Azure suffisent a prouver
+que le SP est valide.
+
+---
+
 ## Escalade
 
 Si aucun diagnostic ne resout le probleme :

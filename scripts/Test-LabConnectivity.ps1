@@ -328,25 +328,17 @@ if ($SkipAzure) {
     }
 
     # -- 3c. Azure service principal --
+    # We verify that ARM_CLIENT_ID and ARM_TENANT_ID are set in .env.
+    # We do NOT call `az ad sp show` because the shared SP lacks Entra ID
+    # directory read permissions (it only has Contributor on the subscription).
+    # The real test is whether Azure login works (3a) and resources are
+    # accessible (3d, 3e, 3f) — those already prove the SP is valid.
     $armClientId = Get-ConfigValue 'ARM_CLIENT_ID'
     $armTenantId = Get-ConfigValue 'ARM_TENANT_ID'
     if ($armClientId -and $armTenantId) {
-        $prevEAP = $ErrorActionPreference
-        $ErrorActionPreference = 'Continue'
-        try {
-            $spCheck = & az ad sp show --id $armClientId --query 'appId' -o tsv 2>&1
-            if ($LASTEXITCODE -eq 0 -and $spCheck) {
-                Test-Step 'Service principal' 'PASS' "App ID: $armClientId"
-            } else {
-                Test-Step 'Service principal' 'FAIL' "SP not found: $armClientId - check ARM_CLIENT_ID"
-            }
-        } catch {
-            Test-Step 'Service principal' 'WARN' 'Could not verify SP (may lack Graph permissions)'
-        } finally {
-            $ErrorActionPreference = $prevEAP
-        }
+        Test-Step 'Service principal' 'PASS' "ARM_CLIENT_ID and ARM_TENANT_ID set (SP verified by Azure login above)"
     } else {
-        Test-Step 'Service principal' 'SKIP' 'ARM_CLIENT_ID or ARM_TENANT_ID not set in .env'
+        Test-Step 'Service principal' 'FAIL' 'ARM_CLIENT_ID or ARM_TENANT_ID not set in .env'
     }
 
     # -- 3d. Azure resource group --

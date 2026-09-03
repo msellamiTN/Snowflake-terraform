@@ -521,16 +521,42 @@ git status
 
 **Checkpoint** : branche propre, aucun fichier modifie (sauf `preflight.md` et `preflight.json` qui sont ignores).
 
+### 7.4 — Lancer le test de connectivite complet
+
+<details>
+<summary>Windows (PowerShell)</summary>
+
+```powershell
+.\scripts\Test-LabConnectivity.ps1 -SkipDevOps
+```
+</details>
+
+<details>
+<summary>Linux/macOS (Bash)</summary>
+
+```bash
+./scripts/test-lab-connectivity.sh --skip-devops
+```
+</details>
+
+**Checkpoint** : `Status: READY` avec 0 FAIL.
+
+> Si `Blob write access` est en FAIL, c'est un probleme RBAC cote formateur.
+> Le role `Storage Blob Data Contributor` n'a pas ete attribue au SP ou
+> la propagation n'est pas encore effective (jusqu'a 10 minutes).
+> Consultez le [guide de troubleshooting](troubleshooting.md) entree 15.
+
 ---
 
 ## Checkpoint final
 
-Le Jour 0 est termine uniquement lorsque les quatre conditions suivantes sont reunies :
+Le Jour 0 est termine uniquement lorsque les conditions suivantes sont reunies :
 
 1. `Toolchain status: READY`
 2. `az account show --query 'name' -o tsv` affiche la souscription Azure
 3. `snow sql -q 'SELECT 1' -c training` retourne un resultat
-4. Le projet type est clone et ne contient aucun fichier `.tf`
+4. `Test-LabConnectivity.ps1` affiche `Status: READY` (0 FAIL)
+5. Le projet type est clone et ne contient aucun fichier `.tf`
 
 ```text
 Ready for Day 1

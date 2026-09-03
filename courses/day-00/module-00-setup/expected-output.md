@@ -210,6 +210,64 @@ find $HOME/Data2AI-Labs/data-platform -name '*.tf' -type f
 
 **Attendu :** aucun resultat.
 
+## Rapport de connectivite
+
+```text
+============================================================
+ Lab Connectivity Test
+============================================================
+
+== 1. CLI Tools
+  [PASS] Git
+  [PASS] Terraform
+  [PASS] Snowflake CLI
+  [PASS] Azure CLI
+  [PASS] Python
+  [PASS] dbt
+  [PASS] tflint
+
+== 2. Snowflake Connectivity
+  [PASS] Snow CLI connection 'training'
+  [PASS] PAT file
+  [PASS] Snowflake query
+
+== 3. Azure Connectivity
+  [PASS] Azure CLI authentication
+  [PASS] Azure tenant
+  [PASS] Subscription match
+  [PASS] Service principal
+  [PASS] Resource group
+  [PASS] Azure Storage Account
+  [PASS] Azure Blob Container
+  [PASS] Blob write access
+  [WARN] Azure Key Vault          (Day 4 — may not exist yet)
+
+== 5. Git and Repository
+  [PASS] Git remote
+  [PASS] Git branch
+  [PASS] .env is gitignored
+  [PASS] secrets/ is gitignored
+
+== 6. Terraform Environment
+  [PASS] Terraform files in environments/dev
+  [PASS] Terraform init
+  [PASS] Provider lock file
+
+============================================================
+ Summary
+============================================================
+
+  PASS : 25
+  FAIL : 0
+  WARN : 1
+  SKIP : 1
+
+Status: READY
+```
+
+> `Azure Key Vault` est en `WARN` car il n'est utilise qu'a partir du Jour 4.
+> `Azure DevOps` est en `SKIP` car `-SkipDevOps` est passe.
+
 ## Checklist finale
 
 - [ ] `Toolchain status: READY`
@@ -220,6 +278,7 @@ find $HOME/Data2AI-Labs/data-platform -name '*.tf' -type f
 - [ ] `Learner-Login` execute avec votre prefixe (`APP01`, `APP02`...)
 - [ ] `az account show --query 'name' -o tsv` affiche la souscription
 - [ ] `snow sql -q 'SELECT 1' -c training` retourne un resultat
+- [ ] `Test-LabConnectivity.ps1 -SkipDevOps` affiche `Status: READY` (0 FAIL)
 - [ ] Projet type clone sous `$HOME/Data2AI-Labs/data-platform`
 - [ ] Scripts presents dans `scripts/` du clone
 - [ ] Aucun fichier `.tf` dans le projet type

@@ -135,6 +135,7 @@ flowchart TD
 
 ```text
 Toolchain status: READY
+Test-LabConnectivity.ps1 → Status: READY (0 FAIL)
 ```
 
 ```bash
@@ -143,7 +144,11 @@ az account show --query 'name' -o tsv  # → Azure subscription 1
 find . -name '*.tf' -type f  # → (vide)
 ```
 
-> Si les trois passent, vous etes `Ready for Day 1`.
+> Si tout passe, vous etes `Ready for Day 1`.
+>
+> Si `Blob write access` est en FAIL, c'est un probleme RBAC formateur —
+> le role `Storage Blob Data Contributor` doit etre attribue au SP
+> avec l'**object ID** (pas l'appId). Voir troubleshooting entree 15.
 
 ---
 

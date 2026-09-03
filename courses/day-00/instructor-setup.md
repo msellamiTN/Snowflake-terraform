@@ -38,6 +38,15 @@ ARM_TENANT_ID=<tenant>
 ARM_SUBSCRIPTION_ID=8c42d5b2-ab70-4051-ab0e-a96877557f6a
 ```
 
+> `[IMPORTANT]` Le SP a **deux identifiants distincts** :
+> - **appId** (`ARM_CLIENT_ID`) : utilisé pour `az login --service-principal -u <appId>`.
+>   C'est ce que l'apprenant utilise dans `Learner-Login.ps1`.
+> - **object ID** : utilisé pour les **attributions de rôles RBAC** (`az role assignment create --assignee-object-id <objectId>`).
+>   Ce n'est **pas** la même valeur que l'appId.
+>
+> Si vous utilisez l'appId au lieu de l'object ID dans `az role assignment create`,
+> le rôle sera attribué au mauvais principal et l'apprenant aura `This endpoint - does not have BlobServices getProperties permission` lors du test de write access.
+
 ### 1.2 — Créer le backend Terraform (state)
 
 Choisissez une région Azure disponible pour votre abonnement. `westeurope` peut refuser de nouveaux clients ; `northeurope` est une alternative courante.
@@ -72,7 +81,13 @@ az storage container create `
   --auth-mode login
 
 # Autoriser le SP à lire et écrire le state sans clé de compte ni SAS.
+# IMPORTANT: az ad sp show --id accepte le nom OU l'appId, mais retourne
+# l'object ID dans le champ 'id'. C'est l'object ID qu'il faut utiliser
+# pour --assignee-object-id, PAS l'appId.
 $spObjectId = az ad sp show --id $spName --query id -o tsv
+# Vérifier que l'object ID est différent de l'appId :
+Write-Host "appId (ARM_CLIENT_ID) = $($creds['ARM_CLIENT_ID'] 2>$null)"
+Write-Host "object ID (for RBAC)   = $spObjectId"
 $storageAccountId = az storage account show `
   --name $storageAccount `
   --resource-group $resourceGroup `
@@ -84,7 +99,14 @@ az role assignment create `
   --scope $storageAccountId
 ```
 
-Le scope **Storage Account** couvre le conteneur `tfstate`. Pour appliquer le moindre privilège à un conteneur déjà créé, remplacez le scope de la dernière commande par `"$storageAccountId/blobServices/default/containers/$container"`. La propagation RBAC peut prendre quelques minutes.
+Le scope **Storage Account** couvre le conteneur `tfstate`. Pour appliquer le moindre privilège à un conteneur déjà créé, remplacez le scope de la dernière commande par `"$storageAccountId/blobServices/default/containers/$container"`.
+
+> `[IMPORTANT]` La propagation RBAC peut prendre **jusqu'à 10 minutes**.
+> Vérifiez avec :
+> ```powershell
+> az role assignment list --scope $storageAccountId --query "[].{principal:principalId,role:roleDefinitionName}" -o table
+> ```
+> L'apprenant ne doit pas tester le blob write access avant que le rôle soit visible.
 
 ### 1.3 — Créer les utilisateurs Azure AD (pour Azure DevOps)
 

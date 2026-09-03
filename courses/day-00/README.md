@@ -140,9 +140,14 @@ Le Jour 0 est termine uniquement lorsque :
 
 ```text
 Toolchain status: READY
+Test-LabConnectivity.ps1 → Status: READY (0 FAIL)
 ```
 
 et que la connexion Snowflake repond a `snow sql -q 'SELECT 1' -c training`.
+
+> Si `Blob write access` est en FAIL, c'est un probleme RBAC cote formateur.
+> Le role `Storage Blob Data Contributor` doit etre attribue au SP avec
+> l'**object ID** (pas l'appId). Voir le [troubleshooting](module-00-setup/troubleshooting.md) entree 15.
 
 ## Suite
 
