@@ -97,7 +97,7 @@ L'apprenant peut se connecter a l'interface web Snowflake avec son username + pa
 individuel (fourni par le formateur).
 
 - URL : https://app.snowflake.com
-- Username : `apprenant01` a `apprenant10`
+- Username : `apprenant01` a `apprenant12`
 - Password : 14+ caracteres (respecte la politique Snowflake)
 
 > Le PAT (CLI/Terraform) et le password (web) sont deux methodes distinctes.

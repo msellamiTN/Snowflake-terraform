@@ -8,24 +8,30 @@
 
 ## Vue d'ensemble
 
-Le formateur doit préparer trois environnements avant la formation :
+Le formateur prépare trois environnements à l'aide de **4 modules Terraform** et **1 script PowerShell** :
 
-| Environnement | Ressources | Script |
+| Étape | Module / Script | Ressources créées |
 |---|---|---|
-| **Azure** | Service principal partagé, Resource Group, Storage Account | `Add-LearnerServicePrincipals.ps1` |
-| **Snowflake** | Utilisateurs apprenants, PAT, rôles | `Add-SnowflakeLearners.ps1` |
-| **Azure DevOps** | Organisation, projet, membres | `az devops` |
+| **Step 1** | `project/00-bootstrap` | Azure : Resource Group, Storage Account, Key Vault, RBAC |
+| **Step 2** | `project/01-snowflake-learners` | Snowflake : 12 utilisateurs, rôles SYSADMIN, MFA bypass, mots de passe → KV |
+| **Step 3** | `project/02-azuread-learners` | Azure AD : 12 utilisateurs, groupe de sécurité, RBAC Reader |
+| **Step 4** | `project/03-devops-setup` | Azure DevOps : projet, entitlements, variable group → Key Vault |
+| **Step 5** | `scripts/Set-SnowflakePATs.ps1` | Snowflake : 12 PATs générés → Key Vault |
+| **Step 6** | Distribution manuelle | Copier `secrets/shared-sp.txt` sur les VMs apprenants |
 
-## 1. Préparer Azure
+> `[IaC]` **Tout est Infrastructure as Code.** Les 4 modules Terraform sont versionnés,
+> idempotents, et offrent un audit trail complet via Git + Terraform state.
+> Le seul script restant (`Set-SnowflakePATs.ps1`) est nécessaire car le provider
+> Snowflake v2.14.0 n'a pas de ressource PAT (disponible en v2.17.0+).
 
-### 1.1 — Créer le service principal partagé
+## 1. Préparer le service principal partagé (une seule fois)
+
+### 1.1 — Créer le SP partagé
 
 ```powershell
-# Variables
 $subscriptionId = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
 $spName = "sp-data2ai-learners"
 
-# Créer le SP avec rôle Contributor
 az ad sp create-for-rbac --name $spName --role Contributor --scopes /subscriptions/$subscriptionId
 ```
 
@@ -38,251 +44,407 @@ ARM_TENANT_ID=<tenant>
 ARM_SUBSCRIPTION_ID=8c42d5b2-ab70-4051-ab0e-a96877557f6a
 ```
 
-> `[IMPORTANT]` Le SP a **deux identifiants distincts** :
-> - **appId** (`ARM_CLIENT_ID`) : utilisé pour `az login --service-principal -u <appId>`.
->   C'est ce que l'apprenant utilise dans `Learner-Login.ps1`.
-> - **object ID** : utilisé pour les **attributions de rôles RBAC** (`az role assignment create --assignee-object-id <objectId>`).
->   Ce n'est **pas** la même valeur que l'appId.
->
-> Si vous utilisez l'appId au lieu de l'object ID dans `az role assignment create`,
-> le rôle sera attribué au mauvais principal et l'apprenant aura `This endpoint - does not have BlobServices getProperties permission` lors du test de write access.
-
-### 1.2 — Créer le backend Terraform (state)
-
-Choisissez une région Azure disponible pour votre abonnement. `westeurope` peut refuser de nouveaux clients ; `northeurope` est une alternative courante.
+Récupérer l'**object ID** du SP :
 
 ```powershell
-$location = "northeurope"
-$resourceGroup = "rg-data2ai-tf-state"
-$storageAccount = "sadata2aitfstatemsn"
-$container = "tfstate"
-
-az group create --name $resourceGroup --location $location
-az storage account create `
-  --name $storageAccount `
-  --resource-group $resourceGroup `
-  --location $location `
-  --sku Standard_LRS `
-  --min-tls-version TLS1_2 `
-  --allow-blob-public-access false
-
-# Protection du state : versioning et soft-delete des blobs pendant 7 jours.
-az storage account blob-service-properties update `
-  --account-name $storageAccount `
-  --resource-group $resourceGroup `
-  --enable-versioning true `
-  --enable-delete-retention true `
-  --delete-retention-days 7
-
-# Les opérations data-plane utilisent l'identité Microsoft Entra connectée.
-az storage container create `
-  --name $container `
-  --account-name $storageAccount `
-  --auth-mode login
-
-# Autoriser le SP à lire et écrire le state sans clé de compte ni SAS.
-# IMPORTANT: az ad sp show --id accepte le nom OU l'appId, mais retourne
-# l'object ID dans le champ 'id'. C'est l'object ID qu'il faut utiliser
-# pour --assignee-object-id, PAS l'appId.
 $spObjectId = az ad sp show --id $spName --query id -o tsv
-# Vérifier que l'object ID est différent de l'appId :
-Write-Host "appId (ARM_CLIENT_ID) = $($creds['ARM_CLIENT_ID'] 2>$null)"
-Write-Host "object ID (for RBAC)   = $spObjectId"
-$storageAccountId = az storage account show `
-  --name $storageAccount `
-  --resource-group $resourceGroup `
-  --query id -o tsv
-az role assignment create `
-  --assignee-object-id $spObjectId `
-  --assignee-principal-type ServicePrincipal `
-  --role "Storage Blob Data Contributor" `
-  --scope $storageAccountId
+Write-Host "SP object ID (for 00-bootstrap): $spObjectId"
 ```
 
-Le scope **Storage Account** couvre le conteneur `tfstate`. Pour appliquer le moindre privilège à un conteneur déjà créé, remplacez le scope de la dernière commande par `"$storageAccountId/blobServices/default/containers/$container"`.
+> `[IMPORTANT]` Le SP a **deux identifiants distincts** :
+> - **appId** (`ARM_CLIENT_ID`) : utilisé pour `az login --service-principal`.
+> - **object ID** : utilisé pour les **attributions de rôles RBAC** dans `00-bootstrap`.
+
+### 1.2 — Accorder les permissions API au SP
+
+Le SP doit avoir les permissions Microsoft Graph suivantes pour `02-azuread-learners` :
+
+- `User.ReadWrite.All` (ou `Directory.ReadWrite.All`)
+
+```powershell
+# Via le portail Azure : App registrations > sp-data2ai-learners > API permissions
+# Ajouter Microsoft Graph > Application permissions > User.ReadWrite.All
+# Puis : Grant admin consent
+```
+
+## 2. Step 1 — Exécuter `00-bootstrap`
+
+```powershell
+cd project/00-bootstrap
+Copy-Item terraform.tfvars.example terraform.tfvars
+# Éditer terraform.tfvars avec les valeurs du SP
+code terraform.tfvars
+```
+
+`terraform.tfvars` minimal :
+
+```hcl
+arm_subscription_id = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
+arm_tenant_id       = "55fca982-2372-4352-8b7e-c28ac00ae8e3"
+arm_client_id       = "<appId du SP partagé>"
+arm_client_secret   = "<password du SP partagé>"
+
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"
+snowflake_role         = "SYSADMIN"
+snowflake_pat          = ""
+
+state_blob_contributor_object_ids = ["<object ID du SP partagé>"]
+wif_service_principal_object_id   = ""
+snowflake_learner_prefixes        = ["APP01", "APP02", "APP03", "APP04", "APP05", "APP06", "APP07", "APP08", "APP09", "APP10", "APP11", "APP12"]
+```
+
+Exécuter :
+
+```powershell
+terraform init
+terraform plan -out bootstrap.tfplan
+terraform apply bootstrap.tfplan
+```
+
+Récupérer les outputs pour les modules suivants :
+
+```powershell
+terraform output -raw key_vault_id          # → pour 01-snowflake-learners
+terraform output -raw key_vault_name        # → pour 03-devops-setup
+terraform output -raw shared_env_snippet    # → pour config/shared.env
+```
+
+Générer `config/shared.env` :
+
+```powershell
+terraform output -raw shared_env_snippet > ../../templates/data-platform-starter/config/shared.env
+```
 
 > `[IMPORTANT]` La propagation RBAC peut prendre **jusqu'à 10 minutes**.
-> Vérifiez avec :
-> ```powershell
-> az role assignment list --scope $storageAccountId --query "[].{principal:principalId,role:roleDefinitionName}" -o table
-> ```
-> L'apprenant ne doit pas tester le blob write access avant que le rôle soit visible.
 
-### 1.3 — Créer les utilisateurs Azure AD (pour Azure DevOps)
+## 3. Step 2 — Exécuter `01-snowflake-learners`
+
+Ce module crée les 12 utilisateurs Snowflake, accorde le rôle SYSADMIN,
+définit le MFA bypass (240 min), et stocke les mots de passe web dans Key Vault.
 
 ```powershell
-.\scripts\Add-LearnerUsers.ps1
+cd ../01-snowflake-learners
+Copy-Item terraform.tfvars.example terraform.tfvars
+code terraform.tfvars
 ```
 
-Ce script crée `apprenant01` à `apprenant10` dans Azure AD et les ajoute à l'organisation Azure DevOps.
+`terraform.tfvars` :
 
-> `[NOTE]` Les utilisateurs Azure AD ne peuvent pas se connecter au portail Azure (MFA bloque).
-> Ils servent uniquement pour Azure DevOps. L'accès Azure se fait via le SP partagé.
+```hcl
+learner_count = 12
+default_role  = "SYSADMIN"
+mins_to_bypass_mfa = 240
+must_change_password = false
 
-## 2. Préparer Snowflake
+snowflake_organization = "ZVFXOZW"
+snowflake_account      = "PM71247"
+snowflake_user         = "DATA2AI"
+snowflake_role         = "ACCOUNTADMIN"
+snowflake_token        = "<votre PAT ACCOUNTADMIN>"
 
-### 2.1 — Créer les utilisateurs apprenants
+key_vault_id       = "<output de 00-bootstrap>"
+store_passwords_in_kv = true
+```
+
+Exécuter :
 
 ```powershell
-# Windows
-.\scripts\Add-SnowflakeLearners.ps1
-
-# Linux/macOS
-./scripts/add-snowflake-learners.sh
+terraform init
+terraform plan -out snowflake-learners.tfplan
+terraform apply snowflake-learners.tfplan
 ```
 
-Ce script :
-
-- crée `apprenant01` à `apprenant10` dans Snowflake;
-- attribue le rôle `SYSADMIN` à chaque utilisateur;
-- génère des mots de passe conformes à la politique (14+ caractères);
-- sauvegarde les mots de passe dans `secrets/learner-snowflake-passwords.txt`.
-
-Pour réinitialiser les mots de passe (si la politique change) :
+Vérifier :
 
 ```powershell
-.\scripts\Add-SnowflakeLearners.ps1 -ResetPasswords
+terraform output learner_usernames
+terraform output role_grants
 ```
 
-### 2.2 — Désactiver MFA pour les apprenants
+> `[MFA]` Le `mins_to_bypass_mfa = 240` expire après 4 heures.
+> Pour rafraîchir, relancez `terraform apply` — il mettra à jour la valeur
+> pour tous les utilisateurs de façon idempotente.
 
-Le compte PM71247 enforce MFA. Les apprenants ne peuvent pas s'inscrire à MFA
-sans accès initial. Le formateur doit désactiver MFA pour chaque utilisateur :
+## 4. Step 3 — Exécuter `02-azuread-learners`
+
+Ce module crée les 12 utilisateurs Azure AD, un groupe de sécurité,
+et assigne le rôle RBAC Reader au groupe.
 
 ```powershell
-$pat = Get-Content secrets\snowflake_pat.txt
-$snowArgs = @('--account', 'ZVFXOZW-PM71247', '--user', 'DATA2AI', '--authenticator', 'PROGRAMMATIC_ACCESS_TOKEN', '--token', $pat, '--role', 'ACCOUNTADMIN')
-for ($i = 1; $i -le 10; $i++) {
-    $padded = '{0:D2}' -f $i
-    snow sql -q "ALTER USER apprenant$padded SET MINS_TO_BYPASS_MFA = 240" @snowArgs
-}
+cd ../02-azuread-learners
+Copy-Item terraform.tfvars.example terraform.tfvars
+code terraform.tfvars
 ```
 
-> `[NOTE]` Le bypass MFA dure 240 minutes (4 heures). Si une session dure plus longtemps,
-> relancez cette commande. Le bypass maximum est de 240 minutes par commande.
-> En production, utilisez plutôt l'authentification SSO ou key-pair.
+`terraform.tfvars` :
 
-### 2.2 — Générer les PAT individuels
+```hcl
+learner_count = 12
+domain        = "data2ai.onmicrosoft.com"
+force_password_change = true
+group_name    = "Data2AI-Learners"
 
-Pour chaque apprenant, générer un PAT :
-
-```sql
--- Connecté en tant que ACCOUNTADMIN
-ALTER USER apprenant01 ADD PASSWORD_AUTH_POLICY = 'PROGRAMMATIC_ACCESS_TOKEN';
--- Ou via l'interface web : Admin > Users > apprenant01 > PAT
+subscription_id = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
+rbac_role       = "Reader"
+assign_rbac     = true
 ```
 
-Sauvegarder chaque PAT dans `secrets/snowflake_pat.txt` (un par apprenant) ou
-distribuer individuellement.
-
-### 2.3 — Vérifier
-
-```sql
-SHOW USERS LIKE 'apprenant%';
--- 10 utilisateurs avec has_password = true, default_role = SYSADMIN
-```
-
-## 3. Préparer Azure DevOps
-
-### 3.1 — Créer l'organisation et le projet
+Exécuter :
 
 ```powershell
-az devops org create --name data2ai-tn
-az devops project create --name terraform-snowflake --organization https://dev.azure.com/data2ai-tn
+terraform init
+terraform plan -out azuread-learners.tfplan
+terraform apply azuread-learners.tfplan
 ```
 
-### 3.2 — Ajouter les apprenants
+Récupérer les UPNs pour `03-devops-setup` :
 
 ```powershell
-.\scripts\Add-LearnerUsers.ps1
+terraform output -json learner_upns
 ```
 
-Ce script ajoute les utilisateurs Azure AD à l'organisation Azure DevOps.
+## 5. Step 4 — Exécuter `03-devops-setup`
 
-### 3.3 — Vérifier
+Ce module crée le projet Azure DevOps, assigne les apprenants (entitlements),
+les ajoute au groupe Contributors, crée un service connection Azure (WIF),
+et lie un variable group au Key Vault.
 
 ```powershell
-az devops user list --organization https://dev.azure.com/data2ai-tn
--- 11 utilisateurs : formateur + 10 apprenants
+cd ../03-devops-setup
+Copy-Item terraform.tfvars.example terraform.tfvars
+code terraform.tfvars
 ```
 
-## 4. Préparer le dépôt du projet type
+`terraform.tfvars` :
 
-### 4.1 — Pré-remplir `.env.example`
+```hcl
+project_name   = "terraform-snowflake"
+learner_upns   = ["apprenant01@data2ai.onmicrosoft.com", ...]  # depuis 02 output
+license_type   = "express"
 
-Vérifier que `.env.example` contient :
+key_vault_name    = "kvdata2aitfsecrets"
+subscription_id   = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
+subscription_name = "Data2AI-Training"
+tenant_id         = "55fca982-2372-4352-8b7e-c28ac00ae8e3"
+auth_scheme       = "WorkloadIdentityFederation"
 
-- `SNOWFLAKE_ORGANIZATION`, `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_HOST`
-- `SNOWFLAKE_USER`, `SNOWFLAKE_ROLE`, `SNOWFLAKE_CONNECTION`
-- `ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_RESOURCE_GROUP`, `ARM_STORAGE_ACCOUNT`, `ARM_CONTAINER`
-- `ARM_CLIENT_ID` (du SP partagé)
-- `ADO_ORGANIZATION`, `ADO_PROJECT`
-- `LEARNER_PREFIX=APP01` (à personnaliser par l'apprenant)
-- `SNOWFLAKE_PAT=` (à remplir par l'apprenant)
+variable_group_name  = "data-platform-secrets"
+kv_secret_variables  = ["SnowflakePAT", "ArmClientSecret"]
+```
 
-### 4.2 — Distribuer les secrets
+Exécuter :
 
-Pour chaque apprenant, préparer :
+```powershell
+terraform init
+terraform plan -out devops-setup.tfplan
+terraform apply devops-setup.tfplan
+```
 
-| Fichier | Contenu | Distribution |
-|---|---|---|
-| `secrets/shared-sp.txt` | SP partagé (même pour tous) | Copier sur la VM |
-| `secrets/snowflake_pat.txt` | PAT individuel | Copier sur la VM |
-| `secrets/learner-snowflake-passwords.txt` | Password web individuel | Communiquer verbalement ou via canal sécurisé |
+Vérifier :
 
-> `[SECURITY]` Tous ces fichiers sont gitignored. Ne jamais les commiter.
+```powershell
+terraform output project_id
+terraform output variable_group_id
+```
 
-## 5. Checklist formateur
+## 6. Step 5 — Générer les PATs avec `Set-SnowflakePATs.ps1`
+
+> `[NOTE]` Cette étape utilise un script car le provider Snowflake v2.14.0
+> n'a pas de ressource `snowflake_user_programmatic_access_token`.
+> Quand la politique passera à v2.17.0+, cette étape sera remplacée
+> par une ressource Terraform (voir `docs/version-policy.md`).
+
+Prérequis : `New-SnowflakeConnection.ps1` doit avoir été exécuté avec
+le PAT ACCOUNTADMIN du formateur.
+
+```powershell
+cd ../../templates/data-platform-starter
+.\scripts\Set-SnowflakePATs.ps1 -LearnerCount 12
+```
+
+Le script :
+1. Se connecte à Snowflake avec ACCOUNTADMIN
+2. Pour chaque apprenant (APP01-APP12), génère un PAT via `ALTER USER ... ADD PROGRAMMATIC_ACCESS_TOKEN`
+3. Stocke chaque PAT dans Key Vault sous le nom `SnowflakePAT-APP01`, etc.
+
+Vérifier :
+
+```powershell
+az keyvault secret list --vault-name kvdata2aitfsecrets --query "[?starts_with(name,'SnowflakePAT')].name" -o tsv
+```
+
+**Expected :** `SnowflakePAT-APP01` à `SnowflakePAT-APP12`.
+
+## 7. Step 6 — Distribuer le bootstrap SP
+
+Copier `secrets/shared-sp.txt` sur chaque VM apprenant.
+
+> `[SECURITY]` Ce fichier est gitignored. Il contient les identifiants du SP partagé.
+> C'est le seul secret distribué manuellement — il est nécessaire pour que
+> `Learner-Login.ps1` puisse s'authentifier à Azure et récupérer le PAT depuis Key Vault.
+
+## 8. Checklist formateur
+
+### Azure (via `00-bootstrap`)
 
 - [ ] SP `sp-data2ai-learners` créé avec rôle `Contributor`
+- [ ] SP a les permissions API `User.ReadWrite.All` (Microsoft Graph)
 - [ ] `secrets/shared-sp.txt` généré
-- [ ] Resource Group `rg-data2ai-tf-state` créé
-- [ ] Storage Account `sadata2aitfstatemsn` créé avec TLS 1.2 minimum et accès public aux blobs désactivé
-- [ ] Versioning activé et soft-delete des blobs configuré à 7 jours
-- [ ] Conteneur `tfstate` créé avec `--auth-mode login`
-- [ ] Rôle `Storage Blob Data Contributor` attribué au SP au scope du Storage Account ou du conteneur
-- [ ] 10 utilisateurs Azure AD créés (`apprenant01` à `apprenant10`)
-- [ ] 10 utilisateurs ajoutés à Azure DevOps
-- [ ] 10 utilisateurs Snowflake créés (`Add-SnowflakeLearners.ps1`)
-- [ ] 10 PAT générés et distribués
-- [ ] 10 passwords web distribués (`learner-snowflake-passwords.txt`)
-- [ ] `.env.example` pré-rempli
-- [ ] Dépôt `data-platform-starter` poussé sur GitHub
-- [ ] VMs apprenants préparées avec les secrets
+- [ ] `project/00-bootstrap/terraform.tfvars` configuré
+- [ ] `terraform apply` exécuté avec succès
+- [ ] Resource Group, Storage Account, Key Vault créés
+- [ ] RBAC `Storage Blob Data Contributor` + `Key Vault Secrets User` attribués au SP
+- [ ] `config/shared.env` généré et commité dans le starter
 
-## 6. Architecture d'authentification
+### Snowflake (via `01-snowflake-learners`)
+
+- [ ] `project/01-snowflake-learners/terraform.tfvars` configuré
+- [ ] `terraform apply` exécuté avec succès
+- [ ] 12 utilisateurs Snowflake créés (`apprenant01` à `apprenant12`)
+- [ ] Rôle `SYSADMIN` accordé à chaque utilisateur
+- [ ] MFA bypass configuré (240 min)
+- [ ] Mots de passe web stockés dans Key Vault (`SnowflakePassword-APP01` etc.)
+
+### Azure AD (via `02-azuread-learners`)
+
+- [ ] `project/02-azuread-learners/terraform.tfvars` configuré
+- [ ] `terraform apply` exécuté avec succès
+- [ ] 12 utilisateurs Azure AD créés
+- [ ] Groupe `Data2AI-Learners` créé avec les 12 membres
+- [ ] Rôle `Reader` attribué au groupe sur la subscription
+
+### Azure DevOps (via `03-devops-setup`)
+
+- [ ] `project/03-devops-setup/terraform.tfvars` configuré
+- [ ] `terraform apply` exécuté avec succès
+- [ ] Projet `terraform-snowflake` créé
+- [ ] 12 entitlements assignés (license `express`)
+- [ ] Apprenants ajoutés au groupe `Contributors`
+- [ ] Service connection Azure créé (WIF)
+- [ ] Variable group `data-platform-secrets` lié au Key Vault
+
+### PATs (via `Set-SnowflakePATs.ps1`)
+
+- [ ] `Set-SnowflakePATs.ps1` exécuté avec succès
+- [ ] 12 PATs générés et stockés dans Key Vault (`SnowflakePAT-APP01` à `SnowflakePAT-APP12`)
+
+### Distribution
+
+- [ ] `secrets/shared-sp.txt` copié sur chaque VM apprenant
+- [ ] Dépôt `data-platform-starter` poussé sur GitHub
+- [ ] `config/shared.env` commité
+
+## 9. Architecture d'authentification
 
 ```mermaid
 flowchart TD
-    subgraph "Azure"
-        SP[SP partagé<br/>sp-data2ai-learners] -->|Contributor| SUB[Subscription]
-        SUB --> RG[rg-data2ai-tf-state]
-        RG --> SA[sadata2aitfstatemsn<br/>TLS 1.2, public blob access off<br/>versioning + soft-delete 7 j]
-        SP -->|Storage Blob Data Contributor<br/>scope compte ou conteneur| CONT[tfstate container]
-        SA --> CONT
+    subgraph "Terraform modules"
+        M0[00-bootstrap] -->|creates| RG[rg-data2ai-tf-state]
+        RG --> SA[sadata2aitfstatemsn]
+        RG --> KV[kvdata2aitfsecrets]
+        M0 -->|RBAC| SP[SP partagé<br/>Storage Blob + KV Secrets User]
+
+        M1[01-snowflake-learners] -->|creates| SF1[apprenant01-12<br/>SYSADMIN + MFA bypass]
+        M1 -->|stores passwords| KV
+
+        M2[02-azuread-learners] -->|creates| AAD1[apprenant01-12<br/>Azure AD users]
+        M2 -->|creates| GRP[Data2AI-Learners group]
+        M2 -->|RBAC Reader| SUB[Subscription]
+
+        M3[03-devops-setup] -->|creates| PROJ[ADO project]
+        M3 -->|assigns| ENT[12 entitlements]
+        M3 -->|links| VG[variable group → Key Vault]
     end
 
-    subgraph "Snowflake"
-        SF_ADMIN[ACCOUNTADMIN] -->|creates| L1[apprenant01<br/>SYSADMIN]
-        SF_ADMIN -->|creates| L2[apprenant02<br/>SYSADMIN]
-        SF_ADMIN -->|creates| L10[apprenant10<br/>SYSADMIN]
-        L1 -->|PAT| PAT1[PAT individuel]
-        L1 -->|Password| PWD1[Password web]
-    end
-
-    subgraph "Azure DevOps"
-        ADO[Organisation<br/>data2ai-tn] --> PROJ[terraform-snowflake]
-        PROJ -->|members| ADU[apprenant01-10<br/>Azure AD users]
+    subgraph "Script (PAT generation)"
+        S1[Set-SnowflakePATs.ps1] -->|ALTER USER| SF1
+        S1 -->|stores PATs| KV
     end
 
     subgraph "Learner VM"
-        ENV[.env] -->|reads| PREFIX[LEARNER_PREFIX=APP01]
-        SHARED[shared-sp.txt] -->|reads| LOGIN[Learner-Login.ps1]
-        LOGIN -->|sets| ARM[ARM_* vars]
-        LOGIN -->|sets| PREFIX
-        PATFILE[snowflake_pat.txt] -->|reads| SNOWC[New-SnowflakeConnection.ps1]
-        SNOWC -->|creates| CONN[training connection]
+        ENV[.env<br/>LEARNER_PREFIX] --> LOGIN[Learner-Login.ps1]
+        SHARED[shared-sp.txt] --> LOGIN
+        CONFIG[config/shared.env] --> LOGIN
+        LOGIN -->|az keyvault secret show| KV
+        KV -->|SnowflakePAT-APP01| LOGIN
+        LOGIN --> TFVAR[TF_VAR_snowflake_token]
     end
+```
+
+## 10. Flux d'exécution complet
+
+```mermaid
+sequenceDiagram
+    participant I as Instructor
+    participant TF as Terraform
+    participant SF as Snowflake
+    participant AAD as Azure AD
+    participant ADO as Azure DevOps
+    participant KV as Key Vault
+    participant S as Set-SnowflakePATs.ps1
+
+    I->>TF: 00-bootstrap apply
+    TF->>KV: Create Key Vault + RBAC
+    TF-->>I: key_vault_id, key_vault_name
+
+    I->>TF: 01-snowflake-learners apply
+    TF->>SF: Create 12 users + SYSADMIN + MFA bypass
+    TF->>KV: Store SnowflakePassword-APP01..APP12
+    TF-->>I: learner_usernames
+
+    I->>TF: 02-azuread-learners apply
+    TF->>AAD: Create 12 users + group
+    TF->>AAD: RBAC Reader on subscription
+    TF-->>I: learner_upns
+
+    I->>TF: 03-devops-setup apply
+    TF->>ADO: Create project + entitlements
+    TF->>ADO: Variable group → Key Vault
+    TF-->>I: project_id, variable_group_id
+
+    I->>S: Set-SnowflakePATs.ps1
+    S->>SF: ALTER USER ADD PROGRAMMATIC_ACCESS_TOKEN
+    SF-->>S: PAT token
+    S->>KV: Store SnowflakePAT-APP01..APP12
+    S-->>I: 12 PATs stored
+
+    I->>I: Distribute shared-sp.txt to VMs
+```
+
+## 11. Rotation et cleanup
+
+### Rotation des PATs
+
+```powershell
+# Re-exécuter le script génère de nouveaux PATs (les anciens restent valides jusqu'à expiration)
+.\scripts\Set-SnowflakePATs.ps1 -LearnerCount 12
+```
+
+### Refresh MFA bypass (toutes les 4 heures)
+
+```powershell
+cd project/01-snowflake-learners
+terraform apply
+```
+
+### Cleanup fin de formation
+
+```powershell
+# 1. Détruire les modules dans l'ordre inverse
+cd project/03-devops-setup && terraform destroy
+cd ../02-azuread-learners && terraform destroy
+cd ../01-snowflake-learners && terraform destroy
+cd ../00-bootstrap && terraform destroy
+
+# 2. Supprimer les PATs du Key Vault (si non détruit avec 00-bootstrap)
+foreach ($i in 1..12) {
+    $prefix = "APP{0:D2}" -f $i
+    az keyvault secret delete --vault-name kvdata2aitfsecrets --name "SnowflakePAT-$prefix"
+}
+
+# 3. Supprimer les VMs apprenants
 ```
 
 ## Suite

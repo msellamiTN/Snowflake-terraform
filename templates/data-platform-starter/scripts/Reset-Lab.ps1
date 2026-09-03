@@ -13,7 +13,7 @@
     Other labs' resources are untouched.
 
 .PARAMETER LearnerPrefix
-    Learner prefix (APP01, APP02, ... APP10).
+    Learner prefix (APP01, APP02, ... APP12).
 
 .PARAMETER Lab
     Lab identifier (M01, M02, ... M14). Case-insensitive.

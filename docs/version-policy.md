@@ -12,6 +12,7 @@ Ce document est la **source de vérité** des versions utilisées par la formati
 | `snowflakedb/snowflake` | 2.14.0 | `= 2.14.0` | Objets Snowflake | `terraform init` |
 | `hashicorp/azurerm` | 4.59.0 | `= 4.59.0` | Backend state et Key Vault | `terraform init` |
 | `microsoft/azuredevops` | 1.14.0 | `= 1.14.0` | Pipelines CI/CD as Code | `terraform init` |
+| `hashicorp/azuread` | 3.1.0 | `= 3.1.0` | Utilisateurs Azure AD (Entra ID) | `terraform init` |
 | `hashicorp/tls` | >= 4.0 | `>= 4.0` | Génération de clés RSA | `terraform init` |
 
 ### Pourquoi un épinglage strict
@@ -84,3 +85,30 @@ Une montée de version n'est jamais faite pendant une session de formation.
 ## Fonctions preview du provider Snowflake
 
 Certaines ressources nécessitent `preview_features_enabled`. Elles peuvent évoluer sans changement de version majeure. Toute ressource preview utilisée dans un support doit être explicitement signalée comme telle.
+
+## Ressources non disponibles en v2.14.0
+
+La ressource `snowflake_user_programmatic_access_token` (PAT via Terraform) est disponible
+depuis le provider **v2.17.0** (juillet 2025). En v2.14.0, les PAT sont générés par le script
+`Set-SnowflakePATs.ps1` puis stockés dans Azure Key Vault.
+
+Quand la politique passera à v2.17.0+, le script sera remplacé par :
+
+```hcl
+resource "snowflake_user_programmatic_access_token" "learner_pats" {
+  for_each = snowflake_user.learners
+  user     = each.value.name
+  name     = "TRAINING"
+}
+
+resource "azurerm_key_vault_secret" "learner_pats" {
+  for_each = snowflake_user_programmatic_access_token.learner_pats
+  name         = "SnowflakePAT-${each.key}"
+  value        = each.value.token
+  key_vault_id = var.key_vault_id
+}
+```
+
+Cette montée de version devra suivre la [procédure de mise à jour](#procédure-de-mise-à-jour)
+(branches dédiées, notes de version, test de tous les modules, vérification d'absence de plan
+de destruction inattendu).

@@ -73,7 +73,7 @@ aux apprenants de vérifier visuellement leurs ressources, le formateur crée de
 Le flux est :
 
 1. le **formateur** exécute `Add-SnowflakeLearners.ps1` (ou `add-snowflake-learners.sh`);
-2. le script crée 10 utilisateurs (`apprenant01` à `apprenant10`) avec rôle `SYSADMIN`;
+2. le script crée 12 utilisateurs (`apprenant01` à `apprenant12`) avec rôle `SYSADMIN`;
 3. les mots de passe respectent la politique Snowflake (14+ caractères, 1 chiffre, 1 majuscule, 1 minuscule);
 4. les mots de passe sont sauvegardés dans `secrets/learner-snowflake-passwords.txt` (gitignored);
 5. le **formateur** distribue chaque mot de passe à l'apprenant correspondant;

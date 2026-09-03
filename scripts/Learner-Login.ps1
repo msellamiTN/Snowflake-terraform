@@ -11,7 +11,7 @@
     No MFA required - service principals bypass MFA enforcement.
 
 .PARAMETER LearnerPrefix
-    Learner prefix for resource isolation (APP01, APP02, ... APP10).
+    Learner prefix for resource isolation (APP01, APP02, ... APP12).
     This is used in Snowflake resource names and Terraform state file paths.
 
 .PARAMETER SecretsFile

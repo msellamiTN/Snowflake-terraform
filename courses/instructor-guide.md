@@ -57,15 +57,20 @@ Objectif de répartition :
 
 La formation s’exécute sur l’environnement d’entreprise : compte Snowflake Enterprise unique, Azure et Azure DevOps.
 
+> `[IaC]` Le provisioning est **Infrastructure as Code** via 4 modules Terraform
+> (`00-bootstrap`, `01-snowflake-learners`, `02-azuread-learners`, `03-devops-setup`)
+> + 1 script (`Set-SnowflakePATs.ps1`). Voir [instructor-setup.md](day-00/instructor-setup.md).
+
 ### Snowflake
 
 Le formateur fournit hors Git, pour chaque participant :
 
-- organization et account;
-- utilisateur ou mécanisme d’identification individuel;
-- **préfixe apprenant unique** de 2 à 12 caractères;
-- PAT temporaire à expiration courte;
-- rôle initial suffisant pour DEV, sans droits sur PROD;
+- organization et account (via `config/shared.env`, committee);
+- utilisateur individuel (cree par `01-snowflake-learners`);
+- **préfixe apprenant unique** de 2 à 12 caracteres;
+- PAT temporaire stocke dans Key Vault (genere par `Set-SnowflakePATs.ps1`);
+- role initial `SYSADMIN` suffisant pour DEV, sans droits sur PROD;
+- MFA bypass de 240 minutes (rafraichissable via `terraform apply`);
 - date d’expiration et procédure de reset.
 
 Le bootstrap administratif est réalisé **avant** la formation. Aucun rôle d’administration ne devient le rôle quotidien de l’apprenant.
@@ -89,10 +94,19 @@ Le bootstrap administratif est réalisé **avant** la formation. Aucun rôle d�
 
 | Étape | Méthode | Règle |
 |---|---|---|
-| Day 0 à Jour 3 | PAT temporaire via profil Snowflake CLI | distribué hors Git, expiration courte |
+| Day 0 à Jour 3 | PAT temporaire stocké dans **Azure Key Vault** | récupéré par `Learner-Login.ps1` au runtime, fallback fichier local |
 | Jour 4 | Identité technique et JWT key-pair | clé privée stockée dans Key Vault |
-| Pipeline | Fédération d’identité Azure | aucun secret client stocké |
+| Pipeline | Fédération d’identité Azure (WIF) | aucun secret client stocké |
 | Bootstrap exceptionnel | rôle élevé | durée minimale, action délimitée, tracée |
+
+> `[IaC]` **Infrastructure as Code** : la préparation des apprenants est entièrement
+> Terraform (4 modules : `00-bootstrap`, `01-snowflake-learners`, `02-azuread-learners`,
+> `03-devops-setup`). Les PATs sont générés par `Set-SnowflakePATs.ps1` (le provider
+> Snowflake v2.14.0 n'a pas de ressource PAT — prévu en v2.17.0+).
+> Voir [instructor-setup.md](day-00/instructor-setup.md) pour la procédure complète.
+
+> `[SECURITY]` Les PATs sont stockés dans Azure Key Vault (`SnowflakePAT-APP01`, etc.)
+> et récupérés par `Learner-Login.ps1` avec `az keyvault secret show`.
 
 Une valeur secrète n’est jamais affichée sur projection, collée dans un ticket, ni incluse dans un rapport de validation. Le formateur ne collecte jamais le PAT ou la clé privée d’un participant.
 
