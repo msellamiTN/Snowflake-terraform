@@ -30,25 +30,85 @@ flowchart LR
 
 ## 📋 Prérequis
 
-- [ ] M2 terminé : le state est dans Azure Blob Storage;
-- [ ] `terraform state list` affiche 3 ressources;
+- [ ] M2 terminé : le state est dans Azure Blob Storage avec `use_azuread_auth = true`;
+- [ ] `terraform state list` affiche les ressources M1 (database, schemas, warehouse);
 - [ ] `snow sql -c training -q 'SHOW DATABASES'` fonctionne.
+
+## 🚀 Préflight
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+$env:TF_VAR_snowflake_password = (Get-Content .\secrets\snowflake_password.txt -Raw).Trim()
+cd .\environments\dev
+terraform version
+terraform state list
+terraform plan
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+cd "$HOME/Data2AI-Labs/data-platform"
+source ./scripts/learner-login.sh APP01
+export TF_VAR_snowflake_password=$(tr -d '[:space:]' < ./secrets/snowflake_password.txt)
+cd ./environments/dev
+terraform version
+terraform state list
+terraform plan
+```
+</details>
+
+✅ **Checkpoint préflight** : Terraform `v1.14.5`, ressources M1 listées, et `terraform plan` affiche `No changes`.
+
+> 🔒 **Security** : n'affichez jamais `ARM_CLIENT_SECRET`, `SNOWFLAKE_PASSWORD` ou `TF_VAR_snowflake_password`.
+
+> ⚠️ **IMPORTANT** : Si vous obtenez `Error acquiring the state lock`, un processus Terraform précédent a laissé un verrou. Voir [troubleshooting.md](troubleshooting.md) — utilisez `terraform force-unlock <LOCK_ID>` uniquement si aucun processus Terraform n'est actif.
 
 ## 📝 Partie 1 — Créer une ressource hors Terraform
 
 ### 📝 Étape 1.1 — Créer une database manuellement dans Snowflake
 
-```powershell
-snow sql -c training -q "CREATE DATABASE ABC_BROWNFIELD_DEV COMMENT = 'Created manually outside Terraform'"
-```
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
-Remplacez `ABC` par votre préfixe.
+```powershell
+snow sql -c training -q "CREATE DATABASE BROWNFIELD_DEV COMMENT = 'Created manually outside Terraform'"
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+snow sql -c training -q "CREATE DATABASE BROWNFIELD_DEV COMMENT = 'Created manually outside Terraform'"
+```
+</details>
+
+> 💡 **Note** : Si vous souhaitez personnaliser le nom, remplacez `BROWNFIELD_DEV` par votre propre convention, mais utilisez le même nom dans toutes les étapes suivantes.
 
 ### 📝 Étape 1.2 — Vérifier
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
-snow sql -c training -q "SHOW DATABASES LIKE 'ABC_BROWNFIELD_DEV'"
+snow sql -c training -q "SHOW DATABASES LIKE 'BROWNFIELD_DEV'"
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+snow sql -c training -q "SHOW DATABASES LIKE 'BROWNFIELD_DEV'"
+```
+</details>
 
 ✅ **Checkpoint 1** : une ligne avec votre database.
 
@@ -58,28 +118,55 @@ snow sql -c training -q "SHOW DATABASES LIKE 'ABC_BROWNFIELD_DEV'"
 
 ### 📝 Étape 2.1 — Ajouter un bloc resource vide
 
-Dans `environments/dev/main.tf`, ajoutez :
+Dans `environments/dev/main.tf`, ajoutez à la fin du fichier :
 
 ```hcl
 resource "snowflake_database" "brownfield" {
-  name = "${var.learner_prefix}_BROWNFIELD_${var.environment}"
+  name = "BROWNFIELD_DEV"
 }
 ```
 
+> 💡 **Note** : Utilisez le nom exact de la database créée à l'étape 1.1. Si vous l'avez personnalisée, adaptez la valeur.
+
 ### 📝 Étape 2.2 — Formater et valider
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform fmt
 terraform validate
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform fmt
+terraform validate
+```
+</details>
+
+✅ **Checkpoint** : `Success! The configuration is valid.`
 
 ### 📝 Étape 2.3 — Importer la ressource
 
-```powershell
-terraform import snowflake_database.brownfield ABC_BROWNFIELD_DEV
-```
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
-Remplacez `ABC` par votre préfixe.
+```powershell
+terraform import snowflake_database.brownfield BROWNFIELD_DEV
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform import snowflake_database.brownfield BROWNFIELD_DEV
+```
+</details>
 
 ✅ **Checkpoint 2** :
 
@@ -87,19 +174,45 @@ Remplacez `ABC` par votre préfixe.
 Import successful!
 ```
 
+> 🔍 **En cas de `Error acquiring the state lock`** : un précédent processus Terraform a laissé un verrou. Vérifiez qu'aucun `plan` ou `apply` n'est actif, puis exécutez `terraform force-unlock <LOCK_ID>` avec l'ID affiché dans le message d'erreur.
+
 ### 📝 Étape 2.4 — Vérifier le state
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform state list
 ```
+</details>
 
-✅ **Checkpoint** : 4 ressources, dont `snowflake_database.brownfield`.
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform state list
+```
+</details>
+
+✅ **Checkpoint** : la liste contient `snowflake_database.brownfield` en plus des ressources M1.
 
 ### 📝 Étape 2.5 — Générer la configuration
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform plan -generate-config-out=generated.tf
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform plan -generate-config-out=generated.tf
+```
+</details>
 
 Terraform compare le state et la configuration, puis génère un fichier avec les attributs réels de la ressource.
 
@@ -129,7 +242,7 @@ Votre `main.tf` devrait maintenant contenir :
 
 ```hcl
 resource "snowflake_database" "brownfield" {
-  name                        = "${var.learner_prefix}_BROWNFIELD_${var.environment}"
+  name                        = "BROWNFIELD_DEV"
   comment                     = "Created manually outside Terraform"
   data_retention_time_in_days = 1
 }
@@ -137,11 +250,25 @@ resource "snowflake_database" "brownfield" {
 
 ### 📝 Étape 2.7 — Formater, valider, planifier
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform fmt
 terraform validate
 terraform plan
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform fmt
+terraform validate
+terraform plan
+```
+</details>
 
 ✅ **Checkpoint 3** : `No changes. Your infrastructure matches the configuration.`
 
@@ -149,31 +276,79 @@ terraform plan
 
 ### 📝 Étape 3.1 — Modifier la ressource hors Terraform
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
-snow sql -c training -q "ALTER DATABASE ABC_BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
+snow sql -c training -q "ALTER DATABASE BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+snow sql -c training -q "ALTER DATABASE BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
+```
+</details>
 
 ### 📝 Étape 3.2 — Détecter la dérive
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform plan
 ```
+</details>
 
-✅ **Checkpoint** : Terraform détecte que le comment a changé et propose de le remettre à la valeur de la configuration.
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform plan
+```
+</details>
+
+✅ **Checkpoint** : Terraform détecte que le `comment` a changé et propose de le remettre à la valeur de la configuration.
 
 ### 📝 Étape 3.3 — Corriger la dérive
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform apply
 ```
+</details>
 
-✅ **Checkpoint** : Terraform remet le comment à la valeur définie dans `main.tf`.
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform apply
+```
+</details>
+
+✅ **Checkpoint** : Terraform remet le `comment` à la valeur définie dans `main.tf`.
 
 ### 📝 Étape 3.4 — Vérifier l'idempotence
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform plan
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform plan
+```
+</details>
 
 ✅ **Checkpoint 4** : `No changes.`
 
@@ -185,7 +360,7 @@ Renommez `snowflake_database.brownfield` en `snowflake_database.imported` :
 
 ```hcl
 resource "snowflake_database" "imported" {
-  name                        = "${var.learner_prefix}_BROWNFIELD_${var.environment}"
+  name                        = "BROWNFIELD_DEV"
   comment                     = "Created manually outside Terraform"
   data_retention_time_in_days = 1
 }
@@ -204,27 +379,65 @@ moved {
 
 ### 📝 Étape 4.3 — Planifier
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform plan
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform plan
+```
+</details>
 
 ✅ **Checkpoint** : `1 resource has been moved.` et `No changes.` — Terraform a déplacé la ressource dans le state sans la recréer.
 
 ### 📝 Étape 4.4 — Appliquer
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform apply
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform apply
+```
+</details>
 
 ### 📝 Étape 4.5 — Supprimer le bloc moved
 
 Une fois le move appliqué, supprimez le bloc `moved` de `main.tf`. Il n'est plus nécessaire.
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform fmt
 terraform validate
 terraform plan
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform fmt
+terraform validate
+terraform plan
+```
+</details>
 
 ✅ **Checkpoint 5** : `No changes.`
 
@@ -253,7 +466,20 @@ Critères :
 
 Si vous voulez supprimer la database brownfield :
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
-snow sql -c training -q "DROP DATABASE ABC_BROWNFIELD_DEV"
+snow sql -c training -q "DROP DATABASE BROWNFIELD_DEV"
 terraform state rm snowflake_database.imported
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+snow sql -c training -q "DROP DATABASE BROWNFIELD_DEV"
+terraform state rm snowflake_database.imported
+```
+</details>
