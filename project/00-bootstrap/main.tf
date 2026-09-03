@@ -156,12 +156,20 @@ resource "azurerm_key_vault_secret" "snowflake_role" {
   depends_on   = [azurerm_role_assignment.kv_admin]
 }
 
-resource "azurerm_key_vault_secret" "snowflake_password" {
-  name         = "SnowflakePassword"
-  value        = var.snowflake_password
+resource "azurerm_key_vault_secret" "snowflake_pat" {
+  name         = "SnowflakePAT"
+  value        = var.snowflake_pat
   key_vault_id = azurerm_key_vault.secrets.id
   depends_on   = [azurerm_role_assignment.kv_admin]
 }
+
+# Per-learner PAT secrets are created manually by the instructor:
+#   az keyvault secret set --vault-name kvdata2aitfsecrets \
+#     --name SnowflakePAT-APP01 --value "<PAT>"
+#
+# This avoids storing all PATs in Terraform state.
+# The snowflake_learner_prefixes variable is used only for documentation
+# and to trigger a reminder output.
 
 # â”€â”€â”€ ARM credentials secrets â”€â”€â”€
 
@@ -195,8 +203,20 @@ resource "azurerm_key_vault_secret" "arm_subscription_id" {
 
 # Grant Key Vault Secrets User to the WIF CI service principal
 resource "azurerm_role_assignment" "kv_secrets_user" {
+  count                = var.wif_service_principal_object_id != "" ? 1 : 0
   scope                = azurerm_key_vault.secrets.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = var.wif_service_principal_object_id
+  depends_on           = [azurerm_role_assignment.kv_admin]
+}
+
+# Grant Key Vault Secrets User to the shared learner service principal
+# so that Learner-Login.ps1 can retrieve the PAT at runtime.
+# The object ID is the same SP that has Storage Blob Data Contributor above.
+resource "azurerm_role_assignment" "kv_secrets_user_learner" {
+  count                = length(var.state_blob_contributor_object_ids)
+  scope                = azurerm_key_vault.secrets.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = var.state_blob_contributor_object_ids[count.index]
   depends_on           = [azurerm_role_assignment.kv_admin]
 }

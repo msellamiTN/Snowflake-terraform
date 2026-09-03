@@ -24,8 +24,8 @@ A la fin de ce lab :
 |---|---|---|---|
 | 0 | `Set-ExecutionPolicy` | Une seule fois | Autorise les scripts PowerShell (Windows) |
 | 1 | `Install-Tools.ps1` | Une seule fois | Installe Terraform, Snow CLI, dbt, tflint |
-| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + ecrit le PAT dans `secrets/snowflake_pat.txt` |
-| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + set ARM_* + set `TF_VAR_snowflake_token` depuis le PAT file |
+| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + ecrit le PAT dans `secrets/snowflake_pat.txt` (fallback) |
+| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + recupere le PAT depuis Key Vault + set `TF_VAR_snowflake_token` |
 | 4 | `Test-LabConnectivity.ps1` | Verification | Valide tous les acces (Snowflake + Azure + Git + Terraform) |
 
 ```powershell
@@ -45,8 +45,9 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 .\scripts\Test-LabConnectivity.ps1 -SkipDevOps
 ```
 
-> `[IMPORTANT]` `Learner-Login.ps1` doit etre execute **apres** `New-SnowflakeConnection.ps1`
-> car il lit le PAT dans `secrets/snowflake_pat.txt` pour set `TF_VAR_snowflake_token`.
+> `[IMPORTANT]` `Learner-Login.ps1` recupere le PAT depuis **Azure Key Vault**
+> (secret `SnowflakePAT-APP01` pour l'apprenant APP01). Si Key Vault est inaccessible,
+> il utilise `secrets/snowflake_pat.txt` comme fallback (cree par `New-SnowflakeConnection.ps1`).
 > Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
 
 ---
@@ -279,9 +280,12 @@ Ouvrez `.env` dans votre editeur. Mettez a jour uniquement :
 | Variable | Valeur |
 |---|---|
 | `LEARNER_PREFIX` | Votre prefixe apprenant (ex. `APP01`, fourni par le formateur) |
-| `SNOWFLAKE_PAT` | Votre PAT temporaire (fourni par le formateur) |
+| `ENVIRONMENT` | `DEV` (par defaut) |
 
-Les autres valeurs (organisation, compte, utilisateur, role, Azure, Azure DevOps) sont deja remplies par le formateur.
+La configuration partagee (organisation, compte, utilisateur, Azure, Key Vault) est dans
+`config/shared.env` (committee, chargee automatiquement par `Learner-Login.ps1`).
+
+Le PAT n'est **pas** dans `.env` — il est recupere depuis Azure Key Vault par `Learner-Login.ps1`.
 
 > Les identifiants Azure (service principal partage) sont dans `secrets/shared-sp.txt`.
 > Vous n'avez pas besoin de les copier dans `.env` — le script `Learner-Login` les lit automatiquement.
@@ -300,9 +304,10 @@ git check-ignore .env
 
 ## Etape 4 — Configurer la connexion Snowflake (20 min)
 
-> `[IMPORTANT]` Cette etape doit etre executee **avant** l'etape 5 (Learner-Login).
-> Le script `New-SnowflakeConnection.ps1` ecrit le PAT dans `secrets/snowflake_pat.txt`.
-> Le script `Learner-Login.ps1` (etape 5) lit ce fichier pour set `TF_VAR_snowflake_token`.
+> `[IMPORTANT]` Cette etape configure Snow CLI et cree un fichier PAT local.
+> Le PAT est ensuite stocke dans **Azure Key Vault** par le formateur
+> (secret `SnowflakePAT-APP01`) pour que `Learner-Login.ps1` puisse le recuperer.
+> Le fichier `secrets/snowflake_pat.txt` sert de **fallback** si Key Vault est inaccessible.
 
 Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de facon masquee.
 
@@ -377,9 +382,10 @@ pour acceder a l'interface web.
 ## Etape 5 — Authentifier Azure avec le service principal partage (10 min)
 
 > `[IMPORTANT]` Cette etape doit etre executee **apres** l'etape 4 (Snowflake).
-> Le script `Learner-Login.ps1` lit `secrets/snowflake_pat.txt` (cree a l'etape 4)
-> pour set `TF_VAR_snowflake_token`. Sans cela, `terraform plan` vous demandera
-> `var.snowflake_token` manuellement.
+> Le script `Learner-Login.ps1` recupere le PAT depuis **Azure Key Vault**
+> (secret `SnowflakePAT-APP01`) et definit `TF_VAR_snowflake_token` pour Terraform.
+> Si Key Vault est inaccessible, il utilise `secrets/snowflake_pat.txt` comme fallback.
+> Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
 
 Le formateur vous a fourni un fichier `secrets/shared-sp.txt` contenant les identifiants
 d'un **service principal partage**. Ce SP contourne l'authentification MFA d'Azure.
@@ -408,10 +414,13 @@ chmod +x scripts/learner-login.sh
 > Remplacez `APP01` par votre prefixe apprenant fourni par le formateur.
 
 Le script :
+- lit `config/shared.env` (config partagee, committee);
+- lit `.env` (valeurs personnelles : `LEARNER_PREFIX`);
 - lit `secrets/shared-sp.txt` (meme fichier pour tous les apprenants);
 - se connecte a Azure avec le service principal (pas de MFA);
 - definit les variables `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`;
-- lit `secrets/snowflake_pat.txt` et definit `TF_VAR_snowflake_token` pour Terraform;
+- recupere le PAT depuis **Azure Key Vault** (`SnowflakePAT-APP01`) et definit `TF_VAR_snowflake_token`;
+- fallback : si Key Vault est inaccessible, lit `secrets/snowflake_pat.txt`;
 - definit `LEARNER_PREFIX` pour l'isolation de vos ressources.
 
 **Checkpoint** :

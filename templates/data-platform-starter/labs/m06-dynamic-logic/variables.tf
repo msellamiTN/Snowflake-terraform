@@ -18,7 +18,7 @@ variable "snowflake_user" {
 
 variable "snowflake_token" {
   type        = string
-  description = "Snowflake PAT (optional - read from secrets/snowflake_pat.txt if not set)"
+  description = "Snowflake PAT (injected via TF_VAR_snowflake_token by Learner-Login.ps1 from Azure Key Vault)"
   sensitive   = true
   default     = ""
 }

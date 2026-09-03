@@ -103,11 +103,17 @@ variable "snowflake_role" {
   default     = "ACCOUNTADMIN"
 }
 
-variable "snowflake_password" {
+variable "snowflake_pat" {
   type        = string
-  description = "Snowflake password for training mode (stored in Key Vault)"
+  description = "Snowflake PAT for the shared training user (stored in Key Vault as SnowflakePAT). Per-learner PATs are stored as SnowflakePAT-APP01, SnowflakePAT-APP02, etc."
   sensitive   = true
   default     = ""
+}
+
+variable "snowflake_learner_prefixes" {
+  type        = list(string)
+  description = "List of learner prefixes (e.g. APP01, APP02) for per-learner PAT secrets in Key Vault. The instructor sets each secret manually via az keyvault secret set."
+  default     = []
 }
 
 variable "arm_client_id" {

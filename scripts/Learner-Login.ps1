@@ -62,15 +62,19 @@ if (-not (Test-Path $SecretsFile)) {
 }
 
 # ------------------------------------------------------------------
-# Load .env if it exists (for ARM_RESOURCE_GROUP, ARM_STORAGE_ACCOUNT, etc.)
+# Load config/shared.env first (committed, shared config — no secrets)
+# Then load .env (gitignored, per-learner personal values — overrides shared)
 # ------------------------------------------------------------------
 
-$envFile = Join-Path $projectRoot '.env'
-if (Test-Path $envFile) {
-    Write-Host "[INFO] Loading .env from $envFile" -ForegroundColor DarkGray
+function Load-EnvFile {
+    param([string]$Path, [hashtable]$EnvValues, [string]$Label)
 
-    # Detect BOM to avoid garbled content if .env was saved as UTF-16 or with BOM.
-    $bytes = [System.IO.File]::ReadAllBytes($envFile)
+    if (-not (Test-Path $Path)) { return }
+
+    Write-Host "[INFO] Loading $Label from $Path" -ForegroundColor DarkGray
+
+    # Detect BOM to avoid garbled content if saved as UTF-16 or with BOM.
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
     $encoding = 'UTF8'
     if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
         $encoding = 'Unicode'
@@ -78,20 +82,30 @@ if (Test-Path $envFile) {
         $encoding = 'UTF8'
     }
 
-    Get-Content $envFile -Encoding $encoding | ForEach-Object {
+    Get-Content $Path -Encoding $encoding | ForEach-Object {
         $line = $_.Trim()
         if ($line -and $line -notmatch '^#') {
             $sep = $line.IndexOf('=')
             if ($sep -gt 0) {
                 $key = $line.Substring(0, $sep).Trim()
                 $value = $line.Substring($sep + 1).Trim().Trim('"').Trim("'")
-                if ($key -and $value -and -not $envValues.ContainsKey($key)) {
-                    $envValues[$key] = $value
+                if ($key -and $value -and -not $EnvValues.ContainsKey($key)) {
+                    $EnvValues[$key] = $value
                     Set-Item -Path "env:$key" -Value $value
                 }
             }
         }
     }
+}
+
+# Load shared config first (lower priority)
+$sharedEnvPath = Join-Path $projectRoot 'config\shared.env'
+Load-EnvFile -Path $sharedEnvPath -EnvValues $envValues -Label "shared config"
+
+# Load .env second (higher priority — overrides shared values)
+$envFile = Join-Path $projectRoot '.env'
+if (Test-Path $envFile) {
+    Load-EnvFile -Path $envFile -EnvValues $envValues -Label ".env"
 
     # Warn if important Azure variables are still empty.
     $azureVars = @('ARM_RESOURCE_GROUP', 'ARM_STORAGE_ACCOUNT', 'ARM_CONTAINER', 'ARM_LOCATION')
@@ -178,19 +192,69 @@ $env:LEARNER_PREFIX = $LearnerPrefix
 
 # ------------------------------------------------------------------
 # Set TF_VAR_snowflake_token so Terraform can read the PAT without
-# prompting. The PAT is read from secrets/snowflake_pat.txt (written
-# by New-SnowflakeConnection.ps1). Never display or log the token.
+# prompting. The PAT is retrieved from Azure Key Vault at runtime.
+# Fallback: if Key Vault is unavailable, try secrets/snowflake_pat.txt.
+# Never display or log the token.
 # ------------------------------------------------------------------
-$patFile = Join-Path $projectRoot 'secrets\snowflake_pat.txt'
-if (Test-Path $patFile) {
-    $patValue = (Get-Content $patFile -Encoding UTF8 -Raw).Trim()
-    if ($patValue) {
+
+$patRetrieved = $false
+
+# --- Strategy 1: Azure Key Vault (preferred) ---
+$kvName = [Environment]::GetEnvironmentVariable('KEY_VAULT_NAME')
+if (-not $kvName) {
+    # Try loading from config/shared.env
+    $sharedEnv = Join-Path $projectRoot 'config\shared.env'
+    if (Test-Path $sharedEnv) {
+        Get-Content $sharedEnv | ForEach-Object {
+            $line = $_.Trim()
+            if ($line -and $line -notmatch '^#' -and $line -match '^KEY_VAULT_NAME=') {
+                $kvName = ($line -split '=', 2)[1].Trim()
+            }
+        }
+    }
+}
+
+if ($kvName) {
+    $secretName = "SnowflakePAT-$LearnerPrefix"
+    Write-Host "[INFO] Retrieving PAT from Key Vault: $kvName / $secretName" -ForegroundColor DarkGray
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'SilentlyContinue'
+    $patValue = & az keyvault secret show --vault-name $kvName --name $secretName --query value -o tsv 2>$null
+    $kvExit = $LASTEXITCODE
+    $ErrorActionPreference = $prevEAP
+
+    if ($kvExit -eq 0 -and $patValue) {
         $env:TF_VAR_snowflake_token = $patValue
-        Write-Host '       TF_VAR_snowflake_token (from PAT file)' -ForegroundColor DarkGray
+        $patRetrieved = $true
+        Write-Host '       TF_VAR_snowflake_token (from Key Vault)' -ForegroundColor DarkGray
+    } else {
+        Write-Host "[WARN] Key Vault secret '$secretName' not found or inaccessible." -ForegroundColor Yellow
+        Write-Host "       Instructor: run az keyvault secret set --vault-name $kvName --name $secretName --value <PAT>" -ForegroundColor DarkGray
     }
 } else {
-    Write-Host '[WARN] secrets/snowflake_pat.txt not found - terraform will prompt for var.snowflake_token' -ForegroundColor Yellow
-    Write-Host '       Run .\scripts\New-SnowflakeConnection.ps1 first.' -ForegroundColor DarkGray
+    Write-Host '[WARN] KEY_VAULT_NAME not set. Cannot retrieve PAT from Key Vault.' -ForegroundColor Yellow
+    Write-Host '       Add KEY_VAULT_NAME to config/shared.env or .env' -ForegroundColor DarkGray
+}
+
+# --- Strategy 2: Fallback to local file (backward compatibility) ---
+if (-not $patRetrieved) {
+    $patFile = Join-Path $projectRoot 'secrets\snowflake_pat.txt'
+    if (Test-Path $patFile) {
+        $patValue = (Get-Content $patFile -Encoding UTF8 -Raw).Trim()
+        if ($patValue) {
+            $env:TF_VAR_snowflake_token = $patValue
+            $patRetrieved = $true
+            Write-Host '       TF_VAR_snowflake_token (from local PAT file fallback)' -ForegroundColor DarkGray
+        }
+    }
+}
+
+if (-not $patRetrieved) {
+    Write-Host '[WARN] PAT not found. Terraform will prompt for var.snowflake_token.' -ForegroundColor Yellow
+    Write-Host '       Fix: ask instructor to set SnowflakePAT-' -NoNewline -ForegroundColor DarkGray
+    Write-Host "$LearnerPrefix" -NoNewline -ForegroundColor Cyan
+    Write-Host ' in Key Vault' -ForegroundColor DarkGray
+    Write-Host '       Or:  run .\scripts\New-SnowflakeConnection.ps1 to create a local PAT file' -ForegroundColor DarkGray
 }
 
 Write-Host '[PASS] Environment variables set:' -ForegroundColor Green
