@@ -20,8 +20,17 @@
 > ```
 >
 > Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
-> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
-> vous demandera `var.snowflake_token` manuellement.
+> et les variables `ARM_*` pour Terraform.
+>
+> Avant `terraform plan`, verifiez que tout est pret :
+>
+> ```powershell
+> cd environments\dev
+> ..\..\scripts\Test-TerraformReady.ps1
+> ```
+>
+> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m01.tfplan"`.
+> Sinon, suivez les corrections indiquees.
 
 ## 🎯 Mission
 

@@ -56,6 +56,49 @@ Puis relancez `terraform plan` et `terraform apply`.
 > L'import de ressources existantes est couvert au **M3** (import-brownfield).
 > Ne pas utiliser `terraform import` en M1.
 
+## `terraform plan` demande `var.snowflake_token`
+
+**Symptome :**
+
+```text
+var.snowflake_token
+  Snowflake PAT (read from secrets/snowflake_pat.txt)
+
+  Enter a value:
+```
+
+**Cause :**
+
+Le PAT n'est pas accessible. Le `provider.tf` lit `secrets/snowflake_pat.txt`
+automatiquement, mais le fichier n'existe pas ou est vide.
+
+**Correction :**
+
+```powershell
+# 1. Verifier que le PAT file existe
+cd "$HOME\Data2AI-Labs\data-platform"
+Test-Path secrets\snowflake_pat.txt
+
+# 2. Si absent, recreer la connexion Snowflake
+.\scripts\New-SnowflakeConnection.ps1
+
+# 3. Relancer Learner-Login (set TF_VAR_snowflake_token)
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+
+# 4. Pre-flight check
+cd environments\dev
+..\..\scripts\Test-TerraformReady.ps1
+
+# 5. Si READY, relancer terraform plan
+terraform plan -out "m01.tfplan"
+```
+
+> Si le pre-flight affiche `READY` mais terraform plan demande encore le token,
+> settez la variable manuellement :
+> ```powershell
+> $env:TF_VAR_snowflake_token = (Get-Content ..\..\secrets\snowflake_pat.txt -Raw).Trim()
+> ```
+
 ---
 
 ## Execution policy PowerShell
