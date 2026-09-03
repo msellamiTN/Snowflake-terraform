@@ -1,12 +1,14 @@
-# Exemple de référence uniquement : construisez vous-même backend.tf pendant le lab.
-# Remplacez APP01 par votre préfixe apprenant.
-#
+# Uncomment and configure after running 00-bootstrap
+# Replace <team> with your team name (e.g. team-alpha)
 # terraform {
 #   backend "azurerm" {
-#     resource_group_name  = "rg-data2ai-tf-state"
-#     storage_account_name = "sadata2aitfstatemsn"
+#     resource_group_name  = "rg-wevops-tf-state"
+#     storage_account_name = "sawevopstfstate"
 #     container_name       = "tfstate"
-#     key                  = "training/APP01/dev/terraform.tfstate"
-#     use_azuread_auth     = true
+#     key                  = "training/<team>/dev/02-day1-state.tfstate"
 #   }
 # }
+#
+# Alternative: use a partial backend config file (gitignored)
+#   terraform init -backend-config=backend.hcl
+# See backend.hcl.template at project root for the format.

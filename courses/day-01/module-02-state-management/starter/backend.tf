@@ -1,3 +1,8 @@
-# Le backend est volontairement absent du starter.
-# Pendant le lab M2, construisez ici le bloc terraform/backend "azurerm",
-# puis migrez le state local produit au M1 vers Azure Blob Storage.
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-data2ai-tf-state"
+    storage_account_name = "sadata2aitfstatemsn"
+    container_name       = "tfstate"
+    key                  = "training/student/dev/02-day1-state.tfstate"
+  }
+}

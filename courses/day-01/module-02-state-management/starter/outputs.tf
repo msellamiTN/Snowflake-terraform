@@ -1,14 +1,14 @@
-output "database_name" {
+output "raw_database_name" {
   value       = snowflake_database.raw.name
-  description = "Database created by the learner"
+  description = "Raw layer database name"
 }
 
-output "schema_name" {
-  value       = snowflake_schema.ingestion.name
-  description = "Schema created inside the database"
-}
-
-output "warehouse_name" {
+output "etl_warehouse_name" {
   value       = snowflake_warehouse.etl.name
-  description = "Cost-controlled training warehouse"
+  description = "ETL warehouse name"
+}
+
+output "schema_names" {
+  value       = [for s in snowflake_schema.raw : s.name]
+  description = "List of created schema names"
 }

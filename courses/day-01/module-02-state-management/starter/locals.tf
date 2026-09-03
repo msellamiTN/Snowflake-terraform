@@ -1,6 +1,6 @@
 locals {
-  database_name  = "${var.learner_prefix}_RAW_${var.environment}"
-  schema_name    = "INGESTION"
-  warehouse_name = "WH_${var.learner_prefix}_ETL_${var.environment}"
-  common_comment = "Managed by Terraform | Training | ${var.learner_prefix}"
+  db_raw_name = "DB_RAW_${var.environment}"
+  wh_etl_name = "WH_ETL_${var.environment}"
+
+  common_comment = "Managed by Terraform | ${var.project} | ${var.environment}"
 }
