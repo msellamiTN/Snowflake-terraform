@@ -74,11 +74,14 @@ terraform plan
 
 ### 📝 Étape 1.1 — Créer une database manuellement dans Snowflake
 
+Chaque apprenant utilise son préfixe pour éviter les conflits de noms dans le compte Snowflake partagé. Remplacez `APP01` par votre préfixe.
+
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-snow sql -c training -q "CREATE DATABASE BROWNFIELD_DEV COMMENT = 'Created manually outside Terraform'"
+$brownfieldDb = "DB_${env:LEARNER_PREFIX}_BROWNFIELD_DEV"
+snow sql -c training -q "CREATE DATABASE $brownfieldDb COMMENT = 'Created manually outside Terraform'"
 ```
 </details>
 
@@ -86,11 +89,12 @@ snow sql -c training -q "CREATE DATABASE BROWNFIELD_DEV COMMENT = 'Created manua
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-snow sql -c training -q "CREATE DATABASE BROWNFIELD_DEV COMMENT = 'Created manually outside Terraform'"
+brownfield_db="DB_${LEARNER_PREFIX}_BROWNFIELD_DEV"
+snow sql -c training -q "CREATE DATABASE ${brownfield_db} COMMENT = 'Created manually outside Terraform'"
 ```
 </details>
 
-> 💡 **Note** : Si vous souhaitez personnaliser le nom, remplacez `BROWNFIELD_DEV` par votre propre convention, mais utilisez le même nom dans toutes les étapes suivantes.
+> 💡 **Note** : Avec le préfixe `APP01`, la database s'appelle `DB_APP01_BROWNFIELD_DEV`. Utilisez le même nom dans toutes les étapes suivantes.
 
 ### 📝 Étape 1.2 — Vérifier
 
@@ -98,7 +102,7 @@ snow sql -c training -q "CREATE DATABASE BROWNFIELD_DEV COMMENT = 'Created manua
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-snow sql -c training -q "SHOW DATABASES LIKE 'BROWNFIELD_DEV'"
+snow sql -c training -q "SHOW DATABASES LIKE 'DB_${env:LEARNER_PREFIX}_BROWNFIELD_DEV'"
 ```
 </details>
 
@@ -106,11 +110,11 @@ snow sql -c training -q "SHOW DATABASES LIKE 'BROWNFIELD_DEV'"
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-snow sql -c training -q "SHOW DATABASES LIKE 'BROWNFIELD_DEV'"
+snow sql -c training -q "SHOW DATABASES LIKE 'DB_${LEARNER_PREFIX}_BROWNFIELD_DEV'"
 ```
 </details>
 
-✅ **Checkpoint 1** : une ligne avec votre database.
+✅ **Checkpoint 1** : une ligne avec votre database (par exemple `DB_APP01_BROWNFIELD_DEV`).
 
 > 💡 **Note** : Cette ressource existe dans Snowflake mais **pas** dans le state Terraform. C'est une ressource brownfield.
 
@@ -118,11 +122,11 @@ snow sql -c training -q "SHOW DATABASES LIKE 'BROWNFIELD_DEV'"
 
 ### 📝 Étape 2.1 — Ajouter un bloc resource vide
 
-Dans `environments/dev/main.tf`, ajoutez à la fin du fichier :
+Dans `environments/dev/main.tf`, ajoutez à la fin du fichier. Remplacez `APP01` par votre préfixe :
 
 ```hcl
 resource "snowflake_database" "brownfield" {
-  name = "BROWNFIELD_DEV"
+  name = "DB_APP01_BROWNFIELD_DEV"
 }
 ```
 
@@ -156,7 +160,7 @@ terraform validate
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-terraform import snowflake_database.brownfield BROWNFIELD_DEV
+terraform import snowflake_database.brownfield "DB_${env:LEARNER_PREFIX}_BROWNFIELD_DEV"
 ```
 </details>
 
@@ -164,7 +168,7 @@ terraform import snowflake_database.brownfield BROWNFIELD_DEV
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-terraform import snowflake_database.brownfield BROWNFIELD_DEV
+terraform import snowflake_database.brownfield "DB_${LEARNER_PREFIX}_BROWNFIELD_DEV"
 ```
 </details>
 
@@ -238,11 +242,11 @@ rm generated.tf
 ```
 </details>
 
-Votre `main.tf` devrait maintenant contenir :
+Votre `main.tf` devrait maintenant contenir (avec votre préfixe) :
 
 ```hcl
 resource "snowflake_database" "brownfield" {
-  name                        = "BROWNFIELD_DEV"
+  name                        = "DB_APP01_BROWNFIELD_DEV"
   comment                     = "Created manually outside Terraform"
   data_retention_time_in_days = 1
 }
@@ -280,7 +284,7 @@ terraform plan
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-snow sql -c training -q "ALTER DATABASE BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
+snow sql -c training -q "ALTER DATABASE DB_${env:LEARNER_PREFIX}_BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
 ```
 </details>
 
@@ -288,7 +292,7 @@ snow sql -c training -q "ALTER DATABASE BROWNFIELD_DEV SET COMMENT = 'Modified o
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-snow sql -c training -q "ALTER DATABASE BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
+snow sql -c training -q "ALTER DATABASE DB_${LEARNER_PREFIX}_BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'"
 ```
 </details>
 
@@ -360,7 +364,7 @@ Renommez `snowflake_database.brownfield` en `snowflake_database.imported` :
 
 ```hcl
 resource "snowflake_database" "imported" {
-  name                        = "BROWNFIELD_DEV"
+  name                        = "DB_APP01_BROWNFIELD_DEV"
   comment                     = "Created manually outside Terraform"
   data_retention_time_in_days = 1
 }
@@ -470,7 +474,7 @@ Si vous voulez supprimer la database brownfield :
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-snow sql -c training -q "DROP DATABASE BROWNFIELD_DEV"
+snow sql -c training -q "DROP DATABASE DB_${env:LEARNER_PREFIX}_BROWNFIELD_DEV"
 terraform state rm snowflake_database.imported
 ```
 </details>
@@ -479,7 +483,7 @@ terraform state rm snowflake_database.imported
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-snow sql -c training -q "DROP DATABASE BROWNFIELD_DEV"
+snow sql -c training -q "DROP DATABASE DB_${LEARNER_PREFIX}_BROWNFIELD_DEV"
 terraform state rm snowflake_database.imported
 ```
 </details>

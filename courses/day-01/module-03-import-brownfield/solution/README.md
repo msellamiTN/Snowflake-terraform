@@ -4,7 +4,7 @@
 
 | Technique | Source |
 |-----------|--------|
-| `terraform import` | Sur la database `BROWNFIELD_DEV` créée manuellement au début du lab |
+| `terraform import` | Sur la database `DB_<PREFIX>_BROWNFIELD_DEV` créée manuellement au début du lab |
 | Blocs `moved {}` | Ajoutés à `main.tf` pendant le lab |
 | `terraform state mv` | Commandes de manipulation du state (alternative au bloc `moved`) |
 
@@ -13,7 +13,7 @@
 | Élément | Valeur attendue |
 |---|---|
 | Dossier de travail | `environments/dev/` |
-| Ressource brownfield | `snowflake_database.brownfield` → importée depuis `BROWNFIELD_DEV` |
+| Ressource brownfield | `snowflake_database.brownfield` → importée depuis `DB_<PREFIX>_BROWNFIELD_DEV` |
 | Génération de config | `terraform plan -generate-config-out=generated.tf` |
 | Bloc moved | `snowflake_database.brownfield` → `snowflake_database.imported` |
 | Plan final | `No changes` |
@@ -28,7 +28,7 @@
 ## Checklist formateur
 
 - [ ] Le préflight vérifie Terraform `v1.14.5` et `No changes` sur le state M2
-- [ ] La database `BROWNFIELD_DEV` est créée manuellement hors Terraform
+- [ ] La database `DB_<PREFIX>_BROWNFIELD_DEV` est créée manuellement hors Terraform (préfixe par apprenant)
 - [ ] L'import utilise le bon nom de database
 - [ ] `generated.tf` est intégré dans `main.tf` puis supprimé
 - [ ] La dérive est détectée par `plan` puis corrigée par `apply`

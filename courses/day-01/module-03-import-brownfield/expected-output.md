@@ -13,15 +13,16 @@ terraform plan
 ## Création de la ressource brownfield
 
 ```bash
-snow sql -c training -q "SHOW DATABASES LIKE 'BROWNFIELD_DEV'"
+# Remplacez APP01 par votre préfixe
+snow sql -c training -q "SHOW DATABASES LIKE 'DB_APP01_BROWNFIELD_DEV'"
 ```
 
-**Attendu :** une ligne avec la database `BROWNFIELD_DEV`.
+**Attendu :** une ligne avec votre database (par exemple `DB_APP01_BROWNFIELD_DEV`).
 
 ## Import
 
 ```bash
-terraform import snowflake_database.brownfield BROWNFIELD_DEV
+terraform import snowflake_database.brownfield DB_APP01_BROWNFIELD_DEV
 ```
 
 **Attendu :**
@@ -60,7 +61,7 @@ No changes. Your infrastructure matches the configuration.
 
 ## Détection de dérive
 
-Après `ALTER DATABASE BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'` :
+Après `ALTER DATABASE DB_APP01_BROWNFIELD_DEV SET COMMENT = 'Modified outside Terraform'` :
 
 ```bash
 terraform plan

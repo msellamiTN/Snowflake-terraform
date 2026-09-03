@@ -34,7 +34,7 @@ flowchart LR
 ## Slide 4 — terraform import (classique)
 
 ```bash
-terraform import snowflake_database.brownfield BROWNFIELD_DEV
+terraform import snowflake_database.brownfield DB_APP01_BROWNFIELD_DEV
 ```
 
 Format : `terraform import <address> <id_snowflake>`
