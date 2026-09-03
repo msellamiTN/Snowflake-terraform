@@ -227,5 +227,6 @@ if (Test-Path $localTerraform) {
     $tfVersion = & $localTerraform version 2>&1 | Select-Object -First 1
     Write-Host "       terraform version -> $tfVersion" -ForegroundColor DarkGray
 } else {
-    Write-Host '       terraform.exe not found in .data2ai\bin - run Install-Tools.ps1 if needed' -ForegroundColor DarkGray
+    Write-Host '[WARN] terraform.exe not found in .data2ai\bin' -ForegroundColor Yellow
+    Write-Host '       Run: .\scripts\Install-Tools.ps1' -ForegroundColor Yellow
 }

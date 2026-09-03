@@ -29,7 +29,7 @@
 > ..\..\scripts\Test-TerraformReady.ps1
 > ```
 >
-> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m01.tfplan"`.
+> Si le pre-flight affiche `READY`, lancez `terraform plan -out "m05.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
 ## 🎯 Mission
@@ -234,36 +234,71 @@ module "landing_zone" {
 | warehouse_name | ETL warehouse name |
 ```
 
-### 📝 Étape 1.7 — Formater et valider le module
+### 📝 Étape 1.7 — Initialiser, formater et valider le module
+
+> `[IMPORTANT]` Vous devez créer **tous les fichiers du module** (variables.tf, main.tf,
+> outputs.tf, versions.tf) **avant** cette étape. Si un fichier manque, `terraform validate`
+> échouera avec des erreurs de référence.
 
 ```bash
 cd modules/landing-zone
+terraform init
 terraform fmt
 terraform validate
 ```
 
 ✅ **Checkpoint** : `The configuration is valid.`
 
-> 💡 **Note** : Un module n'a pas de `provider` block ni de `backend` block. Il déclare seulement les contraintes et les ressources.
+> 💡 **Note** : Un module n'a pas de `provider` block ni de `backend` block. Il déclare seulement les contraintes et les ressources. `terraform init` télécharge le provider pour permettre la validation.
+
+> ⚠️ **IMPORTANT** : Ne lancez **pas** `terraform init` dans `environments/dev/` tant que
+> la Partie 2 n'est pas terminée. Un module incomplet référencé depuis `environments/dev/`
+> provoquera des erreurs `Reference to undeclared resource`.
 
 ## 📝 Partie 2 — Appeler le module depuis environments/dev
 
+> `[IMPORTANT]` Cette partie modifie `environments/dev/main.tf`, `locals.tf` ET `outputs.tf`.
+> Vous devez faire **toutes les étapes 2.1 à 2.4** avant de lancer `terraform init`.
+> Si vous lancez `terraform init` après seulement l'étape 2.1, Terraform détectera
+> le module mais les anciens outputs de M4 référenceront des ressources qui n'existent plus.
+
 ### 📝 Étape 2.1 — Réécrire `environments/dev/main.tf`
 
-Remplacez tout le contenu de `environments/dev/main.tf` par :
+**Remplacez tout le contenu** de `environments/dev/main.tf` par :
 
 ```hcl
 module "landing_zone" {
-  source              = "../../modules/landing-zone"
-  learner_prefix      = var.learner_prefix
-  environment         = var.environment
-  warehouse_size      = var.warehouse_size
-  data_retention_days = var.data_retention_days
+  source               = "../../modules/landing-zone"
+  learner_prefix       = var.learner_prefix
+  environment          = var.environment
+  warehouse_size       = var.warehouse_size
+  data_retention_days  = var.data_retention_days
   auto_suspend_seconds = var.auto_suspend_seconds
 }
 ```
 
-### 📝 Étape 2.2 — Mettre à jour `environments/dev/outputs.tf`
+> Les ressources M1 (database, schema, warehouse) sont maintenant dans le module.
+> `environments/dev/main.tf` ne contient plus que l'appel du module.
+
+### 📝 Étape 2.2 — Nettoyer `environments/dev/locals.tf`
+
+Les locals (`database_name`, `schema_name`, `warehouse_name`, `common_comment`, `retention`, `suspend`)
+étaient utilisés par les ressources M1 qui sont maintenant dans le module.
+**Supprimez le contenu** de `environments/dev/locals.tf` (laissez-le vide ou supprimez le fichier) :
+
+```powershell
+Remove-Item environments\dev\locals.tf
+```
+
+> Si vous gardez les anciens locals, Terraform affichera des warnings `unused local`.
+
+### 📝 Étape 2.3 — Remplacer `environments/dev/outputs.tf`
+
+**Remplacez tout le contenu** de `environments/dev/outputs.tf` par :
+
+> `[IMPORTANT]` Les outputs de M4 (`resource_summary`, `connection_info`) sont remplacés
+> par les outputs du module. Si vous gardez les anciens outputs, vous aurez une erreur
+> `Duplicate output definition`.
 
 ```hcl
 output "database_name" {
@@ -290,7 +325,7 @@ output "resource_summary" {
 }
 ```
 
-### 📝 Étape 2.3 — Formater et initialiser
+### 📝 Étape 2.4 — Formater et initialiser
 
 ```bash
 cd environments/dev
@@ -300,7 +335,7 @@ terraform init
 
 Terraform télécharge le module local.
 
-### 📝 Étape 2.4 — Planifier
+### 📝 Étape 2.5 — Planifier
 
 ```bash
 terraform plan

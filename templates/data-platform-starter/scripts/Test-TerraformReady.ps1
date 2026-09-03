@@ -87,11 +87,26 @@ if ($env:ARM_SUBSCRIPTION_ID) {
 }
 
 # 6. Check terraform is available
-$tfVersion = & terraform version 2>&1 | Select-Object -First 1
-if ($LASTEXITCODE -eq 0) {
-    Check-Ok "Terraform: $tfVersion"
+# Try terraform in PATH, then fall back to .data2ai\bin\terraform.exe
+$tfExe = Get-Command terraform -ErrorAction SilentlyContinue
+if (-not $tfExe) {
+    $localTf = Join-Path $HOME '.data2ai\bin\terraform.exe'
+    if (Test-Path $localTf) {
+        $env:PATH = "$HOME\.data2ai\bin;$env:PATH"
+        $tfExe = Get-Command terraform -ErrorAction SilentlyContinue
+    }
+}
+
+if ($tfExe) {
+    $tfVersion = & terraform version 2>&1 | Select-Object -First 1
+    if ($LASTEXITCODE -eq 0) {
+        Check-Ok "Terraform: $tfVersion"
+    } else {
+        Check-Fail "Terraform found but 'terraform version' failed"
+    }
 } else {
-    Check-Fail "Terraform not found in PATH"
+    Check-Fail "Terraform not found in PATH or .data2ai\bin"
+    Write-Host "       Run: .\scripts\Install-Tools.ps1" -ForegroundColor DarkGray
 }
 
 # 7. Check terraform init was run
