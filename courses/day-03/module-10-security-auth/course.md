@@ -1,5 +1,7 @@
 ﻿# Module 10 ? Cours : Sécurité et Authentification
 
+> [<- Jour 3](../README.md) · [<- Module precedent](../module-09-snowflake-advanced/lab.md) · **Module 10** · [Jour 4 ->](../../day-04/README.md)
+
 ## Contexte métier
 
 Une identité partagée avec mot de passe empêche l'attribution des actions et augmente le risque de compromission. JWT, Key Vault et rotation séparent identité, secret et autorisation.

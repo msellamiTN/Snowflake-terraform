@@ -1,5 +1,7 @@
 ﻿# Dépannage — M10 : Sécurité & Authentification
 
+> [<- Jour 3](../README.md) · [<- Module precedent](../module-09-snowflake-advanced/lab.md) · **Module 10** · [Jour 4 ->](../../day-04/README.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `tls_private_key` dans le state | Attendu en formation ; la production utilise Key Vault | Utiliser le module `key-vault-rsa` qui stocke la clé dans Key Vault, pas dans les outputs |

@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M3 — Import brownfield et alignement Terraform
 
+> [<- Jour 1](../README.md) · [<- Module precedent](../module-02-state-management/lab.md) · **Module 3** · [Module suivant ->](../module-04-variables-outputs/lab.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 60 min |

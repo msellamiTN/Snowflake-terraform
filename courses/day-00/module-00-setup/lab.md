@@ -1,8 +1,8 @@
 # Lab Jour 0 — Préparer votre environnement
 
-**Duree cible : 1 h 30**
+> [<- Jour 0](../README.md) · **M00 Setup** · [Jour 1 ->](../../day-01/module-01-iac-workflow/lab.md)
 
-**Retour au parcours :** [Jour 0 — Commencer ici](../README.md)
+**Duree cible : 1 h 30**
 
 ## Resultat attendu
 

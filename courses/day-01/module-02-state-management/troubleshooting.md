@@ -1,5 +1,7 @@
 ﻿# Dépannage — M2 : Gestion du State
 
+> [<- Jour 1](../README.md) · [<- Module precedent](../module-01-iac-workflow/lab.md) · **Module 2** · [Module suivant ->](../module-03-import-brownfield/lab.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `terraform init -migrate-state` échoue : `storage account not found` | Mauvais nom de compte de stockage | Vérifier que `backend.tf` contient le bon `storage_account_name` (`sadata2aitfstatemsn`) |

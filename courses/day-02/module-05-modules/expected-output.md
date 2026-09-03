@@ -1,5 +1,7 @@
 ﻿# Résultat attendu — M5 : Modules & Git Registry
 
+> [<- Jour 2](../README.md) · [<- Jour 1](../../day-01/README.md) · **Module 05** · [Module suivant ->](../module-06-dynamic-logic/lab.md)
+
 ## Structure des modules
 ```bash
 ls project/03-day2-modules/modules/

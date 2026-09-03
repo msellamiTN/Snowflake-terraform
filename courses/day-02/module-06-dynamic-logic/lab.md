@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M6 — Déploiement dynamique avec `for_each`, `for` et `dynamic`
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-05-modules/lab.md) · **Module 06** · [Module suivant ->](../module-07-cicd-pipeline/lab.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 60 min |

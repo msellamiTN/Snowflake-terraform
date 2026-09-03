@@ -1,5 +1,7 @@
 ﻿# Module 6 : Cours : Logique Dynamique
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-05-modules/lab.md) · **Module 06** · [Module suivant ->](../module-07-cicd-pipeline/lab.md)
+
 ## Contexte métier
 
 La plateforme doit absorber de nouveaux schémas, warehouses et domaines sans dupliquer le code. Les collections typées rendent le déploiement piloté par métadonnées.

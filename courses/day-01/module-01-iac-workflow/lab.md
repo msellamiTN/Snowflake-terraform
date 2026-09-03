@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M1 — Créer votre premier projet Terraform Snowflake
 
+> [<- Jour 1](../README.md) · [<- Jour 0](../../day-00/README.md) · **Module 1** · [Module suivant ->](../module-02-state-management/lab.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 3 heures |

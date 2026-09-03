@@ -1,5 +1,7 @@
 ﻿# Module 8 : Cours : Gestion des environnements
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-07-cicd-pipeline/lab.md) · **Module 08** · [Jour 3 ->](../../day-03/README.md)
+
 ## Contexte métier
 
 DEV, TEST et PROD ont des risques, coûts et rythmes différents. Leur isolation de state et de nommage évite les collisions tout en conservant un code commun.

@@ -1,5 +1,7 @@
 ﻿# Dépannage — M6 : Logique dynamique & for_each
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-05-modules/lab.md) · **Module 06** · [Module suivant ->](../module-07-cicd-pipeline/lab.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `terraform plan` échoue : `invalid for_each argument` | for_each sur un type non-map/list | S'assurer que `for_each` utilise `var.schemas` (set) ou `var.warehouses` (map) |

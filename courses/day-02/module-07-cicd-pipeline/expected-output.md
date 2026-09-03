@@ -1,5 +1,7 @@
 ﻿# Résultat attendu — M7 : Pipeline CI/CD (Azure DevOps)
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-06-dynamic-logic/lab.md) · **Module 07** · [Module suivant ->](../module-08-environments/lab.md)
+
 ## Déclenchement du pipeline
 Créer une PR vers `main` avec des modifications dans `project/05-capstone/**`, `project/03-day2-modules/modules/**` ou `azure-pipelines.yml`.
 **Attendu :** Le pipeline déclenche les stages `Validate` → `Plan`.

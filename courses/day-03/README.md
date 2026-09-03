@@ -1,22 +1,37 @@
-﻿# Jour 4 — Sécurité, RBAC et identité technique
+﻿# Jour 3 — Securite et RBAC Snowflake
 
-> Ce dossier historique porte le nom `day-03`. Dans le parcours officiel de 5 jours, son contenu correspond au **Jour 4**.
+**Objectif :** Appliquer le moindre privilege avec une identite verifiable et une ingestion securisee.
 
-**Objectif :** appliquer le moindre privilège avec une identité vérifiable et une ingestion sécurisée.
+> [<- Catalogue](../README.md) · [Jour 2](../day-02/README.md) · **Jour 3** · [Jour 4 ->](../day-04/README.md)
 
-**Références :** [catalogue](../README.md) · [programme](../../PROGRAMME_FORMATION.md) · [architecture](../../docs/reference-architecture.md)
+## Progression
 
 ```mermaid
 flowchart LR
-    M9[M9 Ressources Snowflake] --> M10[M10 Identité et Key Vault]
-    M10 --> M11[M11 RBAC]
-    M11 --> J5[Jour 5 CI/CD et capstone]
+    M9[M9 Ingestion] --> M10[M10 Identite]
+    M10 --> J4[Jour 4]
 ```
 
-| Module | Durée | Contenu |
-|---|---:|---|
-| [M9 — Ingestion et ressources avancées](module-09-snowflake-advanced/lab.md) | 0 h 45 | File formats, stages, storage integration Azure |
-| [M10 — Identité technique et Key Vault](module-10-security-auth/lab.md) | 1 h 00 | JWT key-pair, stockage et rotation |
-| [M11 — RBAC as Code](../day-04/module-11-rbac/lab.md) | 2 h 15 | Rôles, hiérarchie, grants actuels et futurs |
+## Modules
 
-Les modules M11 et M12 se trouvent physiquement dans `courses/day-04/`. Le capstone est traité au **Jour 5**.
+| Module | Duree | Lab | Course | Troubleshooting | Resultat attendu |
+|---|---:|---|---|---|---|
+| [M9 — Ingestion et ressources avancees](module-09-snowflake-advanced/lab.md) | 0h45 | [lab](module-09-snowflake-advanced/lab.md) | [cours](module-09-snowflake-advanced/course.md) | [guide](module-09-snowflake-advanced/troubleshooting.md) | [output](module-09-snowflake-advanced/expected-output.md) |
+| [M10 — Identite technique et Key Vault](module-10-security-auth/lab.md) | 1h00 | [lab](module-10-security-auth/lab.md) | [cours](module-10-security-auth/course.md) | [guide](module-10-security-auth/troubleshooting.md) | [output](module-10-security-auth/expected-output.md) |
+
+## Workflow du jour
+
+1. **Lisez** le `course.md` du module (concepts, 15-20 min)
+2. **Realisez** le `lab.md` pas a pas (creation de fichiers, execution, checkpoints)
+3. **Comparez** avec `expected-output.md`
+4. **Consultez** `troubleshooting.md` en cas d'erreur
+5. **Passez** au module suivant
+
+## Livrable du jour
+
+Ingestion Azure Data Lake Storage vers Snowflake.
+Identite technique securisee avec JWT key-pair et Azure Key Vault.
+
+## Navigation
+
+[<- Catalogue](../README.md) · [Jour 2](../day-02/README.md) · **Jour 3** · [Jour 4 ->](../day-04/README.md)

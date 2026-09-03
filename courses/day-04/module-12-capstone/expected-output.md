@@ -1,5 +1,7 @@
 ﻿# Résultat attendu — M12 : Capstone
 
+> [<- Jour 4](../README.md) · [<- Module precedent](../module-11-rbac/lab.md) · **Module 12** · [Module suivant ->](../module-13-finops-observability/lab.md)
+
 ## Plan de la plateforme complète
 ```bash
 cd project/05-capstone/environments/dev

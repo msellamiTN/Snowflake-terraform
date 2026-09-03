@@ -1,5 +1,7 @@
 ﻿# Dépannage — M12 : Capstone
 
+> [<- Jour 4](../README.md) · [<- Module precedent](../module-11-rbac/lab.md) · **Module 12** · [Module suivant ->](../module-13-finops-observability/lab.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `terraform plan` montre 50+ ressources à créer | Premier run, aucun state | Attendu au premier apply. Exécuter `terraform apply`. |

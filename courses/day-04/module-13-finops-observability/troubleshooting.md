@@ -1,5 +1,7 @@
 ﻿# Runbook — M13 FinOps
 
+> [<- Jour 4](../README.md) · [<- Module precedent](../module-12-capstone/lab.md) · **Module 13** · [Module suivant ->](../module-14-data-products/lab.md)
+
 ## `dbt debug` échoue
 
 1. Exécuter `dbt debug --config-dir`.

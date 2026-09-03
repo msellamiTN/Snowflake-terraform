@@ -1,5 +1,7 @@
 ﻿# Module 11 – Cours : RBAC Scalable
 
+> [<- Jour 4](../README.md) · [<- Jour 3](../../day-03/README.md) · **Module 11** · [Module suivant ->](../module-12-capstone/lab.md)
+
 ## Contexte métier
 
 L'accès aux données doit suivre les fonctions métier sans tickets manuels ni privilèges permanents. Une hiérarchie data-driven et les Future Grants appliquent le moindre privilège à l'échelle.

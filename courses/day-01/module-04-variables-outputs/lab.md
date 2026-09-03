@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M4 — Variables, locals, outputs et multi-environnement
 
+> [<- Jour 1](../README.md) · [<- Module precedent](../module-03-import-brownfield/lab.md) · **Module 4** · [Jour 2 ->](../../day-02/README.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 50 min |

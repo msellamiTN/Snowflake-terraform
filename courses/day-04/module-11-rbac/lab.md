@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M11 — Modèle RBAC scalable avec Future Grants
 
+> [<- Jour 4](../README.md) · [<- Jour 3](../../day-03/README.md) · **Module 11** · [Module suivant ->](../module-12-capstone/lab.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 60 min |

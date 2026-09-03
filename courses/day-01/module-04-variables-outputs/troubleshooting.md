@@ -1,5 +1,7 @@
 ﻿# Dépannage — M4 : Variables, Outputs & Lifecycle
 
+> [<- Jour 1](../README.md) · [<- Module precedent](../module-03-import-brownfield/lab.md) · **Module 4** · [Jour 2 ->](../../day-02/README.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `terraform validate` échoue : `Invalid value for variable` | Validation de variable échouée | Vérifier le bloc `validation` dans `variables.tf` et s'assurer que l'entrée correspond aux valeurs autorisées |

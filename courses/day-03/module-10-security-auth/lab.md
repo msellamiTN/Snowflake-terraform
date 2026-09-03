@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M10 — Sécurité et authentification : Key Pair, rotation, moindre privilège
 
+> [<- Jour 3](../README.md) · [<- Module precedent](../module-09-snowflake-advanced/lab.md) · **Module 10** · [Jour 4 ->](../../day-04/README.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 50 min |

@@ -1,5 +1,7 @@
 ﻿# Troubleshooting — M1
 
+> [<- Jour 1](../README.md) · [<- Jour 0](../../day-00/README.md) · **Module 1** · [Module suivant ->](../module-02-state-management/lab.md)
+
 | Symptôme | Diagnostic non destructif | Correction minimale | Prévention |
 |---|---|---|---|
 | Module M1 introuvable | Lister `student-track/module-01-*` | Utiliser la version refondue du dépôt | Préflight du catalogue |

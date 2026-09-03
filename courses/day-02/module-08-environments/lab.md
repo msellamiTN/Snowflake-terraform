@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M8 — Gestion multi-environnements : DEV, UAT, PROD
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-07-cicd-pipeline/lab.md) · **Module 08** · [Jour 3 ->](../../day-03/README.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 50 min |

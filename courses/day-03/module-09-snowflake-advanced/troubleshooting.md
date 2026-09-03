@@ -1,5 +1,7 @@
 ﻿# Dépannage — M9 : Snowflake avancé
 
+> [<- Jour 3](../README.md) · [<- Jour 2](../../day-02/README.md) · **Module 09** · [Module suivant ->](../module-10-security-auth/lab.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `snowflake_storage_integration_azure` échoue : `insufficient privileges` | Le rôle manque `CREATE INTEGRATION` | Utiliser le rôle `ACCOUNTADMIN` ou accorder `CREATE INTEGRATION` sur le compte |

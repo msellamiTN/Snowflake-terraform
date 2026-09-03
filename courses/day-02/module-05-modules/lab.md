@@ -1,5 +1,7 @@
 ﻿# 🧪 Lab M5 — Module Landing Zone réutilisable
 
+> [<- Jour 2](../README.md) · [<- Jour 1](../../day-01/README.md) · **Module 05** · [Module suivant ->](../module-06-dynamic-logic/lab.md)
+
 | Élément | Valeur |
 |---|---|
 | **Durée** | 60 min |

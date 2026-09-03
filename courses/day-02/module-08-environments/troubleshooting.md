@@ -1,5 +1,7 @@
 ﻿# Dépannage — M8 : Stratégies d'environnements
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-07-cicd-pipeline/lab.md) · **Module 08** · [Jour 3 ->](../../day-03/README.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `terraform plan` pour UAT ou PROD montre les ressources DEV | Mauvais fichier de state | Vérifier les clés `training/APP01/uat/terraform.tfstate` et `training/APP01/prod/terraform.tfstate` ; remplacer `APP01` par le préfixe apprenant. |

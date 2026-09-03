@@ -1,5 +1,7 @@
 ﻿# Module 2 : Cours : Gestion du State
 
+> [<- Jour 1](../README.md) · [<- Module precedent](../module-01-iac-workflow/lab.md) · **Module 2** · [Module suivant ->](../module-03-import-brownfield/lab.md)
+
 ## Contexte métier
 
 Un state local crée un point de défaillance et autorise des applications concurrentes. Azure Blob Storage fournit une source de vérité partagée, chiffrée et verrouillée pour l'équipe plateforme.

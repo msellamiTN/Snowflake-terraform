@@ -1,5 +1,7 @@
 ﻿# Module 12 – Cours : Projet Fil Rouge
 
+> [<- Jour 4](../README.md) · [<- Module precedent](../module-11-rbac/lab.md) · **Module 12** · [Module suivant ->](../module-13-finops-observability/lab.md)
+
 ## Contexte métier
 
 Le comité d'architecture attend une plateforme gouvernée, exploitable et auditable plutôt qu'une collection de ressources. Le capstone assemble les capacités précédentes et démontre le zero-drift.

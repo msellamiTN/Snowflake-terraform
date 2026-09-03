@@ -1,5 +1,7 @@
 ﻿# Cours M13 — Observabilité et FinOps as Code
 
+> [<- Jour 4](../README.md) · [<- Module precedent](../module-12-capstone/lab.md) · **Module 13** · [Module suivant ->](../module-14-data-products/lab.md)
+
 ## Pourquoi cette capacité existe
 
 FinOps rend la consommation Snowflake visible, attribuable et actionnable. Terraform prévient les excès avec quotas et auto-suspend ; dbt transforme `ACCOUNT_USAGE` en décisions opérationnelles testées.

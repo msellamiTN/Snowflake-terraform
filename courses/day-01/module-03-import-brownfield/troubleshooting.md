@@ -1,5 +1,7 @@
 ﻿# Dépannage — M3 : Import & Brownfield
 
+> [<- Jour 1](../README.md) · [<- Module precedent](../module-02-state-management/lab.md) · **Module 3** · [Module suivant ->](../module-04-variables-outputs/lab.md)
+
 | Symptôme | Cause | Solution |
 |----------|-------|----------|
 | `Error acquiring the state lock` lors de `terraform import` | Un précédent processus Terraform a laissé un verrou (plan/apply interrompu) | Vérifier qu'aucun `plan`/`apply` n'est actif, puis `terraform force-unlock <LOCK_ID>` avec l'ID affiché dans le message |

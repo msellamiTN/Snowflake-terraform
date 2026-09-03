@@ -1,5 +1,7 @@
 ﻿# Cours M14 — Data Products as Code
 
+> [<- Jour 4](../README.md) · [<- Module precedent](../module-13-finops-observability/lab.md) · **Module 14** · [Fin ->](../../README.md)
+
 ## Pourquoi cette capacité existe
 
 Un Data Product transforme des données de domaine en un service découvrable, gouverné et exploitable. La plateforme fournit les rails ; le domaine possède le contenu, la qualité et le cycle de vie.

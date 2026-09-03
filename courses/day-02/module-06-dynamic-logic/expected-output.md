@@ -1,5 +1,7 @@
 ﻿# Résultat attendu — M6 : Logique dynamique & for_each
 
+> [<- Jour 2](../README.md) · [<- Module precedent](../module-05-modules/lab.md) · **Module 06** · [Module suivant ->](../module-07-cicd-pipeline/lab.md)
+
 ## Landing Zone avec schémas dynamiques
 ```bash
 cd project/03-day2-modules/environments/dev

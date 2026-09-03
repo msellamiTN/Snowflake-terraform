@@ -1,6 +1,6 @@
 # Jour 0 — Guide de troubleshooting
 
-**Retour au parcours :** [Jour 0 — Commencer ici](../README.md)
+> [<- Jour 0](../README.md) · **M00 Setup** · [Jour 1 ->](../../day-01/module-01-iac-workflow/lab.md)
 
 ## Symptomes et diagnostics
 

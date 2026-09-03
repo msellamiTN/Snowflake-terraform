@@ -1,5 +1,7 @@
 ﻿# Module 3 : Cours : Import Brownfield
 
+> [<- Jour 1](../README.md) · [<- Module precedent](../module-02-state-management/lab.md) · **Module 3** · [Module suivant ->](../module-04-variables-outputs/lab.md)
+
 ## Contexte métier
 
 Une entreprise ne remplace pas une plateforme Snowflake existante pour adopter Terraform. Elle l'intègre sans interruption, sans recréation et avec une trajectoire de retour arrière explicite.

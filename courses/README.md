@@ -1,35 +1,33 @@
 ﻿# Catalogue — Formation Terraform & Snowflake
 
-**Parcours officiel : 5 jours × 6 heures — 30 heures**
+**Parcours officiel : 5 jours x 6 heures — 30 heures**
 
 **Stack :** Snowflake Enterprise, Terraform, Azure, Azure DevOps, dbt
 
-**Références :** [`PROGRAMME_FORMATION.md`](../PROGRAMME_FORMATION.md) · [architecture](../docs/reference-architecture.md) · [versions](../docs/version-policy.md)
+**References :** [`PROGRAMME_FORMATION.md`](../PROGRAMME_FORMATION.md) · [architecture](../docs/reference-architecture.md) · [versions](../docs/version-policy.md)
 
-## Mode d’emploi
+## Mode d'emploi
 
-1. Réalisez le préflight et confirmez votre accès Snowflake ainsi que votre préfixe apprenant.
-2. Créez un workspace propre pour le module.
+1. Realisez le preflight et confirmez votre acces Snowflake ainsi que votre prefixe apprenant.
+2. Creez un workspace propre pour le module.
 3. Suivez le `course.md`, puis le `lab.md` sans consulter la solution.
-4. Exécutez les checkpoints Windows ou Unix.
-5. Comparez vos preuves à `expected-output.md`.
+4. Executez les checkpoints Windows ou Unix.
+5. Comparez vos preuves a `expected-output.md`.
 6. Utilisez `troubleshooting.md` avant de demander ou consulter un indice.
 7. Terminez le challenge et le quiz.
-8. Exécutez le cleanup indiqué.
+8. Executez le cleanup indique.
 
-> La structure historique `day-00` à `day-04` reste disponible pendant la refonte. Le catalogue cible ci-dessous fait autorité; les modules seront remappés par lots sans suppression implicite des supports existants.
+## Legend
 
-## Légende
-
-| Badge | Portée |
+| Badge | Portee |
 |---|---|
 | `[CORE]` | Obligatoire : Terraform, Snowflake, Azure, Azure DevOps |
-| `[ANNEXE]` | Comparaison AWS ou GCP, non exécutée |
+| `[ANNEXE]` | Comparaison AWS ou GCP, non executee |
 | `[WINDOWS]`, `[UNIX]` | Commande propre au shell |
 | `[CHECK]` | Checkpoint ou preuve |
-| `[SECURITY]` | Identité, privilège ou secret |
+| `[SECURITY]` | Identite, privilege ou secret |
 | `[COST]` | Ressource facturable |
-| `[CLEANUP]` | Nettoyage contrôlé |
+| `[CLEANUP]` | Nettoyage controle |
 
 ## Convention de nommage
 
@@ -39,135 +37,130 @@
 
 Exemples : `ABC_RAW_DEV`, `ABC_ETL_UAT`. Les environnements sont **DEV**, **UAT** et **PROD** dans un compte Snowflake unique.
 
-## Jour 1 — Préparer, créer et déployer (6 h)
+---
 
-| Séquence | Durée | Support actuel / cible |
+## Jour 0 — Preparer votre environnement (1 h 30)
+
+> [Point d'entree Day 0 ->](day-00/README.md)
+
+Le Jour 0 est **automatise** : clonez le projet type, executez les scripts, configurez les connexions Snowflake et Azure. Aucune ressource Cloud n'est creee.
+
+| Etape | Duree | Support |
 |---|---:|---|
-| Orientation, sécurité et coûts | 0 h 45 | [Point d’entrée Day 0](day-00/README.md) |
-| Préflight Windows/Unix | 1 h 00 | [Lab Jour 0](day-00/module-00-setup/lab.md) |
-| Accès Snowflake et préfixe apprenant | 1 h 00 | [Lab Jour 0](day-00/module-00-setup/lab.md) |
-| Premier projet créé depuis zéro | 2 h 15 | M1 refondu |
-| Workflow Terraform et preuves | 0 h 45 | M1 refondu |
-| Évaluation et cleanup | 0 h 15 | M1 refondu |
-| **Total** | **6 h 00** | |
+| Installation et verification des outils | 40 min | [Lab Jour 0](day-00/module-00-setup/lab.md) |
+| Connexion Snowflake + Azure + validation | 50 min | [Lab Jour 0](day-00/module-00-setup/lab.md) |
+| **Total** | **1 h 30** | |
 
-**Livrable :** database, schema et warehouse Snowflake créés par un projet écrit par l’apprenant.
+**Livrable :** `Toolchain status: READY` + `snow sql -q 'SELECT 1' -c training` + `Test-LabConnectivity -> READY`
 
-## Jour 2 — State et maîtrise du changement (6 h)
+---
 
-| Séquence | Durée | Support actuel / cible |
-|---|---:|---|
-| State local et sécurité | 0 h 45 | M2 refondu |
-| Backend Azure Blob Storage | 1 h 15 | M2 refondu |
-| Variables, locals et conventions | 1 h 00 | M4 refondu |
-| Logique dynamique et lifecycle | 1 h 00 | M4/M6 réorganisés |
-| Import brownfield et dérive | 1 h 15 | M3 refondu |
-| Challenge et idempotence | 0 h 45 | Nouveau challenge J2 |
-| **Total** | **6 h 00** | |
+## Jour 1 — Fondations, State, Import (6 h)
 
-**Livrable :** state cohérent, ressource importée sans recréation et dérive corrigée intentionnellement.
+> [Point d'entree Day 1 ->](day-01/README.md)
 
-## Jour 3 — Modules et environnements (6 h)
+| Module | Duree | Lab | Course | Troubleshooting |
+|---|---:|---|---|---|
+| M1 — IaC Workflow | 1h30 | [lab](day-01/module-01-iac-workflow/lab.md) | [cours](day-01/module-01-iac-workflow/course.md) | [guide](day-01/module-01-iac-workflow/troubleshooting.md) |
+| M2 — State Management | 2h | [lab](day-01/module-02-state-management/lab.md) | [cours](day-01/module-02-state-management/course.md) | [guide](day-01/module-02-state-management/troubleshooting.md) |
+| M3 — Import Brownfield | 2h | [lab](day-01/module-03-import-brownfield/lab.md) | [cours](day-01/module-03-import-brownfield/course.md) | [guide](day-01/module-03-import-brownfield/troubleshooting.md) |
+| M4 — Variables & Outputs | 1h30 | [lab](day-01/module-04-variables-outputs/lab.md) | [cours](day-01/module-04-variables-outputs/course.md) | [guide](day-01/module-04-variables-outputs/troubleshooting.md) |
 
-| Séquence | Durée | Support actuel / cible |
-|---|---:|---|
-| Contrat de module | 0 h 45 | M5 refondu |
-| Landing Zone créée depuis zéro | 2 h 00 | M5 refondu |
-| Couches RAW/CLEAN/CURATED | 0 h 45 | M6 refondu |
-| Environnements DEV/UAT et promotion PROD | 1 h 15 | M8 refondu |
-| Qualité et versioning | 0 h 45 | M5/M8 |
-| Challenge d’extension | 0 h 30 | Nouveau challenge J3 |
-| **Total** | **6 h 00** | |
+**Livrable :** database, schema et warehouse Snowflake crees par un projet ecrit par l'apprenant.
 
-**Livrable :** module réutilisable et deux environnements isolés.
+---
 
-## Jour 4 — Sécurité et RBAC Snowflake (6 h)
+## Jour 2 — Modules, CI/CD, Environnements (6 h)
 
-| Séquence | Durée | Support actuel / cible |
-|---|---:|---|
-| Modèle de privilèges | 0 h 45 | M10/M11 réorganisés |
-| RBAC as Code | 1 h 30 | M11 refondu |
-| Grants actuels/futurs | 0 h 45 | M11 refondu |
-| Identité technique, JWT et Key Vault | 1 h 00 | M10 refondu |
-| Ingestion Azure Data Lake Storage | 0 h 45 | M9 refondu |
-| Troubleshooting contrôlé | 0 h 45 | M9–M11 |
-| Challenge moindre privilège | 0 h 30 | Nouveau challenge J4 |
-| **Total** | **6 h 00** | |
+> [Point d'entree Day 2 ->](day-02/README.md)
 
-**Livrable :** RBAC vérifié par tests positifs/négatifs et identité technique sécurisée.
+| Module | Duree | Lab | Course | Troubleshooting |
+|---|---:|---|---|---|
+| M5 — Modules reutilisables | 2h | [lab](day-02/module-05-modules/lab.md) | [cours](day-02/module-05-modules/course.md) | [guide](day-02/module-05-modules/troubleshooting.md) |
+| M6 — Logique dynamique | 1h30 | [lab](day-02/module-06-dynamic-logic/lab.md) | [cours](day-02/module-06-dynamic-logic/course.md) | [guide](day-02/module-06-dynamic-logic/troubleshooting.md) |
+| M7 — CI/CD Pipeline | 2h | [lab](day-02/module-07-cicd-pipeline/lab.md) | [cours](day-02/module-07-cicd-pipeline/course.md) | [guide](day-02/module-07-cicd-pipeline/troubleshooting.md) |
+| M8 — Environnements | 1h30 | [lab](day-02/module-08-environments/lab.md) | [cours](day-02/module-08-environments/course.md) | [guide](day-02/module-08-environments/troubleshooting.md) |
 
-## Jour 5 — CI/CD, FinOps, Data Products et capstone (6 h)
+**Livrable :** module reutilisable et deux environnements isoles.
 
-| Séquence | Durée | Support actuel / cible |
-|---|---:|---|
-| Pipeline Azure DevOps | 1 h 00 | M7 refondu |
-| Policy as Code et quality gates | 0 h 30 | M7 refondu |
-| FinOps Snowflake/dbt | 0 h 45 | M13 intégré |
-| Data Products SALES/FINANCE | 0 h 45 | M14 intégré |
-| Capstone challenge | 2 h 15 | M12 refondu |
-| Soutenance, zero-drift et cleanup | 0 h 45 | M12 refondu |
-| **Total** | **6 h 00** | |
+---
 
-**Livrable :** plateforme composée et évaluée, pipeline de qualité, indicateurs FinOps et Data Products gouvernés.
+## Jour 3 — Securite et RBAC Snowflake (6 h)
 
-## Structure standard cible d’un module
+> [Point d'entree Day 3 ->](day-03/README.md)
+
+| Module | Duree | Lab | Course | Troubleshooting |
+|---|---:|---|---|---|
+| M9 — Ingestion et ressources avancees | 0h45 | [lab](day-03/module-09-snowflake-advanced/lab.md) | [cours](day-03/module-09-snowflake-advanced/course.md) | [guide](day-03/module-09-snowflake-advanced/troubleshooting.md) |
+| M10 — Identite technique et Key Vault | 1h00 | [lab](day-03/module-10-security-auth/lab.md) | [cours](day-03/module-10-security-auth/course.md) | [guide](day-03/module-10-security-auth/troubleshooting.md) |
+
+**Livrable :** RBAC verifie par tests positifs/negatifs et identite technique securisee.
+
+---
+
+## Jour 4 — Capstone, FinOps, Data Products (6 h)
+
+> [Point d'entree Day 4 ->](day-04/README.md)
+
+| Module | Duree | Lab | Course | Troubleshooting |
+|---|---:|---|---|---|
+| M11 — RBAC as Code | 2h15 | [lab](day-04/module-11-rbac/lab.md) | [cours](day-04/module-11-rbac/course.md) | [guide](day-04/module-11-rbac/troubleshooting.md) |
+| M12 — Capstone | 2h15 | [lab](day-04/module-12-capstone/lab.md) | [cours](day-04/module-12-capstone/course.md) | [guide](day-04/module-12-capstone/troubleshooting.md) |
+| M13 — FinOps & Observabilite | 0h45 | [lab](day-04/module-13-finops-observability/lab.md) | [cours](day-04/module-13-finops-observability/course.md) | [guide](day-04/module-13-finops-observability/troubleshooting.md) |
+| M14 — Data Products | 0h45 | [lab](day-04/module-14-data-products/lab.md) | [cours](day-04/module-14-data-products/course.md) | [guide](day-04/module-14-data-products/troubleshooting.md) |
+
+**Livrable :** plateforme composee et evaluee, pipeline de qualite, indicateurs FinOps et Data Products gouvernes.
+
+---
+
+## Structure standard d'un module
 
 ```text
 module-XX-name/
-├── README.md
-├── course.md
-├── lab.md
-├── expected-output.md
-├── troubleshooting.md
-├── quiz.md
-├── starter/
-├── solution/
-├── validate.ps1
-├── validate.sh
-└── assets/
+├── course.md           ← concepts (lire avant le lab)
+├── lab.md              ← atelier pratique pas a pas
+├── expected-output.md  ← resultats attendus pour comparaison
+├── troubleshooting.md  ← diagnostics non destructifs
+├── slides.md           ← support de presentation
+├── starter/            ← squelette (sans code de ressource)
+├── solution/           ← solution de reference (ne pas copier)
+└── assets/             ← diagrammes et captures
 ```
 
-Le `starter/` ne contient pas le code que l’apprenant doit apprendre à écrire. Il peut contenir des données, validateurs et assets non pédagogiques. La solution est séparée et n’est jamais copiée automatiquement dans le workspace.
+Le `starter/` ne contient pas le code que l'apprenant doit apprendre a ecrire. Il peut contenir des donnees, validateurs et assets non pedagogiques. La solution est separee et n'est jamais copiee automatiquement dans le workspace.
+
+## Navigation rapide
+
+| Jour | Modules | Point d'entree |
+|---|---|---|
+| Jour 0 | M00 | [day-00/README.md](day-00/README.md) |
+| Jour 1 | M1 → M4 | [day-01/README.md](day-01/README.md) |
+| Jour 2 | M5 → M8 | [day-02/README.md](day-02/README.md) |
+| Jour 3 | M9 → M10 | [day-03/README.md](day-03/README.md) |
+| Jour 4 | M11 → M14 | [day-04/README.md](day-04/README.md) |
 
 ## Contrat de validation
 
-| Niveau | Contrôle |
+| Niveau | Controle |
 |---|---|
 | 1 | Structure et absence de placeholders/secrets |
 | 2 | `terraform fmt -check` et `terraform validate` |
 | 3 | Assertions sur le plan Terraform |
 | 4 | Preuve fonctionnelle Snowflake, Snow CLI ou dbt |
 | 5 | Second plan sans changement inattendu |
-| 6 | Challenge évalué par critères |
+| 6 | Challenge evalue par criteres |
 
-## Code de référence actuel
-
-| Capacité | Code de référence |
-|---|---|
-| Bootstrap Azure (state) | `project/00-bootstrap` |
-| Fondamentaux | `project/01-day1-basics` |
-| Backend Azure Blob | `project/02-day1-state` |
-| Modules et environnements | `project/03-day2-modules` |
-| RBAC | `project/04-day3-rbac` |
-| Capstone | `project/05-capstone` |
-| Data Products | `project/06-data-products` |
-| Agents Azure DevOps | `project/07-devops-agents` |
-| Pipeline CI/CD | `azure-pipelines.yml` |
-| FinOps | `finops/` |
-
-Ces dossiers deviennent des **solutions testables**. Ils ne constituent plus le workspace principal de l’apprenant.
-
-## Règles de sécurité
+## Regles de securite
 
 - aucun secret dans Git, les captures ou les rapports;
-- aucun mot de passe Snowflake dans une racine enseignée;
-- aucun `.terraform/`, state ou plan distribué dans un starter;
-- ressources préfixées par apprenant et suffixées par environnement;
-- warehouse économique avec auto-suspend;
-- avertissement et portée avant toute destruction ou policy réseau;
-- cleanup vérifié côté Snowflake **et** côté Azure;
-- rôle d’administration limité aux opérations qui l’exigent réellement.
+- aucun mot de passe Snowflake dans une racine enseignee;
+- aucun `.terraform/`, state ou plan distribue dans un starter;
+- ressources prefixees par apprenant et suffixees par environnement;
+- warehouse economique avec auto-suspend;
+- avertissement et portee avant toute destruction ou policy reseau;
+- cleanup verifie cote Snowflake **et** cote Azure;
+- role d'administration limite aux operations qui l'exigent reellement.
 
 ## Versions
 
-Les versions des outils et providers sont définies dans la [politique de versions](../docs/version-policy.md). Aucun support ne redéfinit une version localement.
+Les versions des outils et providers sont definies dans la [politique de versions](../docs/version-policy.md). Aucun support ne redefinit une version localement.
