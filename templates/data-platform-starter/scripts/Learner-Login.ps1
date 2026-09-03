@@ -176,6 +176,23 @@ $env:ARM_TENANT_ID = $creds['ARM_TENANT_ID']
 $env:ARM_SUBSCRIPTION_ID = $creds['ARM_SUBSCRIPTION_ID']
 $env:LEARNER_PREFIX = $LearnerPrefix
 
+# ------------------------------------------------------------------
+# Set TF_VAR_snowflake_token so Terraform can read the PAT without
+# prompting. The PAT is read from secrets/snowflake_pat.txt (written
+# by New-SnowflakeConnection.ps1). Never display or log the token.
+# ------------------------------------------------------------------
+$patFile = Join-Path $projectRoot 'secrets\snowflake_pat.txt'
+if (Test-Path $patFile) {
+    $patValue = (Get-Content $patFile -Encoding UTF8 -Raw).Trim()
+    if ($patValue) {
+        $env:TF_VAR_snowflake_token = $patValue
+        Write-Host '       TF_VAR_snowflake_token (from PAT file)' -ForegroundColor DarkGray
+    }
+} else {
+    Write-Host '[WARN] secrets/snowflake_pat.txt not found - terraform will prompt for var.snowflake_token' -ForegroundColor Yellow
+    Write-Host '       Run .\scripts\New-SnowflakeConnection.ps1 first.' -ForegroundColor DarkGray
+}
+
 Write-Host '[PASS] Environment variables set:' -ForegroundColor Green
 Write-Host '       ARM_CLIENT_ID' -ForegroundColor DarkGray
 Write-Host '       ARM_CLIENT_SECRET (hidden)' -ForegroundColor DarkGray

@@ -11,6 +11,18 @@
 | **Coût** | Aucune nouvelle ressource |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Une entreprise ne remplace pas une plateforme Snowflake existante pour adopter Terraform. Elle l'intègre sans interruption. Vous allez importer une ressource Snowflake existante dans le state Terraform, puis corriger la dérive.
@@ -489,3 +501,9 @@ snow sql -c training -q "DROP DATABASE DB_${LEARNER_PREFIX}_BROWNFIELD_DEV"
 terraform state rm snowflake_database.imported
 ```
 </details>
+
+---
+
+## Navigation
+
+[<- Lab M2](../module-02-state-management/lab.md) · [<- Jour 1](../README.md) · **Lab M3** · [Lab M4 ->](../module-04-variables-outputs/lab.md)

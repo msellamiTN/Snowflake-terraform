@@ -109,5 +109,11 @@ Terraform gère la définition ; les fichiers arrivent via les événements Azur
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M8](../../day-02/module-08-environments/course.md) · [<- Jour 3](../README.md) · **Course M9** · [Course M10 ->](../module-10-security-auth/course.md)
+
 
 

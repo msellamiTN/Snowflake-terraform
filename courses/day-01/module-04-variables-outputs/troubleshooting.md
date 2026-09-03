@@ -13,3 +13,29 @@
 | `Error: Invalid type` pour une variable | Incompatibilité de type | S'assurer que le type de variable correspond à l'entrée (ex. `list(string)` pas `string`) |
 | `terraform fmt -check` échoue | Code non formaté | Exécuter `terraform fmt` pour formater automatiquement |
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+

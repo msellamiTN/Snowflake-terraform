@@ -14,3 +14,29 @@
 | Association de tag échoue : `tag not found` | Tag pas encore créé | Ajouter `depends_on = [module.landing_zone]` aux ressources d'association de tags |
 | `Error: cannot grant to self` | Rôle accordé à lui-même | Vérifier que `parent_role` ne crée pas de dépendance circulaire |
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+

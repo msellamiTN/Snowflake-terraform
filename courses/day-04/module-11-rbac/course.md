@@ -117,4 +117,10 @@ Puis `terraform plan` — doit rester stable après création d'objets dynamique
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M10](../../day-03/module-10-security-auth/course.md) · [<- Jour 4](../README.md) · **Course M11** · [Course M12 ->](../module-12-capstone/course.md)
+
 

@@ -11,6 +11,18 @@
 | **Coût** | Warehouses X-SMALL |
 | **Cleanup** | Détruire à la fin |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Le comité d'architecture attend une plateforme gouvernée, exploitable et auditable. Vous allez assembler tous les modules créés (landing-zone, ingestion, security, RBAC) dans une configuration complète et prouver le zero-drift.
@@ -304,3 +316,9 @@ Et supprimez le backend Azure :
 az storage account delete --name "$ARM_STORAGE_ACCOUNT" --resource-group "$ARM_RESOURCE_GROUP" --yes
 az group delete --name "$ARM_RESOURCE_GROUP" --yes
 ```
+
+---
+
+## Navigation
+
+[<- Lab M11](../module-11-rbac/lab.md) · [<- Jour 4](../README.md) · **Lab M12** · [Lab M13 ->](../module-13-finops-observability/lab.md)

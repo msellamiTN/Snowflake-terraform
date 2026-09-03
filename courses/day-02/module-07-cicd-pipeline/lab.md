@@ -11,6 +11,18 @@
 | **Coût** | Aucun (pipeline gratuit avec agent Microsoft) |
 | **Cleanup** | Conserver jusqu'au Jour 5 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Les changements manuels ne fournissent ni séparation des responsabilités ni preuve d'approbation. Vous allez configurer un pipeline Azure DevOps qui produit un plan immuable, applique après revue et audite la dérive.
@@ -210,3 +222,9 @@ Critères :
 ## 🧹 Cleanup
 
 Conservez le pipeline pour le capstone.
+
+---
+
+## Navigation
+
+[<- Lab M6](../module-06-dynamic-logic/lab.md) · [<- Jour 2](../README.md) · **Lab M7** · [Lab M8 ->](../module-08-environments/lab.md)

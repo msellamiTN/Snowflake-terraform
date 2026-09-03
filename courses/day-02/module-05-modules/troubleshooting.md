@@ -13,3 +13,29 @@
 | `tflint` avertit sur la source du module | Tflint non initialisé | Exécuter `tflint --init` avant `tflint --recursive` |
 | `terraform fmt -check` échoue dans le module | Code du module non formaté | Exécuter `terraform fmt` dans le répertoire du module |
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+

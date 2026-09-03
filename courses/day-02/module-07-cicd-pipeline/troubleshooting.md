@@ -15,3 +15,29 @@
 | `Install Python` échoue dans `Audit` | `UsePythonVersion` non supporté sur agent auto-hébergé | Supprimer le stage `dbt/FinOps` pour ne conserver que le `Drift Check` |
 | Erreur de syntaxe matrice ADO | Expression de template incorrecte | Utiliser `strategy.matrix` avec la variable `ROOT` par job |
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+

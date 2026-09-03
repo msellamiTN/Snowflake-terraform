@@ -55,3 +55,9 @@ L'autonomie n'est pas l'absence de gouvernance. Les modules, conventions, CI/CD,
 
 Le Golden Path produit un environnement de domaine complet avec un appel de module puis publie le contenu SQL sans confondre les cycles de vie.
 
+---
+
+## Navigation
+
+[<- Course M13](../module-13-finops-observability/course.md) · [<- Jour 4](../README.md) · **Course M14** · [Fin de formation ->](../../README.md)
+

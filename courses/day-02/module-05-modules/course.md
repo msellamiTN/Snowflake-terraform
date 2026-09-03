@@ -111,4 +111,10 @@ module "landing_zone" {
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M4](../../day-01/module-04-variables-outputs/course.md) · [<- Jour 2](../README.md) · **Course M5** · [Course M6 ->](../module-06-dynamic-logic/course.md)
+
 

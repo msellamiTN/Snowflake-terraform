@@ -11,6 +11,18 @@
 | **Coût** | Warehouse FinOps X-SMALL |
 | **Cleanup** | Détruire à la fin |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Le propriétaire de la plateforme doit attribuer les crédits consommés, détecter les warehouses inactifs et prévenir un dépassement avant la facture. Vous allez configurer dbt avec le package `get-select/dbt_snowflake_monitoring` pour transformer la télémétrie Snowflake en indicateurs de décision.
@@ -220,3 +232,9 @@ Critères :
 snow sql -c training -q "DROP DATABASE DB_FINOPS_DEV"
 snow sql -c training -q "DROP WAREHOUSE WH_ABC_FINOPS_DEV"
 ```
+
+---
+
+## Navigation
+
+[<- Lab M12](../module-12-capstone/lab.md) · [<- Jour 4](../README.md) · **Lab M13** · [Lab M14 ->](../module-14-data-products/lab.md)

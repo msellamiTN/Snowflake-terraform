@@ -19,3 +19,29 @@
 | Terraform refuse `required_version = 1.14.5` | Terraform 1.15+ dans le PATH avant 1.14.5 | Relancer `Install-Tools.ps1 -Force`, fermer/rouvrir le terminal, ou utiliser `$HOME\.data2ai\bin\terraform.exe` |
 | `No credentials found` ou warning account key | `--auth-mode login` absent | Ajouter `--auth-mode login` aux commandes `az storage` ; le backend doit avoir `use_azuread_auth = true` |
 | `AuthorizationPermissionMismatch` sur Blob | Rôle `Storage Blob Data Contributor` absent ou en propagation | Faire attribuer le rôle au SP sur le Storage Account, attendre la propagation RBAC, retester |
+
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```

@@ -95,4 +95,10 @@ flowchart TD
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M5](../module-05-modules/course.md) · [<- Jour 2](../README.md) · **Course M6** · [Course M7 ->](../module-07-cicd-pipeline/course.md)
+
 

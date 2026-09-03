@@ -127,3 +127,9 @@ Le flux est :
 ## Suite
 
 Passez à l'[atelier pratique](lab.md) pour exécuter les scripts.
+
+---
+
+## Navigation
+
+[<- Jour 0](../README.md) · **Course M00** · [Course M1 ->](../../day-01/module-01-iac-workflow/course.md)

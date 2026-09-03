@@ -453,6 +453,55 @@ que le SP est valide.
 
 ---
 
+### 17. L'execution de scripts est desactivee
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier C:\...\Learner-Login.ps1, car
+l'execution de scripts est desactivee sur ce systeme.
+```
+
+ou :
+
+```text
+running scripts is disabled on this system
+```
+
+**Cause :**
+
+La politique d'execution PowerShell (`ExecutionPolicy`) est reglee sur `Restricted`
+par defaut sur Windows. Cela bloque tous les scripts `.ps1`.
+
+**Correction :**
+
+Autorisez l'execution des scripts locaux pour l'utilisateur courant :
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux signes et non signes, mais bloque
+> les scripts telecharges depuis Internet qui ne sont pas signes numeriquement.
+> C'est le parametre standard pour un poste de formation.
+
+Relancez ensuite le script :
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+```
+
+**Alternative ponctuelle (sans changer la politique) :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+```
+
+> Cette alternative ne persiste pas. Vous devrez l'utiliser a chaque appel.
+> Preferez la correction permanente avec `Set-ExecutionPolicy`.
+
+---
+
 ## Escalade
 
 Si aucun diagnostic ne resout le probleme :

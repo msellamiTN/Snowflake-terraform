@@ -11,6 +11,18 @@
 | **Coût** | Aucun — Storage Account minimal |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Votre state est actuellement local. En équipe, cela pose trois problèmes : pas de verrou, pas d'historique, pas de partage. Vous allez migrer le state vers Azure Blob Storage avec verrouillage natif.
@@ -872,3 +884,9 @@ az group delete --name "$ARM_RESOURCE_GROUP" --yes
 </details>
 
 > ⚠️ **WARNING** : Ne faites ceci qu'à la fin de la formation, pas entre les modules.
+
+---
+
+## Navigation
+
+[<- Lab M1](../module-01-iac-workflow/lab.md) · [<- Jour 1](../README.md) · **Lab M2** · [Lab M3 ->](../module-03-import-brownfield/lab.md)

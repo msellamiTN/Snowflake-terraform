@@ -15,3 +15,29 @@
 | `snow sql` échoue : `Unknown connection 'training'` | Snow CLI non configuré | Relancer `Learner-Login` ou configurer la connexion `training` dans `~/.snowflake/config.toml` |
 | `terraform validate` échoue : `Reference to undeclared variable` | `var.learner_prefix` n'existe pas dans le starter | Utiliser le nom littéral de la database (par exemple `DB_APP01_BROWNFIELD_DEV`) au lieu d'une variable |
 | `generated.tf` vide ou absent | Import non réussi ou plan sans drift | Vérifier que l'import a réussi, puis relancer `terraform plan -generate-config-out=generated.tf` |
+
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```

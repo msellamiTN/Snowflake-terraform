@@ -11,6 +11,18 @@
 | **Coût** | Warehouse X-SMALL, initialement suspendu |
 | **Cleanup** | Conserver jusqu'au début du Jour 2 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Vous êtes Data Platform Engineer. Votre équipe vous demande une zone RAW minimale composée d'une database, d'un schema d'ingestion et d'un warehouse économique. Le changement doit être relisible avant exécution et reproductible sans exposer de credential.
@@ -526,3 +538,9 @@ terraform plan
 | `Invalid account identifier` | L'identifiant de compte est mal formé | Vérifiez `snowflake_organization` et `snowflake_account` dans `terraform.tfvars` |
 | `Insufficient privileges` | Le rôle n'a pas les droits de création | Vérifiez que `SNOWFLAKE_ROLE=SYSADMIN` dans `.env` |
 | `snow sql` échoue hors du script | La connexion `training` n'existe pas | Relancez `New-SnowflakeConnection.ps1` |
+
+---
+
+## Navigation
+
+[<- Lab M00](../../day-00/module-00-setup/lab.md) · [<- Jour 1](../README.md) · **Lab M1** · [Lab M2 ->](../module-02-state-management/lab.md)

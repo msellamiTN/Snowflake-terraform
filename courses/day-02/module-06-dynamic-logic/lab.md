@@ -11,6 +11,18 @@
 | **Coût** | Warehouses X-SMALL supplémentaires |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 La plateforme doit absorber de nouveaux schémas, warehouses et domaines sans dupliquer le code. Vous allez rendre le module `landing-zone` piloté par métadonnées avec `for_each`, `for` et `dynamic`.
@@ -308,3 +320,9 @@ Critères :
 ## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 3.
+
+---
+
+## Navigation
+
+[<- Lab M5](../module-05-modules/lab.md) · [<- Jour 2](../README.md) · **Lab M6** · [Lab M7 ->](../module-07-cicd-pipeline/lab.md)

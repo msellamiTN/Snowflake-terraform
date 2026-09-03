@@ -165,5 +165,11 @@ flowchart LR
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M9](../module-09-snowflake-advanced/course.md) · [<- Jour 3](../README.md) · **Course M10** · [Course M11 ->](../../day-04/module-11-rbac/course.md)
+
 
 

@@ -56,6 +56,32 @@ Puis relancez `terraform plan` et `terraform apply`.
 > L'import de ressources existantes est couvert au **M3** (import-brownfield).
 > Ne pas utiliser `terraform import` en M1.
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+
 ## Informations à communiquer pour obtenir de l'aide
 
 - OS et shell;

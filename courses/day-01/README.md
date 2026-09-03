@@ -33,6 +33,11 @@ flowchart LR
 
 > Tous les fichiers `.tf` que vous crerez iront dans `$HOME/Data2AI-Labs/data-platform/environments/dev/`.
 
+> `[WINDOWS]` Si l'execution de scripts `.ps1` est bloquee, autorisez les scripts locaux :
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
+
 ## Livrable du jour
 
 Database, schema et warehouse Snowflake cres par un projet ecrit par l'apprenant.

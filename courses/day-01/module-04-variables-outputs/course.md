@@ -226,4 +226,10 @@ Variables + locals + outputs = contrat clair entre modules et environnements. Ba
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M3](../module-03-import-brownfield/course.md) · [<- Jour 1](../README.md) · **Course M4** · [Course M5 ->](../../day-02/module-05-modules/course.md)
+
 

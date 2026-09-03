@@ -11,6 +11,18 @@
 | **Coût** | Warehouses X-SMALL en UAT, SMALL en PROD |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 DEV, UAT et PROD ont des risques, coûts et rythmes différents. Vous allez déployer le module `landing-zone` dans les trois environnements avec une isolation de state et de nommage.
@@ -301,3 +313,9 @@ Conservez les ressources pour le Jour 3. Pour nettoyer UAT et PROD :
 cd environments/uat && terraform destroy
 cd environments/prod && terraform destroy
 ```
+
+---
+
+## Navigation
+
+[<- Lab M7](../module-07-cicd-pipeline/lab.md) · [<- Jour 2](../README.md) · **Lab M8** · [Lab M9 ->](../../day-03/module-09-snowflake-advanced/lab.md)

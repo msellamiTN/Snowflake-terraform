@@ -16,6 +16,39 @@ A la fin de ce lab :
 
 > **Toutes les commandes s'executent depuis la racine du clone** (`$HOME/Data2AI-Labs/data-platform`).
 
+## Ordre d'execution des scripts
+
+> `[IMPORTANT]` L'ordre des scripts est important. Suivez cette sequence exacte.
+
+| # | Script | Quand | Action |
+|---|---|---|---|
+| 0 | `Set-ExecutionPolicy` | Une seule fois | Autorise les scripts PowerShell (Windows) |
+| 1 | `Install-Tools.ps1` | Une seule fois | Installe Terraform, Snow CLI, dbt, tflint |
+| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + ecrit le PAT dans `secrets/snowflake_pat.txt` |
+| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + set ARM_* + set `TF_VAR_snowflake_token` depuis le PAT file |
+| 4 | `Test-LabConnectivity.ps1` | Verification | Valide tous les acces (Snowflake + Azure + Git + Terraform) |
+
+```powershell
+# 0. Autoriser les scripts (une seule fois, Windows seulement)
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# 1. Installer les outils (une seule fois)
+.\scripts\Install-Tools.ps1
+
+# 2. Configurer Snowflake (une seule fois)
+.\scripts\New-SnowflakeConnection.ps1
+
+# 3. Login Azure + variables Terraform (CHaque session)
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+
+# 4. Verifier tout
+.\scripts\Test-LabConnectivity.ps1 -SkipDevOps
+```
+
+> `[IMPORTANT]` `Learner-Login.ps1` doit etre execute **apres** `New-SnowflakeConnection.ps1`
+> car il lit le PAT dans `secrets/snowflake_pat.txt` pour set `TF_VAR_snowflake_token`.
+> Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
+
 ---
 
 ## Etape 1 — Cloner le projet type (5 min)
@@ -70,6 +103,16 @@ validate.sh
 ```
 
 > A partir d'ici, **toutes les commandes s'executent depuis la racine du clone**.
+
+> `[WINDOWS]` Si vous obtenez l'erreur `l'execution de scripts est desactivee`,
+> autorisez les scripts locaux une seule fois :
+>
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
+>
+> `RemoteSigned` est le parametre standard pour un poste de formation.
+> Il autorise les scripts locaux mais bloque les scripts telecharges non signes.
 
 ---
 
@@ -255,99 +298,21 @@ git check-ignore .env
 
 ---
 
-## Etape 4 — Authentifier Azure avec le service principal partage (10 min)
+## Etape 4 — Configurer la connexion Snowflake (20 min)
 
-Le formateur vous a fourni un fichier `secrets/shared-sp.txt` contenant les identifiants
-d'un **service principal partage**. Ce SP contourne l'authentification MFA d'Azure.
-
-> `secrets/shared-sp.txt` est gitignored. Ne le commitez jamais.
-
-### 4.1 — Lancer le script de login
-
-<details>
-<summary>Windows (PowerShell)</summary>
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
-```
-</details>
-
-<details>
-<summary>Linux/macOS (Bash)</summary>
-
-```bash
-chmod +x scripts/learner-login.sh
-./scripts/learner-login.sh APP01
-```
-</details>
-
-> Remplacez `APP01` par votre prefixe apprenant fourni par le formateur.
-
-Le script :
-- lit `secrets/shared-sp.txt` (meme fichier pour tous les apprenants);
-- se connecte a Azure avec le service principal (pas de MFA);
-- definit les variables `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`;
-- definit `LEARNER_PREFIX` pour l'isolation de vos ressources.
-
-**Checkpoint** :
-
-```text
-============================================================
- Learner Login: APP01
-============================================================
-
-[INFO] Logging in with shared service principal...
-[PASS] Logged in to Azure
-       Subscription: Azure subscription 1 (...)
-       Tenant: ...
-       Learner prefix: APP01
-
-[PASS] Environment variables set:
-       ARM_CLIENT_ID
-       ARM_CLIENT_SECRET (hidden)
-       ARM_TENANT_ID
-       ARM_SUBSCRIPTION_ID
-       LEARNER_PREFIX = APP01
-
-============================================================
- Ready for labs
-============================================================
-```
-
-### 4.2 — Verifier la connexion Azure
-
-```bash
-az account show --query 'name' -o tsv
-```
-
-**Checkpoint** : le nom de la souscription Azure.
-
-### 4.3 — Verifier le prefixe apprenant
-
-```bash
-echo $LEARNER_PREFIX       # Linux/macOS
-echo $env:LEARNER_PREFIX   # Windows PowerShell
-```
-
-**Checkpoint** : votre prefixe (ex. `APP01`).
-
-> **IMPORTANT** Vous devez relancer `Learner-Login` au debut de chaque session
-> (nouveau terminal, redemarrage VM). Les variables d'environnement ne persistent
-> pas entre les sessions.
-
----
-
-## Etape 5 — Configurer la connexion Snowflake (20 min)
+> `[IMPORTANT]` Cette etape doit etre executee **avant** l'etape 5 (Learner-Login).
+> Le script `New-SnowflakeConnection.ps1` ecrit le PAT dans `secrets/snowflake_pat.txt`.
+> Le script `Learner-Login.ps1` (etape 5) lit ce fichier pour set `TF_VAR_snowflake_token`.
 
 Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de facon masquee.
 
-### 5.1 — Lancer le script
+### 4.1 — Lancer le script
 
 <details>
 <summary>Windows (PowerShell)</summary>
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\New-SnowflakeConnection.ps1
+.\scripts\New-SnowflakeConnection.ps1
 ```
 </details>
 
@@ -385,7 +350,7 @@ Snowflake PAT (token): ********
 
 Saisissez votre PAT. Il ne s'affiche pas a l'ecran.
 
-### 5.2 — Verifier la connexion
+### 4.2 — Verifier la connexion
 
 ```bash
 snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
@@ -393,7 +358,7 @@ snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c traini
 
 **Checkpoint** : une ligne avec votre utilisateur, votre role et votre compte.
 
-### 5.3 — Acceder a l'interface web Snowflake (optionnel)
+### 4.3 — Acceder a l'interface web Snowflake (optionnel)
 
 Le formateur vous a fourni un **identifiant Snowflake individuel** (username + password)
 pour acceder a l'interface web.
@@ -406,6 +371,95 @@ pour acceder a l'interface web.
 > Le PAT (utilise par CLI et Terraform) ne fonctionne pas pour l'interface web.
 > L'interface web necessite un username + password.
 > Le formateur vous distribue votre password individuel de facon securisee.
+
+---
+
+## Etape 5 — Authentifier Azure avec le service principal partage (10 min)
+
+> `[IMPORTANT]` Cette etape doit etre executee **apres** l'etape 4 (Snowflake).
+> Le script `Learner-Login.ps1` lit `secrets/snowflake_pat.txt` (cree a l'etape 4)
+> pour set `TF_VAR_snowflake_token`. Sans cela, `terraform plan` vous demandera
+> `var.snowflake_token` manuellement.
+
+Le formateur vous a fourni un fichier `secrets/shared-sp.txt` contenant les identifiants
+d'un **service principal partage**. Ce SP contourne l'authentification MFA d'Azure.
+
+> `secrets/shared-sp.txt` est gitignored. Ne le commitez jamais.
+
+### 5.1 — Lancer le script de login
+
+<details>
+<summary>Windows (PowerShell)</summary>
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+```
+</details>
+
+<details>
+<summary>Linux/macOS (Bash)</summary>
+
+```bash
+chmod +x scripts/learner-login.sh
+./scripts/learner-login.sh APP01
+```
+</details>
+
+> Remplacez `APP01` par votre prefixe apprenant fourni par le formateur.
+
+Le script :
+- lit `secrets/shared-sp.txt` (meme fichier pour tous les apprenants);
+- se connecte a Azure avec le service principal (pas de MFA);
+- definit les variables `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`;
+- lit `secrets/snowflake_pat.txt` et definit `TF_VAR_snowflake_token` pour Terraform;
+- definit `LEARNER_PREFIX` pour l'isolation de vos ressources.
+
+**Checkpoint** :
+
+```text
+============================================================
+ Learner Login: APP01
+============================================================
+
+[INFO] Logging in with shared service principal...
+[PASS] Logged in to Azure
+       Subscription: Azure subscription 1 (...)
+       Tenant: ...
+       Learner prefix: APP01
+
+[PASS] Environment variables set:
+       ARM_CLIENT_ID
+       ARM_CLIENT_SECRET (hidden)
+       ARM_TENANT_ID
+       ARM_SUBSCRIPTION_ID
+       LEARNER_PREFIX = APP01
+       TF_VAR_snowflake_token (from PAT file)
+
+============================================================
+ Ready for labs
+============================================================
+```
+
+### 5.2 — Verifier la connexion Azure
+
+```bash
+az account show --query 'name' -o tsv
+```
+
+**Checkpoint** : le nom de la souscription Azure.
+
+### 5.3 — Verifier le prefixe apprenant
+
+```bash
+echo $LEARNER_PREFIX       # Linux/macOS
+echo $env:LEARNER_PREFIX   # Windows PowerShell
+```
+
+**Checkpoint** : votre prefixe (ex. `APP01`).
+
+> **IMPORTANT** Vous devez relancer `Learner-Login` au debut de chaque session
+> (nouveau terminal, redemarrage VM). Les variables d'environnement ne persistent
+> pas entre les sessions.
 
 ---
 
@@ -576,3 +630,9 @@ A partir du Jour 1, **tous les fichiers `.tf` que vous creerez** iront dans ce c
 Chaque atelier indique le chemin exact depuis la racine du clone. Les scripts `validate.ps1` et `validate.sh` dans `scripts/` verifient votre travail localement avant de pousser.
 
 Passez a [M1 — Premier deploiement Terraform Snowflake](../../day-01/module-01-iac-workflow/lab.md).
+
+---
+
+## Navigation
+
+[<- Jour 0](../README.md) · **Lab M00** · [Lab M1 ->](../../day-01/module-01-iac-workflow/lab.md)

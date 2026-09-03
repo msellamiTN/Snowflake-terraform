@@ -198,5 +198,11 @@ resource "azuredevops_build_definition" "terraform" {
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M6](../module-06-dynamic-logic/course.md) · [<- Jour 2](../README.md) · **Course M7** · [Course M8 ->](../module-08-environments/course.md)
+
 
 

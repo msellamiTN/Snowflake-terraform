@@ -47,3 +47,9 @@ Les Resource Monitors constituent le contrôle immédiat. Les marts dbt explique
 
 Une plateforme observable produit des métriques versionnées, testées, attribuées et reliées à des actions ; elle ne se limite pas à collecter des logs.
 
+---
+
+## Navigation
+
+[<- Course M12](../module-12-capstone/course.md) · [<- Jour 4](../README.md) · **Course M13** · [Course M14 ->](../module-14-data-products/course.md)
+

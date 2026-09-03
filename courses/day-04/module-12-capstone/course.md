@@ -126,5 +126,11 @@ L'équipe est autonome si elle peut :
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète. La grille d'évaluation du lab permet de valider chaque compétence.
 
+---
+
+## Navigation
+
+[<- Course M11](../module-11-rbac/course.md) · [<- Jour 4](../README.md) · **Course M12** · [Course M13 ->](../module-13-finops-observability/course.md)
+
 
 

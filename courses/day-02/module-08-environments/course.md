@@ -91,4 +91,10 @@ flowchart TD
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M7](../module-07-cicd-pipeline/course.md) · [<- Jour 2](../README.md) · **Course M8** · [Course M9 ->](../../day-03/module-09-snowflake-advanced/course.md)
+
 

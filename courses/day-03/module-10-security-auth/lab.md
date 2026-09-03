@@ -11,6 +11,18 @@
 | **Coût** | Aucun |
 | **Cleanup** | Conserver jusqu'au Jour 5 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Une identité partagée avec un PAT empêche l'attribution des actions. Vous allez générer une paire de clés RSA, configurer l'authentification JWT pour un utilisateur technique Terraform et préparer la rotation.
@@ -278,3 +290,9 @@ Critères :
 ## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 4 et 5.
+
+---
+
+## Navigation
+
+[<- Lab M9](../module-09-snowflake-advanced/lab.md) · [<- Jour 3](../README.md) · **Lab M10** · [Lab M11 ->](../../day-04/module-11-rbac/lab.md)

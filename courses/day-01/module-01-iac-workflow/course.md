@@ -98,3 +98,9 @@ Après un `apply` réussi, un nouveau `plan` doit afficher `No changes` si le co
 ## Synthèse
 
 Le workflow professionnel est `écrire → formater → initialiser → valider → planifier → revoir → appliquer → prouver → replanifier`. Une destruction inattendue dans un plan impose un arrêt et une analyse, jamais une approbation automatique.
+
+---
+
+## Navigation
+
+[<- Course M00](../../day-00/module-00-setup/course.md) · [<- Jour 1](../README.md) · **Course M1** · [Course M2 ->](../module-02-state-management/course.md)

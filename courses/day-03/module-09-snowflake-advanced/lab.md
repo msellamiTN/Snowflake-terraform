@@ -11,6 +11,18 @@
 | **Coût** | Warehouse X-SMALL pour COPY |
 | **Cleanup** | Conserver jusqu'au Jour 5 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 La valeur Data commence quand les fichiers arrivent de façon fiable dans Snowflake. Vous allez créer un module d'ingestion avec un stage interne, un file format CSV et une table cible.
@@ -297,3 +309,9 @@ Critères :
 ## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 4 et 5.
+
+---
+
+## Navigation
+
+[<- Lab M8](../../day-02/module-08-environments/lab.md) · [<- Jour 3](../README.md) · **Lab M9** · [Lab M10 ->](../module-10-security-auth/lab.md)

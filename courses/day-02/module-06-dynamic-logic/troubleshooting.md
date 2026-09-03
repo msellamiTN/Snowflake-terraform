@@ -12,3 +12,29 @@
 | `snowflake_grant_account_role` échoue : `role not found` | Rôle pas encore créé | Ajouter `depends_on = [snowflake_account_role.this]` |
 | `for_each` sur `var.users` échoue | La map users a un mauvais type | S'assurer que `users` est `map(object({roles = list(string), ...}))` |
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+

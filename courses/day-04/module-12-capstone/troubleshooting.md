@@ -16,3 +16,29 @@
 | `terraform state list` montre des ressources inattendues | State d'un module précédent | Exécuter `terraform destroy` sur les anciennes ressources ou utiliser une clé de state propre |
 | `dbt build` échoue : `ACCOUNT_USAGE latency` | Les vues ont 1-2h de latence | Attendre que les données se peuplent ; utiliser `--vars 'start_date: "2025-01-01"'` pour les données historiques |
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+

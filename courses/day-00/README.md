@@ -74,6 +74,12 @@ Le depot du projet type est : `https://github.com/msellamiTN/data-platform-start
 > git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
 > ```
 
+> `[WINDOWS]` Si l'execution de scripts `.ps1` est bloquee, autorisez les scripts locaux :
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
+> `RemoteSigned` est le parametre standard pour un poste de formation.
+
 ### 3. Vos identifiants Snowflake
 
 Le formateur a pre-rempli le fichier `.env.example` du projet type avec :

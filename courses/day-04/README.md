@@ -31,6 +31,11 @@ flowchart LR
 4. **Consultez** `troubleshooting.md` en cas d'erreur
 5. **Passez** au module suivant
 
+> `[WINDOWS]` Si l'execution de scripts `.ps1` est bloquee, autorisez les scripts locaux :
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
+
 ## Livrable du jour
 
 Plateforme composee et evaluee, pipeline de qualite, indicateurs FinOps et Data Products gouvernes.

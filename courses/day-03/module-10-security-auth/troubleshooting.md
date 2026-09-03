@@ -15,3 +15,29 @@
 | `terraform output` montre la clé privée | Le module expose la clé privée | Utiliser le module `key-vault-rsa` (pas d'output de clé privée) au lieu du module `crypto` |
 | Rotation de clé : `rsa_public_key_2 not set` | Rotation non activée | Définir `enable_key_rotation = true` dans l'appel du module |
 
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
+

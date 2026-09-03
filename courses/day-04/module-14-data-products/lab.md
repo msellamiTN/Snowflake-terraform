@@ -11,6 +11,18 @@
 | **Coût** | Warehouses X-SMALL |
 | **Cleanup** | Détruire à la fin |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Les domaines SALES et FINANCE doivent livrer des données avec autonomie sans contourner sécurité, coûts et standards. Vous allez créer un module `data-product` qui déploie la structure (database, schemas RAW/SILVER/GOLD, rôles, stage) et publier le contenu SQL avec Snow CLI.
@@ -405,3 +417,9 @@ terraform destroy
 snow sql -c training -q "DROP DATABASE ABC_SALES_DEV"
 snow sql -c training -q "DROP DATABASE ABC_FINANCE_DEV"
 ```
+
+---
+
+## Navigation
+
+[<- Lab M13](../module-13-finops-observability/lab.md) · [<- Jour 4](../README.md) · **Lab M14** · [Fin de formation ->](../../README.md)

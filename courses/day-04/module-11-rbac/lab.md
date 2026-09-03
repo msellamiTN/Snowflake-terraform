@@ -11,6 +11,18 @@
 | **Coût** | Aucun |
 | **Cleanup** | Conserver jusqu'au Jour 5 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 L'accès aux données doit suivre les fonctions métier sans tickets manuels. Vous allez créer une hiérarchie de rôles, appliquer le moindre privilège avec des grants ciblés et configurer des Future Grants pour les nouvelles tables.
@@ -328,3 +340,9 @@ Critères :
 ## 🧹 Cleanup
 
 Conservez les ressources pour le Jour 5.
+
+---
+
+## Navigation
+
+[<- Lab M10](../../day-03/module-10-security-auth/lab.md) · [<- Jour 4](../README.md) · **Lab M11** · [Lab M12 ->](../module-12-capstone/lab.md)

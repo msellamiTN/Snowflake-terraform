@@ -257,4 +257,10 @@ Le backend distant + locking est le **socle** de toute industrialisation Terrafo
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M1](../module-01-iac-workflow/course.md) · [<- Jour 1](../README.md) · **Course M2** · [Course M3 ->](../module-03-import-brownfield/course.md)
+
 

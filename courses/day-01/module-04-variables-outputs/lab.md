@@ -11,6 +11,18 @@
 | **Coût** | Aucune nouvelle ressource |
 | **Cleanup** | Conserver jusqu'au Jour 3 |
 
+> `[IMPORTANT]` Avant de commencer, vous devez etre dans la racine du clone
+> et avoir execute `Learner-Login.ps1` dans **cette session** :
+>
+> ```powershell
+> cd "$HOME\Data2AI-Labs\data-platform"
+> .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+> ```
+>
+> Cela set `TF_VAR_snowflake_token` (depuis `secrets/snowflake_pat.txt`)
+> et les variables `ARM_*` pour Terraform. Sans cela, `terraform plan`
+> vous demandera `var.snowflake_token` manuellement.
+
 ## 🎯 Mission
 
 Des valeurs dispersées et non validées rendent les environnements incohérents. Vous allez structurer les variables, ajouter des validations, créer des outputs exploitables et préparer la configuration pour DEV, UAT et PROD.
@@ -295,3 +307,9 @@ Critères :
 ## 🧹 Cleanup
 
 > ⚠️ **WARNING** : Conservez les ressources pour le Jour 3.
+
+---
+
+## Navigation
+
+[<- Lab M3](../module-03-import-brownfield/lab.md) · [<- Jour 1](../README.md) · **Lab M4** · [Lab M5 ->](../../day-02/module-05-modules/lab.md)

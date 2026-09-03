@@ -225,4 +225,10 @@ L'import est la passerelle obligatoire vers Snowflake as Code en environnement e
 
 Voir [lab.md](./lab.md) pour la mise en pratique complète.
 
+---
+
+## Navigation
+
+[<- Course M2](../module-02-state-management/course.md) · [<- Jour 1](../README.md) · **Course M3** · [Course M4 ->](../module-04-variables-outputs/course.md)
+
 

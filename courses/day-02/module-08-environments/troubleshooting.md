@@ -13,3 +13,29 @@
 | `deployment_mode` non défini | Variable manquante dans tfvars | Ajouter `deployment_mode = "training"` dans `terraform.tfvars`. |
 | `terraform plan -var="deployment_mode=production"` échoue | Clé privée non configurée | Définir `private_key_path` dans tfvars ou utiliser `deployment_mode = "training"`. |
 | Erreur de grant cross-environnement | Rôle d'un autre environnement référencé | Chaque environnement crée ses propres rôles avec le suffixe `_DEV`, `_UAT` ou `_PROD`. |
+
+---
+
+## Execution policy PowerShell
+
+**Symptome :**
+
+```text
+Impossible de charger le fichier ...ps1, car l'execution de scripts est desactivee.
+```
+
+**Cause :** La politique d'execution PowerShell est reglee sur `Restricted`.
+
+**Correction :**
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+> `RemoteSigned` autorise les scripts locaux. C'est le parametre standard pour un poste de formation.
+
+**Alternative ponctuelle :**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\<script-name>.ps1
+```
