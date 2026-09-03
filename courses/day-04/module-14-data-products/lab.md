@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M14 — Data Products as Code avec Terraform et Snow CLI
+# 🧪 Lab M14 — Data Products as Code avec Terraform et Snow CLI
 
 > [<- Jour 4](../README.md) · [<- Module precedent](../module-13-finops-observability/lab.md) · **Module 14** · [Fin ->](../../README.md)
 
@@ -392,6 +392,59 @@ snow sql -c training -q "SHOW GRANTS ON TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTU
 ```bash
 snow sql -c training -q "DROP TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTURE"
 ```
+
+### 🌐 Étape 4.4 — Vérification Graphique du Data Mesh & Masquage dans Snowsight
+
+1. Ouvrez **Snowflake Snowsight (`https://app.snowflake.com`)**.
+2. Naviguez vers **Data > Databases > APP01_M14_SALES_DEV > GOLD**.
+3. Cliquez sur la table `DAILY_REVENUE` :
+   - Observez les métadonnées et l'onglet **Tags** : vérifiez la présence des tags de gouvernance (`Domain = SALES`, `Confidentiality = HIGH`).
+4. Ouvrez une **SQL Worksheet** et exécutez la requête avec le rôle `SYSADMIN` :
+   ```sql
+   SELECT * FROM APP01_M14_SALES_DEV.GOLD.DAILY_REVENUE LIMIT 5;
+   ```
+   Les données sensibles apparaissent en clair pour l'administrateur.
+5. Basculez sur le rôle reader `ROLE_APP01_M14_SALES_RDR_DEV` et ré-exécutez la requête :
+   Les colonnes protégées par la politique de masquage dynamique sont automatiquement masquées (`***`).
+
+---
+
+## 🐛 Chaos Lab M14 — Dérive Manuelle d'un Tag de Gouvernance
+
+*Pour garantir l'intégrité de votre catalogue de données d'entreprise :*
+
+1. **Injection de dérive dans Snowsight :** Dans Snowsight, modifiez manuellement la valeur d'un tag sur la table `DAILY_REVENUE` (ex: passez `Confidentiality` de `HIGH` à `PUBLIC`).
+2. **Détection au terminal :**
+   ```powershell
+   terraform plan
+   ```
+3. Observez le diff détecté par Terraform sur l'association de tags :
+   ```text
+   ~ tag_value = "PUBLIC" -> "HIGH"
+   ```
+4. **Remédiation :** Lancez `terraform apply -auto-approve` pour réaligner immédiatement la gouvernance sur la politique officielle as-code.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Exécutez le script d'auto-évaluation pour valider le module Data Products :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 14 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 Domain databases created
+[PASS] T2 Governance tags assigned
+[PASS] T3 Dynamic masking policy active
+[PASS] T4 terraform fmt & validate passed
+[PASS] T5 Future grants verified
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

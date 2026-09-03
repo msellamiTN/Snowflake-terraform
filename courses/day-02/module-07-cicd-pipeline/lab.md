@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M7 — Pipeline CI/CD Terraform avec Azure DevOps
+# 🧪 Lab M7 — Pipeline CI/CD Terraform avec Azure DevOps
 
 > [<- Jour 2](../README.md) · [<- Module precedent](../module-06-dynamic-logic/lab.md) · **Module 07** · [Module suivant ->](../module-08-environments/lab.md)
 
@@ -298,28 +298,81 @@ Dans Azure DevOps, créez une Pull Request vers `main`.
 
 ### 📝 Étape 3.5 — Observer le pipeline
 
-Le pipeline exécute les stages `Validate` et `Plan`.
+### 🌐 Étape 3.5 — Créer et Réviser la Pull Request dans Azure DevOps Web
 
-✅ **Checkpoint** :
+1. Ouvrez votre navigateur sur **[dev.azure.com](https://dev.azure.com)** et accédez à votre projet.
+2. Dans le menu de gauche, rendez-vous dans **Repos > Pull requests** et cliquez sur **New pull request**.
+3. Sélectionnez votre branche source `feature/add-archive-schema` vers `main`.
+4. Donnez le titre : `feat: add archive schema to landing zone` et cliquez sur **Create**.
+5. Observez le déclenchement automatique de la validation :
+   - Le pipeline s'active dans la section **Checks / Builds**.
+   - Cliquez sur le build en cours pour observer en direct l'exécution de `Validate` (`terraform fmt -check`, `validate`, `tflint`) puis de `Plan`.
+6. Cliquez sur le stage **Plan** dans les logs :
+   - Vérifiez le rapport différentiel : `Plan: 1 to add, 0 to change, 0 to destroy` (le schema `ARCHIVE`).
 
-- `Validate` : `terraform fmt -check` passe, `validate` passe, `tflint` passe;
-- `Plan` : `1 to add` — le nouveau schema ARCHIVE.
+---
 
-### 📝 Étape 3.6 — Approuver et merger
+### 🌐 Étape 3.6 — Approuver l'Environment Gate & Observer l'Apply
 
-1. Relisez le plan dans les logs du pipeline;
-2. approuvez la PR;
-3. mergez vers `main`.
+1. Retournez dans la Pull Request et cliquez sur **Approve**, puis **Complete** (sélectionnez *Merge (no fast-forward)*) et validez.
+2. Rendez-vous dans **Pipelines > Pipelines** et cliquez sur la dernière exécution déclenchée sur la branche `main`.
+3. Le pipeline exécute `Validate` puis `Plan`.
+4. **Action Manuelle d'Approbation (Manual Approval Gate) :**
+   - Le stage `Apply` passe au statut *Waiting for approval*.
+   - En tant qu'ingénieur responsable de la plateforme, cliquez sur **Review** > **Approve**.
+5. Observez le job `Apply` exécuter `terraform apply tfplan` avec succès.
+6. Le dernier stage `Audit` s'exécute automatiquement : il lance un `terraform plan` de contrôle et affiche `No changes. Your infrastructure matches the configuration.` (zéro dérive).
 
-### 📝 Étape 3.7 — Observer le pipeline sur main
+---
 
-Le pipeline exécute tous les stages :
+### ❄️ Étape 3.7 — Vérification dans Snowflake Snowsight
 
-- `Validate` : passe;
-- `Plan` : `1 to add`;
-- `Approval` : attend l'approbation manuelle;
-- `Apply` : applique le changement;
-- `Audit` : `No changes` — zéro dérive.
+1. Ouvrez votre console **Snowflake Snowsight (`https://app.snowflake.com`)**.
+2. Naviguez dans **Data > Databases** > Votre base de données.
+3. Constatez la présence du nouveau schema `ARCHIVE` créé automatiquement par la chaîne CI/CD sans aucune intervention manuelle directe sur Snowflake.
+
+---
+
+## 🐛 Chaos Lab M07 — Pull Request Rejetée par le Pipeline CI/CD
+
+*Pour éprouver la robustesse de votre garde-fou automatisé :*
+
+1. **Injection d'une erreur HCL :** Créez une nouvelle branche locale `feature/broken-syntax` :
+   ```powershell
+   git checkout -b feature/broken-syntax
+   ```
+2. Dans un fichier `.tf`, introduisez délibérément une erreur de syntaxe (ex: une accolade non fermée ou un type de variable erroné).
+3. Commitez et poussez la branche vers Azure Repos :
+   ```powershell
+   git commit -am "test: introduce syntax error"
+   git push origin feature/broken-syntax
+   ```
+4. Ouvrez la Pull Request sur **Azure DevOps Web** :
+   - Constatez que le stage `Validate` passe instantanément en **rouge (Failed)**.
+   - La Pull Request est **bloquée**, empêchant tout déploiement corrompu en production.
+5. **Remédiation :** Corrigez l'erreur en local, commitez et poussez. Le pipeline se relance automatiquement et repasse au **vert**.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Exécutez le script d'auto-évaluation pour vérifier la conformité de votre pipeline et de vos configurations :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 7 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 azure-pipelines.yml exists
+[PASS] T1 Multi-stage pipeline declared (Validate, Plan, Apply)
+[PASS] T2 Approval gate environment configured
+[PASS] T3 terraform fmt & validate passed
+[PASS] T4 Git branch hygiene compliant
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 📝 Partie 4 — Comprendre les gates d'environnement
 

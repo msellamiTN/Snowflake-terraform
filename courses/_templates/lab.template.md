@@ -1,55 +1,58 @@
-﻿# 🧪 Lab Mx — <Tâche professionnelle>
+# 🧪 Lab Mx — <Titre Métier Actionnable>
 
 | Élément | Valeur |
 |---|---|
-| **Durée** | <durée réaliste, troubleshooting inclus> |
+| **Durée** | <45 à 90 minutes, troubleshooting inclus> |
 | **Piste** | `[CORE]` / `[AZURE]` / `[AWS]` / `[GCP]` |
-| **Workspace** | `<chemin exact>` |
-| **Point de départ** | <fichiers réellement présents> |
-| **Coût** | <gratuit, crédit sandbox ou estimation> |
-| **Cleanup** | <obligatoire / conservation jusqu’au module X> |
+| **Workspace** | `labs/mXX-<name>/` |
+| **Coût Estimé** | < $0.05 (Warehouse X-SMALL auto-suspendu) |
+| **Certifications** | HashiCorp Terraform Associate · Snowflake SnowPro · Azure/AWS/GCP |
+| **Cleanup** | <Obligatoire / Conservation pour module suivant> |
 
-## 🎯 Mission
+---
 
-<Acteur, contexte, résultat professionnel et raison de le construire.>
+## 🎯 1. Mission Métier & User Story
 
-## 🎁 Résultat final
+> **En tant que :** <Rôle d'ingénierie : Cloud Data Engineer / DevOps Platform Engineer>  
+> **Je veux :** <Automatiser et sécuriser tel composant de la plateforme Snowflake>  
+> **Afin de :** <Garantir la conformité de production, l'auditabilité et le zéro dérive manuelle>
 
-À la fin du lab, vous aurez créé :
+---
 
-```text
-<arborescence finale, avec annotation des nouveaux fichiers>
-```
-
-## 🏗️ Architecture
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
-    SOURCE[Entrée] --> CURRENT[Capacité construite]
-    CURRENT --> TARGET[(Ressource cible)]
-    CURRENT --> PROOF[Preuve]
+    DEV["🧑‍💻 Apprenant"] -->|"1. terraform apply"| TF["⚙️ Terraform Engine"]
+    TF -->|"2. Storage Integration / Backend"| CLOUD["☁️ Cloud Provider (Azure / AWS / GCP)"]
+    TF -->|"3. RBAC & Resources"| SF["❄️ Snowflake Enterprise"]
+    SF -->|"4. Preuve SQL / CLI"| AUDIT["✅ Zero-Drift & Compliance"]
 ```
 
-## 🎯 Objectifs pédagogiques
+---
 
-- ✅ <verbe observable>;
-- ✅ <verbe observable>;
-- ✅ <preuve mesurable>.
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
-## 📋 Prérequis vérifiables
+- ✅ <Objectif 1 : verbe d'action + ressource créée>;
+- ✅ <Objectif 2 : validation et preuve fonctionnelle>;
+- ✅ <Objectif 3 : incident diagnostiqué et résolu>;
+- ✅ <Objectif 4 : challenge autonome complété sans la solution>.
 
-- [ ] <checkpoint du module précédent>;
-- [ ] `<commande de version>` retourne <contrainte>;
-- [ ] <connexion/rôle testé sans afficher de secret>.
+---
 
-## 🚀 Préflight
+## 🚀 4. Pre-Flight Diagnostic (Vérification Initiale)
 
-<details>
+Assurez-vous que la session est initialisée et que le workspace est propre :
+
+<details open>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-Get-Location
-# autres contrôles non destructifs
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Learner-Login.ps1 -LearnerPrefix <PREFIXE>
+.\scripts\Reset-Lab.ps1 -LearnerPrefix <PREFIXE> -Lab Mxx
+cd labs\mxx-<name>
+..\..\scripts\Test-TerraformReady.ps1
 ```
 </details>
 
@@ -57,217 +60,237 @@ Get-Location
 <summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
 ```bash
-pwd
-# contrôles équivalents
+cd "$HOME/Data2AI-Labs/data-platform"
+./scripts/learner-login.sh --learner-prefix <PREFIXE>
+./scripts/reset-lab.sh --learner-prefix <PREFIXE> --lab Mxx
+cd labs/mxx-<name>
+../../scripts/test-terraform-ready.sh
 ```
 </details>
 
-✅ **Checkpoint** : <répertoire, versions et connexion>.
+✅ **Checkpoint 0 :** La commande affiche `Toolchain: READY`, `Snowflake Connection: READY`, `Workspace: CLEAN`.
 
-## 🗺️ Vue d’ensemble
+---
 
-```mermaid
-flowchart TD
-    A[Préparer] --> B[Créer les fichiers]
-    B --> C[Valider]
-    C --> D[Planifier]
-    D --> E[Exécuter]
-    E --> F[Prouver]
-    F --> G[Nettoyer]
-```
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-## 📝 Partie 1 — <capacité incrémentale>
+### 📝 Étape 5.1 — Déclaration des Entrées & Contraintes (`variables.tf`)
 
-### 📝 Étape 1.1 — Créer le dossier
+**Objectif :** Définir les variables d'entrée avec des règles de validation strictes.
 
-**Objectif :** <pourquoi ce dossier existe>.
-
-<details>
-<summary>![PowerShell](https://raw.githubusercontent.com/PowerShell/PowerShell/master/assets/Powershell_64.svg) <b>Windows (PowerShell)</b></summary>
-
-```powershell
-New-Item -ItemType Directory -Path <path> -Force
-Set-Location <path>
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
-
-```bash
-mkdir -p <path>
-cd <path>
-```
-</details>
-
-✅ **Checkpoint** :
-
-```text
-<structure attendue>
-```
-
-### 📝 Étape 1.2 — Créer `<file>`
-
-**Objectif :** <responsabilité unique du fichier>.
-
-Créez le fichier vide :
-
-<details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
-
-```powershell
-New-Item -ItemType File -Path <file>
-code <file>
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
-
-```bash
-touch <file>
-code <file>
-```
-</details>
-
-Ajoutez ce contenu complet :
+Ouvrez `variables.tf` et ajoutez le bloc de validation :
 
 ```hcl
-<bloc minimal valide, sans ellipse ambiguë>
+variable "<variable_name>" {
+  type        = string
+  description = "<Description précise>"
+  validation {
+    condition     = <expression_booléenne>
+    error_message = "<Message d'erreur guidant la correction>"
+  }
+}
 ```
 
-**Explication :**
+*Explication de l'architecture :*
+1. `<attribut>` : Expliquer pourquoi cette option est nécessaire.
+2. `validation` : Empêche les déploiements hors standard dès la phase de `plan`.
 
-1. `<élément>` — <rôle>;
-2. `<élément>` — <rôle>;
-3. `<élément>` — <conséquence>.
+---
 
-### 📝 Checkpoint 1 — Structure et syntaxe
+### 📝 Étape 5.2 — Déclaration des Ressources Cibles (`main.tf`)
+
+**Objectif :** Écrire la configuration HCL pour instancier la ressource sur Snowflake / Cloud.
+
+<details open>
+<summary>🔵 <b>Implémentation Standard (Azure / Snowflake)</b></summary>
+
+```hcl
+resource "snowflake_<resource_type>" "<resource_name>" {
+  name    = local.<computed_name>
+  comment = "Managed by Terraform for ${var.learner_prefix}"
+  # Attributs FinOps obligatoires
+}
+```
+</details>
 
 <details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
+<summary>🟠 <b>Variante AWS (si parcours AWS)</b></summary>
+
+```hcl
+# Ressource équivalente AWS (ex: aws_s3_bucket, aws_iam_role)
+```
+</details>
+
+<details>
+<summary>🟢 <b>Variante GCP (si parcours GCP)</b></summary>
+
+```hcl
+# Ressource équivalente GCP (ex: google_storage_bucket)
+```
+</details>
+
+---
+
+### 📝 Étape 5.3 — Formatage, Initialisation & Validation Statique
 
 ```powershell
-.\validate.ps1 -Checkpoint 1
+terraform fmt
+terraform validate
 ```
-</details>
 
 <details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+<summary>📋 <b>Sortie console attendue</b></summary>
 
-```bash
-./validate.sh --checkpoint 1
+```text
+Success! The configuration is valid.
 ```
 </details>
 
-✅ **Checkpoint** :
+---
 
-```text
-[PASS] <contrôle 1>
-[PASS] <contrôle 2>
-Checkpoint 1: PASS
+### 📝 Étape 5.4 — Planification & Décryptage Différentiel
+
+Générez le plan spéculatif :
+
+```powershell
+terraform plan -out "mxx.tfplan"
 ```
 
-> 🔍 **Si votre résultat diffère :** vérifiez d’abord le répertoire courant, le nom exact du fichier et les placeholders. Consultez ensuite `troubleshooting.md#checkpoint-1`.
+> 🔍 **Grille de lecture du Plan :**
+> - `+` Vert : Création nette de ressource.
+> - `~` Jaune : Modification in-place sans perte de données.
+> - `-` Rouge : Destruction pure.
+> - `-/+` Rouge/Vert : Remplacement destructif (*destroy then create*). **Attention requise !**
 
-## 📝 Partie 2 — Formater, initialiser et valider
+---
 
-Présenter chaque commande séparément, expliquer son rôle, montrer une sortie courte et stable, puis exécuter un checkpoint.
+### 📝 Étape 5.5 — Déploiement Approuvé & Preuve SQL / CLI
 
-## 📝 Partie 3 — Planifier et lire le changement
+Appliquez le plan :
 
-- enregistrer le plan lorsque pertinent;
-- expliquer `+`, `~`, `-`, `-/+`;
-- comparer types, adresses et quantité aux critères;
-- arrêter si une destruction inattendue apparaît.
-
-## 📝 Partie 4 — Exécuter et prouver
-
-Avant `apply`, rappeler la portée exacte. Après exécution, produire une preuve Terraform et une preuve fonctionnelle Snowflake/CLI/dbt.
-
-## 🐛 Erreur contrôlée
-
-### Symptôme attendu
-
-<Erreur sûre et réversible introduite intentionnellement.>
-
-### Diagnostic
-
-```text
-<commande non destructive et observation>
+```powershell
+terraform apply "mxx.tfplan"
 ```
 
-### Correction minimale
+Produisez la **preuve fonctionnelle indiscutable** en interrogeant Snowflake :
 
-<Modification ciblée, sans remplacer le workspace par la solution.>
+```powershell
+snow sql -q "SHOW <OBJECTS> LIKE '<PATTERN>';" -c training
+```
 
-### Prévention
+<details>
+<summary>📊 <b>Sortie attendue (Preuve)</b></summary>
 
-<Contrôle automatisé ou pratique réutilisable.>
+```text
++-------------------+---------+-----------------------+
+| name              | state   | comment               |
+|-------------------+---------+-----------------------|
+| APP01_MXX_...     | STARTED | Managed by Terraform  |
++-------------------+---------+-----------------------+
+```
+</details>
 
-## ✅ Validation finale
+---
 
-- [ ] structure conforme;
-- [ ] formatage et syntaxe valides;
-- [ ] plan conforme aux ressources annoncées;
-- [ ] preuve fonctionnelle obtenue;
-- [ ] second plan sans modification inattendue;
-- [ ] aucun secret ou artefact interdit dans Git.
+### 🌐 Étape 5.6 — Vérification Graphique via les Consoles Web
 
-## 🏆 Challenge
+L'ingénierie moderne combine automatisation au terminal et contrôle visuel dans les interfaces de gestion :
 
-### Scénario
+#### ❄️ Console Snowflake Snowsight (`https://app.snowflake.com`)
+1. Connectez-vous avec vos identifiants apprenant (`<PREFIXE_APPRENANT>` / mot de passe ou PAT).
+2. Vérifiez le rôle actif en haut à droite (ex: `SYSADMIN`).
+3. Naviguez vers l'objet créé (*Data > Databases* ou *Admin > Warehouses*).
+4. Vérifiez que la ressource apparaît exactement avec la configuration déclarée dans Terraform (ex: Warehouse *Suspended*, taille *X-Small*).
 
-<Nouvelle demande liée au même contexte métier.>
+#### 🔵 Portail Microsoft Azure (`https://portal.azure.com`)
+*(Selon le module : M02 State, M09 Ingestion, M10 Secrets)*
+1. Connectez-vous avec votre compte Azure de formation.
+2. Naviguez vers votre groupe de ressources :
+   - *Pour M02* : Ouvrez le compte de stockage > Conteneurs > `tfstate` > vérifier le fichier `.tfstate` et le bail (*Lease status*).
+   - *Pour M09* : Ouvrez ADLS Gen2 > Conteneur de données > vérifier les fichiers Parquet.
+   - *Pour M10* : Ouvrez Azure Key Vault > Secrets > vérifier la présence de la clé RSA privée.
 
-### Contraintes
+#### 🚀 Console Azure DevOps (`https://dev.azure.com`)
+*(Pour M07 CI/CD et M12 Capstone)*
+1. Ouvrez le projet Azure DevOps > *Pipelines*.
+2. Ouvrez la dernière exécution du pipeline ou la Pull Request en cours.
+3. Vérifiez les étapes : `Validate` (vert), `Plan` (rapport lisible), et **cliquez sur "Approve" sur l'Environment Gate** pour autoriser le déploiement en PROD.
 
-- <contrainte 1>;
-- <contrainte 2>;
-- ne pas consulter `solution/` avant le score.
+---
 
-### Critères de score
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
-| Critère | Points |
+*Pour devenir un ingénieur chevronné, apprenez à diagnostiquer une panne réelle de production provoquée par une action manuelle.*
+
+### Symptôme & Injection de Dérive Manuelle (via Snowsight UI)
+1. Ouvrez **Snowflake Snowsight**, sélectionnez votre ressource (ex: Warehouse ou Database) et cliquez sur **Edit** (ou exécutez un `ALTER` direct dans une worksheet).
+2. Modifiez un paramètre géré par Terraform (ex: passez la taille à `Small` ou modifiez le commentaire à `'Modifié manuellement dans Snowsight'`).
+3. Revenez dans votre terminal et lancez `terraform plan`.
+
+### Diagnostic & Observation
+Observez comment Terraform compare l'état réel et le fichier `.tfstate` pour détecter la dérive (*drift*) :
+```text
+~ comment = "Modifié manuellement dans Snowsight" -> "Managed by Terraform for APP01"
+```
+
+### Remédiation
+Exécutez `terraform apply` pour réaligner immédiatement l'infrastructure réelle sur la vérité du code versionné, sans toucher aux autres composants.
+
+---
+
+## 🤖 7. Validation Automatisée (*Check My Progress*)
+
+Validez votre avancement avec le moteur d'auto-évaluation du cours :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module <ModuleNumber> -All -Report
+```
+
+<details>
+<summary>✅ <b>Exemple de Rapport de Validation</b></summary>
+
+```text
+[PASS] T1 versions.tf and provider pinned correctly
+[PASS] T2 Variables and naming conventions validated
+[PASS] T3 Resource configured with FinOps rules
+[PASS] T4 Functional proof verified in Snowflake
+[PASS] T5 Idempotent plan (0 to add, 0 to change, 0 to destroy)
+Result: 5/5 Tasks Passed.
+Report written to: student-track/_reports/module-XX-APP01.md
+```
+</details>
+
+---
+
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
+
+> **Scénario :** <Nouvelle demande client / contrainte de sécurité à implémenter>  
+> **Contraintes :**  
+> - <Contrainte 1 : pas de secrets en dur>;  
+> - <Contrainte 2 : zéro dérive au second plan>;  
+> - Ne consultez pas le dossier `solution/` avant d'avoir atteint le score de 100%.
+
+| Critère d'Évaluation | Points |
 |---|---:|
-| <preuve> | <points> |
-| <qualité> | <points> |
-| <sécurité/idempotence> | <points> |
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-## 🧹 Cleanup contrôlé
+---
 
-> ⚠️ Confirmez le workspace, le préfixe apprenant et la liste des ressources avant toute destruction.
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
-<details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
+Pour éviter toute consommation inutile de crédits :
 
 ```powershell
-<commande de preview>
-<commande de cleanup avec confirmation>
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
-
-```bash
-<commande de preview>
-<commande de cleanup avec confirmation>
-```
-</details>
-
-✅ **Checkpoint** : <requête/commande confirmant le nettoyage>.
-
-## 🎯 Point de reprise
-
-Si vous devez interrompre le lab, conservez <fichiers autorisés> et reprenez avec :
-
-```text
-<commande de vérification/reprise>
+terraform destroy -auto-approve
 ```
 
-## 🤔 Réflexion
+Vérifiez que la ressource a bien disparu :
+```powershell
+snow sql -q "SHOW <OBJECTS> LIKE '<PATTERN>';" -c training
+```
 
-1. Quel risque le pattern réduit-il ?
-2. Quel compromis de formation ne faut-il pas reproduire en production ?
-3. Quelle preuve présenteriez-vous en revue de changement ?
+✅ **Checkpoint Final :** `0 rows returned`.

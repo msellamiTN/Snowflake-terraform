@@ -4,35 +4,42 @@
 
 | Item | Definition |
 |---|---|
-| **Duration** | 5 days × 6 hours — **30 hours** |
-| **Delivery** | Instructor-led or guided self-paced learning |
-| **Practice ratio** | 65–70%, on a project built from an almost empty workspace |
-| **Entry level** | Intermediate IT |
+| **Duration** | 5 days × 6 hours — **30 to 40 hours** |
+| **Delivery** | Self-paced autonomous training or instructor-led bootcamp |
+| **Practice ratio** | **80% active hands-on labs**, 20% micro-theory |
+| **Entry level** | Intermediate IT (DevOps, Data Engineers, SysAdmin, Cloud Architects) |
 | **Workstations** | Windows/PowerShell and Linux/macOS/Bash |
-| **Core stack** | Terraform, Snowflake Enterprise, Azure, Azure DevOps, Git, Snowflake CLI, dbt |
+| **Core stack** | Terraform, Snowflake Enterprise, Multi-Cloud (Azure, AWS, GCP), Git, CI/CD, dbt |
 | **Environments** | DEV, UAT, PROD inside a single Snowflake account |
-| **Language** | French learning content; official English technical terms and commands |
+| **Language** | English and French courseware; official technical terms, HCL code, and CLI syntax in English |
 
-**Mandatory references:** [Reference architecture](docs/reference-architecture.md) · [Version policy](docs/version-policy.md)
+**Mandatory references:** [Academic Master Plan](PLAN.md) · [Reference architecture](docs/reference-architecture.md) · [Version policy](docs/version-policy.md)
 
 ## Purpose
 
-Learners build, secure, automate, and operate a Snowflake platform with Terraform on Azure, reproducing the company's real environment. They create the project structure and code one file at a time instead of inspecting a prebuilt solution. Every important action includes an expected result, a validation checkpoint, and a recovery path.
+Learners build, secure, automate, and operate an enterprise Snowflake platform with Terraform across modern cloud providers (**Microsoft Azure, AWS, or GCP**). They write the project architecture and code step-by-step with automated verification tooling rather than passively reviewing prebuilt repositories.
 
-## Target environment
+Key pedagogical pillars include:
+- **80% Hands-On Labs**: Atomic, verifiable, copy-pasteable instructions with expected console logs.
+- **Continuous Automated Self-Evaluation**: Instant feedback using `SelfPacedLab.ps1` (`Check My Progress`).
+- **Tri-Cloud Enterprise Scenarios**: Full options for Azure (ADLS Gen2, Key Vault), AWS (S3, Secrets Manager, KMS), or GCP (GCS, Secret Manager).
+- **Chaos Engineering Labs**: Intentional failure injections (manual drift, state lock conflicts, 403 authorization failures) and step-by-step runbooks.
+- **FinOps & Security By Design**: Auto-suspending warehouses, passwordless key-pair JWT service users, sub-$0.05 cost per lab.
 
-| Layer | Technology |
-|---|---|
-| Data cloud | Snowflake Enterprise, single account |
-| Isolation | `DEV`, `UAT`, `PROD` naming convention |
-| Infrastructure as Code | Terraform |
-| Remote state | Azure Blob Storage |
-| Secrets | Azure Key Vault |
-| CI/CD | Azure DevOps with self-hosted agents |
-| Storage and ingestion | Azure Data Lake Storage Gen2 |
-| Transformation and FinOps | dbt on `ACCOUNT_USAGE` |
+## Target environment & Tri-Cloud Architecture
 
-AWS and GCP appear only as a comparison appendix, with no executable lab.
+| Architecture Layer | 🔵 Microsoft Azure | 🟠 Amazon Web Services (AWS) | 🟢 Google Cloud Platform (GCP) |
+|---|---|---|---|
+| **Data Cloud** | Snowflake Enterprise | Snowflake Enterprise | Snowflake Enterprise |
+| **Infrastructure as Code** | Terraform (`snowflake`, `azurerm`) | Terraform (`snowflake`, `aws`) | Terraform (`snowflake`, `google`) |
+| **Remote State Backend** | Azure Blob Storage + Lease Lock | AWS S3 Bucket + DynamoDB Table | Google Cloud Storage + Native Lock |
+| **Secret & Key Vault** | Azure Key Vault | AWS Secrets Manager / KMS | GCP Secret Manager / Cloud KMS |
+| **External Stages** | Azure Data Lake Storage Gen2 | Amazon S3 Bucket | Google Cloud Storage Bucket |
+| **IAM Integration** | Storage Integration (Entra ID SP) | Storage Integration (IAM Role & Ext ID) | Storage Integration (GCP Service Account) |
+| **Event-driven Ingestion** | Azure Event Grid + Storage Queue | S3 Notifications + SQS | GCP Pub/Sub Topic & Subscription |
+| **CI/CD & GitOps** | Azure DevOps Pipelines / GitHub Actions | GitHub Actions / AWS CodePipeline | GitHub Actions / GitLab CI / Cloud Build |
+| **Transformation & FinOps** | dbt Core on `ACCOUNT_USAGE` | dbt Core on `ACCOUNT_USAGE` | dbt Core on `ACCOUNT_USAGE` |
+| **Zero-Cost Local Sandbox**| **Azurite** Emulator | **LocalStack** / **MinIO** Emulator | **GCS Local** / **MinIO** Emulator |
 
 ## Required access
 
@@ -60,7 +67,19 @@ By the end of the course, learners can:
 11. build an Azure DevOps pipeline with validation, plan, approval, apply, and drift detection;
 12. produce FinOps evidence with `ACCOUNT_USAGE` and dbt;
 13. publish a governed Data Product;
-14. demonstrate an idempotent, documented, and cleanable platform.
+14. demonstrate an idempotent, documented, and cleanable platform;
+15. diagnose and remediate production incidents (drift, lock contention, IAM failures).
+
+## Professional Certification Alignment
+
+| Certification Authority | Certification Title | Exam Topics Covered in Curriculum | Aligned Modules |
+|---|---|---|---|
+| **HashiCorp** | **Terraform Associate (003)** | HCL Syntax, Terraform Workflow, Remote State & Locking, Modules, Dynamic Blocks, Import & Drift | M01, M02, M03, M04, M05, M06, M08 |
+| **Snowflake** | **SnowPro Core (COF-C02)** | Virtual Warehouses, Resource Monitors, Databases, Schemas, Stages, COPY INTO, RBAC | M01, M09, M10, M11, M13 |
+| **Snowflake** | **SnowPro Advanced Architect** | Storage Integrations, Data Governance, Object Tagging, Multi-Cluster Warehouses, FinOps | M09, M11, M12, M13, M14 |
+| **Microsoft** | **Azure DevOps Engineer (AZ-400)** | Infrastructure as Code CI/CD, Workload Identity Federation, Service Connections, Quality Gates | M07, M10, M12 |
+| **Amazon Web Services** | **AWS Data Engineer (DEA-C01)** | S3 Storage Ingestion, IAM Roles / External ID, Event-driven Pipelines, KMS Encryption | M02, M09, M10 |
+| **Google Cloud** | **Associate Cloud Engineer (ACE)** | Google Cloud Storage, Cloud IAM, Service Accounts, Workload Identity Pools | M02, M09, M10 |
 
 ## Isolation and security model
 

@@ -1,4 +1,4 @@
-﻿# Lab M2 — State distant Azure Blob Storage
+# Lab M2 — State distant Azure Blob Storage
 
 > [<- Jour 1](../README.md) · [<- Module precedent](../module-01-iac-workflow/lab.md) · **Module 2** · [Module suivant ->](../module-03-import-brownfield/lab.md)
 
@@ -690,6 +690,20 @@ az storage blob list \
 
 > 💡 **Note** : `--auth-mode login` force Azure CLI à utiliser la session ouverte par `Learner-Login.ps1`. Sans cette option, Azure CLI affiche un avertissement puis tente de récupérer une account key. Si la commande retourne `AuthorizationPermissionMismatch`, demandez au formateur d'attribuer au service principal le rôle `Storage Blob Data Reader` ou `Storage Blob Data Contributor`.
 
+### 🌐 Étape 4.5 — Vérification Visuelle dans le Portail Microsoft Azure
+
+Pour ancrer votre compréhension de l'infrastructure cloud :
+
+1. Ouvrez votre navigateur sur **[portal.azure.com](https://portal.azure.com)**.
+2. Recherchez le compte de stockage Azure indiqué par `$env:ARM_STORAGE_ACCOUNT`.
+3. Dans le menu de gauche, cliquez sur **Conteneurs (Containers)** puis ouvrez le conteneur **`tfstate`**.
+4. Naviguez dans le répertoire `training/APP01/m02/` :
+   - Vous devez voir le fichier binaire `terraform.tfstate`.
+   - Cliquez dessus et observez les métadonnées : **Chiffrement au repos (Microsoft-managed key)**, **Taille**, et **Statut du bail (*Lease status : Unlocked / Available*)**.
+5. Cette inspection visuelle confirme que votre infrastructure d'équipe est prête pour la production.
+
+---
+
 ## 📝 Partie 5 — Tester le verrouillage
 
 ### 📝 Étape 5.1 — Ouvrir et préparer deux terminaux
@@ -965,6 +979,29 @@ cd "$HOME/Data2AI-Labs/data-platform"
 rm -rf labs/m02-state-management/reader
 ```
 </details>
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Exécutez le script d'évaluation pour valider la configuration du state distant Azure :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 2 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 backend.tf exists
+[PASS] T1 backend "azurerm" declared
+[PASS] T2 terraform init succeeded
+[PASS] T3 Remote state migrated to Azure Blob
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Locking configuration compliant
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

@@ -4,54 +4,50 @@
 
 | Élément | Valeur |
 |---|---|
-| **Durée** | 5 jours × 6 heures — **30 heures** |
-| **Modalité** | Formation accompagnée ou autoformation guidée (*self-paced*) |
-| **Approche** | 65 à 70 % de pratique, fil rouge construit depuis zéro |
-| **Niveau d’entrée** | Intermédiaire IT |
+| **Durée** | 5 jours × 6 heures — **30 à 40 heures** |
+| **Modalité** | Autoformation autonome (*self-paced*) ou formation accompagnée (*bootcamp*) |
+| **Approche** | **80 % de pratique active (hands-on)**, 20 % micro-théorie, fil rouge progressif |
+| **Niveau d’entrée** | Intermédiaire IT (DevOps, Data Engineers, SysAdmin, Cloud Architects) |
 | **Plateformes poste** | Windows/PowerShell et Linux/macOS/Bash |
-| **Cœur technique** | Terraform, Snowflake Enterprise, Azure, Azure DevOps, Git, Snowflake CLI, dbt |
+| **Cœur technique** | Terraform, Snowflake Enterprise, Multi-Cloud (Azure, AWS, GCP), CI/CD, Git, dbt |
 | **Environnements** | DEV, UAT, PROD dans un compte Snowflake unique |
-| **Langue** | Français pédagogique; termes techniques et commandes en anglais |
+| **Langue** | Français pédagogique; termes techniques, code HCL et commandes en anglais |
 
-**Références obligatoires :** [Architecture de référence](docs/reference-architecture.md) · [Politique de versions](docs/version-policy.md)
+**Références obligatoires :** [Plan Directeur Académique](PLAN.md) · [Architecture de référence](docs/reference-architecture.md) · [Politique de versions](docs/version-policy.md)
 
 ---
 
 ## 1. Finalité professionnelle
 
-Cette formation apprend à construire, sécuriser, automatiser et exploiter une plateforme Snowflake avec Terraform sur Azure, en reproduisant l’environnement réel de l’entreprise.
+Cette formation d'excellence apprend à concevoir, sécuriser, automatiser et exploiter une plateforme de données Snowflake avec Terraform sur un écosystème Cloud moderne (**Microsoft Azure, AWS, ou GCP**), en reproduisant fidèlement les exigences des environnements d'entreprise.
 
-L’apprenant ne reçoit pas un projet final à ouvrir : il crée progressivement l’arborescence, les fichiers HCL, les modules, le pipeline et les contrôles, puis exécute et dépanne chaque étape.
+L’apprenant ne reçoit pas un projet final préconstruit : il écrit progressivement l’arborescence, les fichiers HCL, les modules réutilisables, le pipeline CI/CD et les règles de gouvernance, puis exécute et dépanne chaque étape grâce à des outils de validation automatisés.
 
-Le parcours reprend les mécanismes des formations pratiques professionnelles :
+Le parcours applique la pédagogie active des certifications professionnelles :
 
-- scénario métier et tâche réelle pour chaque module;
-- environnement vérifié avant de commencer;
-- instructions atomiques et copiables;
-- résultat attendu après chaque action importante;
-- checkpoints automatiques et preuves fonctionnelles;
-- erreurs contrôlées pour apprendre le diagnostic;
-- challenge avec moins de guidage en fin de module;
-- nettoyage explicite pour limiter coûts et risques;
-- capstone évalué sur critères observables.
+- **80% de laboratoires pratiques** avec instructions atomiques, vérifiables et exécutables;
+- **Boucle d'auto-évaluation continue** via `SelfPacedLab.ps1` (`Check My Progress`);
+- **Scénarios Tri-Cloud** : Choix et transposition vers Azure (ADLS, Key Vault), AWS (S3, Secrets Manager, KMS), ou GCP (GCS, Secret Manager);
+- **Pédagogie de l'incident (*Chaos Lab*)** : Simulation de pannes réelles (dérive d'infrastructure, conflits de state lock, permissions 403) et runbooks de résolution;
+- **Hygiène FinOps & Sécurité Fail-Closed** : Warehouses auto-suspendus, identités de service JWT sans mot de passe, coût moyen par lab inférieur à 0.05 $;
+- **Projet Capstone d'intégration** évalué selon les 5 Piliers du *Well-Architected Framework*.
 
-## 2. Environnement cible
+## 2. Environnement cible & Matrice Tri-Cloud
 
-La formation s’exécute sur la plateforme suivante.
+La formation repose sur le cœur **Snowflake Enterprise + Terraform**, tout en offrant une déclinaison pratique complète sur les trois principaux fournisseurs Cloud :
 
-| Couche | Technologie |
-|---|---|
-| Data Cloud | Snowflake Enterprise, compte unique |
-| Isolation | Nommage `DEV`, `UAT`, `PROD` |
-| Infrastructure as Code | Terraform |
-| État distant | Azure Blob Storage |
-| Secrets | Azure Key Vault |
-| CI/CD | Azure DevOps, agents auto-hébergés |
-| Ingestion et stockage | Azure Data Lake Storage Gen2 |
-| Transformation et FinOps | dbt sur `ACCOUNT_USAGE` |
-| Outils | Git, Snowflake CLI, Azure CLI, Python |
-
-Les équivalents AWS et GCP sont traités en **annexe comparative** uniquement, sans lab exécutable.
+| Couche d'Architecture | 🔵 Microsoft Azure | 🟠 Amazon Web Services (AWS) | 🟢 Google Cloud Platform (GCP) |
+|---|---|---|---|
+| **Data Cloud** | Snowflake Enterprise | Snowflake Enterprise | Snowflake Enterprise |
+| **Infrastructure as Code** | Terraform (Providers `snowflake`, `azurerm`) | Terraform (Providers `snowflake`, `aws`) | Terraform (Providers `snowflake`, `google`) |
+| **État Distant (Backend)** | Azure Blob Storage + Lease Lock | AWS S3 Bucket + DynamoDB Table | Google Cloud Storage Bucket avec Lock natif |
+| **Gestion des Secrets** | Azure Key Vault | AWS Secrets Manager / KMS | GCP Secret Manager / Cloud KMS |
+| **Stockage Externe & Stages** | Azure Data Lake Storage Gen2 | Amazon S3 | Google Cloud Storage |
+| **Intégration d'Accès IAM** | Storage Integration (Entra ID SP) | Storage Integration (IAM Role & Ext ID) | Storage Integration (GCP Service Account) |
+| **Ingestion Événementielle** | Azure Event Grid + Storage Queue | S3 Bucket Notifications + SQS | GCP Pub/Sub Topic & Subscription |
+| **CI/CD & GitOps** | Azure DevOps Pipelines / GitHub Actions | GitHub Actions / AWS CodePipeline | GitHub Actions / GitLab CI / Cloud Build |
+| **Transformation & FinOps** | dbt Core sur `ACCOUNT_USAGE` | dbt Core sur `ACCOUNT_USAGE` | dbt Core sur `ACCOUNT_USAGE` |
+| **Option Locale Sans Frais** | Émulateur **Azurite** | Émulateur **LocalStack** / **MinIO** | Émulateur **GCS Local** / **MinIO** |
 
 ## 3. Public cible
 
@@ -98,7 +94,21 @@ Aucune expérience préalable de Terraform n’est obligatoire.
 11. construire un pipeline Azure DevOps avec validation, plan, approbation, apply et détection de dérive;
 12. produire des indicateurs FinOps avec `ACCOUNT_USAGE` et dbt;
 13. publier un Data Product gouverné;
-14. démontrer une plateforme composée, idempotente, documentée et nettoyable.
+14. démontrer une plateforme composée, idempotente, documentée et nettoyable;
+15. diagnostiquer et résoudre des incidents de production (drift, lock de state, permissions IAM).
+
+### 5.1 Alignement avec les Certifications Internationales
+
+Le programme est aligné sur les domaines de compétences clés des examens officiels :
+
+| Organisme | Certification | Domaines Couverts dans le Parcours | Modules Correspondants |
+|---|---|---|---|
+| **HashiCorp** | **Terraform Associate (003)** | HCL Syntax, Terraform Workflow, State Management, Modules, Dynamic Blocks, Import & Drift | M01, M02, M03, M04, M05, M06, M08 |
+| **Snowflake** | **SnowPro Core (COF-C02)** | Virtual Warehouses, Resource Monitors, Databases, Schemas, Stages, COPY INTO, RBAC | M01, M09, M10, M11, M13 |
+| **Snowflake** | **SnowPro Advanced Architect** | Storage Integrations, Data Governance, Object Tagging, Multi-Cluster Warehouses, FinOps | M09, M11, M12, M13, M14 |
+| **Microsoft** | **Azure DevOps Engineer (AZ-400)** | Infrastructure as Code CI/CD, Workload Identity Federation, Service Connections, Quality Gates | M07, M10, M12 |
+| **Amazon Web Services** | **AWS Data Engineer (DEA-C01)** | S3 Storage Ingestion, IAM Roles / External ID, Event-driven Pipelines, KMS Encryption | M02, M09, M10 |
+| **Google Cloud** | **Associate Cloud Engineer (ACE)** | Google Cloud Storage, Cloud IAM, Service Accounts, Workload Identity Pools | M02, M09, M10 |
 
 ## 6. Principes pédagogiques
 

@@ -20,7 +20,6 @@ snowflake_organization = "VYUJNGZ"
 snowflake_account      = "DY31329"
 snowflake_user         = "DATA2AITN"
 snowflake_role         = "ACCOUNTADMIN"
-snowflake_password     = "<Snowflake password>"
 
 # ARM credentials for the shared service principal (stored in Key Vault)
 arm_client_id       = "<appId from az ad sp create-for-rbac>"

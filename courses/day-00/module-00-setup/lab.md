@@ -613,6 +613,54 @@ git status
 
 ---
 
+## Etape 6 — Première Connexion aux Consoles Web (Snowsight & Azure Portal)
+
+L'apprentissage professionnel associe les commandes du terminal à la maîtrise des interfaces graphiques d'administration.
+
+### 6.1 — Connexion à Snowflake Snowsight Web UI
+
+1. Ouvrez votre navigateur et accédez à : `https://app.snowflake.com`
+2. Saisissez votre identifiant de compte Snowflake : `<ORGANIZATION>-<ACCOUNT>` (valeur présente dans votre `.env`).
+3. Connectez-vous avec vos identifiants apprenant :
+   - **Nom d'utilisateur :** `<PREFIXE_APPRENANT>` (ex: `APP01`)
+   - **Mot de passe :** Renseigné lors de l'initialisation ou via PAT.
+4. Vérifiez en haut à droite que votre rôle actif est **`SYSADMIN`** (et non `ACCOUNTADMIN`).
+5. Cliquez sur **Worksheets > + SQL Worksheet**, collez et exécutez (`Ctrl + Enter`) :
+   ```sql
+   SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT(), CURRENT_REGION();
+   ```
+6. Vous devez voir votre identifiant apprenant et le rôle `SYSADMIN`.
+
+### 6.2 — Vérification du Portail Microsoft Azure
+
+1. Accédez au portail officiel : `https://portal.azure.com`
+2. Vérifiez votre accès à la souscription de formation indiquée par :
+   ```powershell
+   az account show --query "name" -o tsv
+   ```
+3. Naviguez vers le groupe de ressources de la formation et repérez :
+   - Le compte de stockage Azure Blob Storage qui hébergera votre state Terraform distant (étudié au Jour 1).
+   - Le coffre **Azure Key Vault** contenant votre secret PAT Snowflake (`SnowflakePAT-APP01`).
+
+---
+
+## 🐛 Chaos Lab M00 — Diagnostic d'une Panne d'Environnement
+
+*Pour apprendre à dépanner sans stress, simulez une anomalie courante de configuration :*
+
+1. **Injection de l'anomalie :** Ouvrez votre `.env` et modifiez temporairement `LEARNER_PREFIX` avec un nom non conforme contenant un tiret et des minuscules :
+   ```text
+   LEARNER_PREFIX=app-01-test
+   ```
+2. **Observation du diagnostic :** Lancez la vérification d'environnement :
+   ```powershell
+   .\scripts\SelfPacedLab.ps1 -Module 0 -All
+   ```
+3. **Résultat :** Le validateur signale un échec immédiat sur la conformité de l'identifiant (la regex de validation impose `^[A-Z0-9]{2,10}$`).
+4. **Remédiation :** Restaurez votre préfixe officiel (ex: `APP01`), ré-exécutez le script et vérifiez le retour au statut `PASS`.
+
+---
+
 ## Checkpoint final
 
 Le Jour 0 est termine uniquement lorsque les conditions suivantes sont reunies :
@@ -620,8 +668,9 @@ Le Jour 0 est termine uniquement lorsque les conditions suivantes sont reunies :
 1. `Toolchain status: READY`
 2. `az account show --query 'name' -o tsv` affiche la souscription Azure
 3. `snow sql -q 'SELECT 1' -c training` retourne un resultat
-4. `Test-LabConnectivity.ps1` affiche `Status: READY` (0 FAIL)
-5. Le projet type est clone et ne contient aucun fichier `.tf`
+4. Connexion confirmée dans **Snowflake Snowsight Web UI** avec le rôle `SYSADMIN`
+5. `Test-LabConnectivity.ps1` affiche `Status: READY` (0 FAIL)
+6. Le projet type est clone et ne contient aucun fichier `.tf`
 
 ```text
 Ready for Day 1

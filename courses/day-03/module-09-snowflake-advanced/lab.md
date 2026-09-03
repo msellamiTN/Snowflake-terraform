@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M9 — Ressources Snowflake avancées : Stages, File Formats, Pipes
+# 🧪 Lab M9 — Ressources Snowflake avancées : Stages, File Formats, Pipes
 
 > [<- Jour 3](../README.md) · [<- Jour 2](../../day-02/README.md) · **Module 09** · [Module suivant ->](../module-10-security-auth/lab.md)
 
@@ -491,7 +491,7 @@ Remplacez `APP01` par votre préfixe.
 snow sql -c training -q "COPY INTO APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS (ID, FIRST_NAME, LAST_NAME, EMAIL) FROM @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS FILE_FORMAT = (FORMAT_NAME = APP01_M09_RAW_DEV.INGESTION.FF_CSV) ON_ERROR = 'ABORT_STATEMENT'"
 ```
 
-### 📝 Étape 4.4 — Vérifier les données
+### 📝 Étape 4.4 — Vérifier les données dans le terminal
 
 ```bash
 snow sql -c training -q "SELECT COUNT(*) FROM APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS"
@@ -500,33 +500,89 @@ snow sql -c training -q "SELECT * FROM APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS
 
 ✅ **Checkpoint** : 3 lignes avec les données du fichier CSV.
 
-## 📝 Partie 5 — Stage externe Azure (concept)
+### 🌐 Étape 4.5 — Prévisualisation Visuelle dans Snowflake Snowsight
 
-### 📝 Étape 5.1 — Comprendre la différence
+1. Ouvrez votre navigateur sur **[app.snowflake.com](https://app.snowflake.com)**.
+2. Naviguez vers **Data > Databases > APP01_M09_RAW_DEV > INGESTION > Tables > RAW_CUSTOMERS**.
+3. Cliquez sur l'onglet **Data Preview** :
+   - Constatez l'affichage graphique des 3 enregistrements (`ID`, `FIRST_NAME`, `LAST_NAME`, `EMAIL`).
+4. Cliquez sur **Worksheets > + SQL Worksheet** et observez l'historique des requêtes (*Query History*) pour visualiser le graphe d'exécution de votre commande `COPY INTO`.
 
-|| Critère | Stage interne | Stage externe |
-||---|---|---|
-|| Stockage | Dans Snowflake | Azure Blob Storage |
-|| Gestion | Snowflake gère les fichiers | Vous gérez les fichiers |
-|| Coût | Stockage Snowflake | Stockage Azure (moins cher) |
-|| Recommandé pour | Tests, petits volumes | Production, gros volumes |
+---
 
-### 📝 Étape 5.2 — Déclaration d'un storage integration (concept)
+## 📝 Partie 5 — Ingestion Hybride Externe ADLS Gen2 (Pattern Enterprise)
 
-En production, vous utiliseriez :
+### 📝 Étape 5.1 — Comprendre la différence Architectural
+
+| Critère | Stage interne | Stage externe Azure ADLS Gen2 |
+|---|---|---|
+| Stockage physique | Dans le compte Snowflake | Compte Azure Blob / ADLS Gen2 managé |
+| Gestion des fichiers | Commandes `PUT` Snowflake | Azure Storage Explorer, API, Pipelines Azure |
+| Coût de conservation | Facturation Snowflake | Facturation Azure Blob (très économique) |
+| Cas d'usage recommandé | Développements & petits volumes | **Production d'entreprise, Data Lakes** |
+
+### 📝 Étape 5.2 — Déclaration de la Storage Integration Azure
+
+En entreprise, la délégation d'identité repose sur un Principal de Service Microsoft Entra ID (*Zero Shared Secrets*) :
 
 ```hcl
 resource "snowflake_storage_integration" "azure" {
-  name    = "INT_AZURE_BLOB"
-  type    = "AZURE_BLOB_STORAGE"
-  azure_tenant_id = var.arm_tenant_id
-  enabled = true
-
-  storage_allowed_locations = ["azure://<account>.blob.core.windows.net/raw/"]
+  name                      = "APP01_INT_ADLS_GEN2"
+  type                      = "AZURE_BLOB_STORAGE"
+  azure_tenant_id           = var.arm_tenant_id
+  enabled                   = true
+  storage_allowed_locations = ["azure://${var.arm_storage_account}.blob.core.windows.net/data-raw/"]
 }
 ```
 
-> Ce lab utilise un stage interne pour éviter la configuration Azure Storage. Le module externe est couvert dans le capstone.
+---
+
+## 🐛 Chaos Lab M09 — Rejet de Données Corrompues lors du COPY INTO
+
+*En production, les fichiers sources contiennent parfois des formats anormaux. Vous allez tester le comportement défensif de Snowflake.*
+
+1. **Injection d'un fichier corrompu :** Créez un fichier contenant un champ texte au lieu d'un ID numérique :
+   ```bash
+   cat > /tmp/bad_customers.csv << 'EOF'
+   ID,FIRST_NAME,LAST_NAME,EMAIL
+   NON_NUMERIQUE,Daniel,Faussaire,daniel@bad.com
+   EOF
+   ```
+2. **Upload vers le stage :**
+   ```bash
+   snow sql -c training -q "PUT file:///tmp/bad_customers.csv @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS"
+   ```
+3. **Exécution du COPY INTO :**
+   ```bash
+   snow sql -c training -q "COPY INTO APP01_M09_RAW_DEV.INGESTION.RAW_CUSTOMERS FROM @APP01_M09_RAW_DEV.INGESTION.STG_RAW_CUSTOMERS/bad_customers.csv FILE_FORMAT = (FORMAT_NAME = APP01_M09_RAW_DEV.INGESTION.FF_CSV) ON_ERROR = 'ABORT_STATEMENT'"
+   ```
+4. **Observation du diagnostic :** Snowflake rejette la transaction entière :
+   ```text
+   Numeric value 'NON_NUMERIQUE' is not recognized. File 'bad_customers.csv.gz', line 2, character 1.
+   ```
+5. **Remédiation FinOps :** Utilisez `ON_ERROR = 'CONTINUE'` ou `VALIDATION_MODE = 'RETURN_ERRORS'` pour auditer les rejets sans interrompre le pipeline d'ingestion.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Exécutez le script d'évaluation pour valider l'ensemble du module d'ingestion :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 9 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 Landing zone module instantiated
+[PASS] T2 Ingestion module declared (Stage, Format, Table)
+[PASS] T3 terraform fmt & validate passed
+[PASS] T4 Resources deployed to Snowflake
+[PASS] T5 Data ingestion verified via COPY INTO
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

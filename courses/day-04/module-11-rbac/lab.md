@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M11 — Modèle RBAC scalable avec Future Grants
+# 🧪 Lab M11 — Modèle RBAC scalable avec Future Grants
 
 > [<- Jour 4](../README.md) · [<- Jour 3](../../day-03/README.md) · **Module 11** · [Module suivant ->](../module-12-capstone/lab.md)
 
@@ -378,6 +378,64 @@ snow sql -c training -q "SHOW GRANTS TO USER TF_APP01_M11_SVC"
 ```
 
 ✅ **Checkpoint** : le rôle `ROLE_APP01_M11_RAW_DEV` est attribué à l'utilisateur technique.
+
+### 🌐 Étape 3.6 — Test Interactif des Rôles dans Snowflake Snowsight
+
+Pour ressentir concrètement l'effet de votre politique de moindre privilège :
+
+1. Ouvrez votre navigateur sur **[app.snowflake.com](https://app.snowflake.com)**.
+2. Cliquez sur votre profil en haut à droite et changez de rôle actif : sélectionnez votre rôle fonctionnel `ROLE_APP01_M11_RAW_DEV` (ou un analyste auquel vous avez hérité les droits).
+3. Ouvrez une **SQL Worksheet** et exécutez un test de lecture :
+   ```sql
+   SELECT * FROM APP01_M11_RAW_DEV.INGESTION.TEST_TABLE LIMIT 5;
+   ```
+   ✅ **Résultat attendu :** Requête exécutée avec succès (droit `SELECT` accordé).
+4. Tentez maintenant une opération destructive interdite :
+   ```sql
+   DROP TABLE APP01_M11_RAW_DEV.INGESTION.TEST_TABLE;
+   ```
+   🛑 **Résultat attendu :** Échec immédiat avec erreur Snowflake :
+   `SQL access control error: Insufficient privileges to operate on table 'TEST_TABLE'`.
+
+---
+
+## 🐛 Chaos Lab M11 — Rupture de la Chaîne d'Héritage RBAC
+
+*Une erreur classique en production est d'accorder des droits sur une table ou un schema sans accorder le droit USAGE sur la base de données parente.*
+
+1. **Simulation de l'incident :** Dans votre code Terraform `main.tf`, commentez temporairement le bloc attribuant le privilège `USAGE` sur la database :
+   ```hcl
+   # Privilège USAGE commenté
+   ```
+2. Appliquez la modification :
+   ```powershell
+   terraform apply -auto-approve
+   ```
+3. **Observation dans Snowsight :** Basculez sur le rôle utilisateur. Bien que le rôle possède encore des droits sur les tables, la base de données entière a disparu de l'arborescence graphique !
+   *Principe Snowflake : Sans USAGE sur le conteneur parent, aucun objet enfant n'est accessible.*
+4. **Remédiation :** Décommentez le grant `USAGE`, appliquez avec `terraform apply`, et vérifiez la réapparition instantanée de la base dans Snowsight.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Exécutez le script d'auto-évaluation pour vérifier la conformité de votre modèle RBAC :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 11 -All -Report
+```
+
+✅ **Résultat attendu :**
+```text
+[PASS] T1 Access roles declared (AR_*)
+[PASS] T2 Functional roles declared (FR_*)
+[PASS] T3 Future grants defined
+[PASS] T4 terraform fmt & validate passed
+[PASS] T5 Least privilege compliance verified
+Result: 5/5 Tasks Passed.
+```
+
+---
 
 ## 🏆 Challenge
 

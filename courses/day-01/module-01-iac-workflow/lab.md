@@ -1,4 +1,4 @@
-﻿# 🧪 Lab M1 — Créer votre premier projet Terraform Snowflake
+# 🧪 Lab M1 — Créer votre premier projet Terraform Snowflake
 
 > [<- Jour 1](../README.md) · [<- Jour 0](../../day-00/README.md) · **Module 1** · [Module suivant ->](../module-02-state-management/lab.md)
 
@@ -475,25 +475,67 @@ terraform plan
 
 ✅ **Checkpoint 7** : `No changes. Your infrastructure matches the configuration.`
 
-## 🐛 Erreur contrôlée — Préfixe invalide
+## 🐛 Chaos Lab M01 — Dérive Manuelle via Snowsight & Auto-Remédiation
 
-Dans `terraform.tfvars`, remplacez temporairement le préfixe par `abc-invalid`, puis exécutez :
+*En entreprise, des modifications manuelles hors Terraform sont parfois faites par erreur dans l'interface graphique. Vous allez simuler ce scénario réel.*
+
+### Étape 1 : Injection de dérive dans Snowflake Snowsight
+1. Dans votre navigateur sur **Snowflake Snowsight**, rendez-vous dans **Admin > Warehouses**.
+2. Cliquez sur votre warehouse `WH_APP01_M01_ETL_DEV` > **... (Options)** > **Edit**.
+3. Modifiez le champ **Comment** en saisissant : `'Modifié manuellement hors Terraform'`.
+4. Cliquez sur **Save**.
+
+### Étape 2 : Détection automatique par Terraform
+1. Revenez dans votre terminal et exécutez un plan de détection :
+   ```powershell
+   terraform plan
+   ```
+2. Observez le diff généré :
+   ```text
+   ~ comment = "Modifié manuellement hors Terraform" -> "Managed by Terraform for APP01"
+   Plan: 0 to add, 1 to change, 0 to destroy.
+   ```
+   Terraform a détecté que l'état réel ne correspond plus au code versionné !
+
+### Étape 3 : Remédiation automatique
+1. Exécutez :
+   ```powershell
+   terraform apply -auto-approve
+   ```
+2. Rafraîchissez votre navigateur dans Snowsight : le commentaire a été immédiatement restauré à sa valeur officielle sans interruption de service.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Exécutez le script d'évaluation pour valider toutes les étapes du module :
 
 ```powershell
-terraform validate
-terraform plan
+.\scripts\SelfPacedLab.ps1 -Module 1 -All -Report
 ```
 
-Le plan doit refuser la valeur avec le message de validation. Restaurez ensuite votre préfixe majuscule et rejouez `terraform plan`.
+✅ **Résultat attendu :**
+```text
+[PASS] T1 versions.tf exists
+[PASS] T1 Snowflake provider pinned
+[PASS] T1 provider.tf uses profile
+[PASS] T2 Required variables
+[PASS] T3 Database resource
+[PASS] T3 Schema resource
+[PASS] T3 Cost-controlled warehouse
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Idempotent plan evidence
+Result: 5/5 Tasks Passed.
+```
 
-Cette erreur ne modifie aucune ressource distante.
+---
 
 ## ✅ Validation finale
 
 - [ ] structure conforme;
 - [ ] formatage et syntaxe valides;
 - [ ] plan conforme aux ressources annoncées;
-- [ ] preuve fonctionnelle obtenue;
+- [ ] preuve fonctionnelle obtenue dans le terminal et visualisée dans Snowsight;
 - [ ] second plan sans modification inattendue;
 - [ ] aucun secret ou artefact interdit dans Git.
 
