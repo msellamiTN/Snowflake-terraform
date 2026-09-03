@@ -578,7 +578,9 @@ terraform output platform_summary
 
 ✅ **Checkpoint** : un objet avec la database, les schemas, les warehouses, l'utilisateur et les rôles.
 
-## 📝 Partie 4 — Prouver le zero-drift
+## � Partie 4 — Chaos Lab : Dérive manuelle dans Snowsight & Rétablissement Zero-Drift
+
+*Dans ce Chaos Lab d'entreprise, vous injectez une dérive manuelle hors IaC directement via l'interface graphique Snowsight, vous la détectez au terminal via terraform plan, et vous forcez la réconciliation.*
 
 ### 📝 Étape 4.1 — Plan avec detailed-exitcode
 
@@ -594,12 +596,12 @@ terraform plan -detailed-exitcode
 
 ✅ **Checkpoint** : code 0 (no changes).
 
-### 📝 Étape 4.2 — Simuler une dérive
+### 📝 Étape 4.2 — Simuler une dérive via Snowsight UI
 
-Modifiez une ressource hors Terraform :
+Dans **Snowflake Snowsight** (`app.snowflake.com`) ou via la CLI, modifiez une ressource hors Terraform :
 
 ```bash
-snow sql -c training -q "ALTER DATABASE APP01_M12_RAW_DEV SET COMMENT = 'Drift test'"
+snow sql -c training -q "ALTER DATABASE APP01_M12_RAW_DEV SET COMMENT = 'Drift test from Snowsight UI'"
 ```
 
 ### 📝 Étape 4.3 — Détecter la dérive
@@ -608,7 +610,7 @@ snow sql -c training -q "ALTER DATABASE APP01_M12_RAW_DEV SET COMMENT = 'Drift t
 terraform plan -detailed-exitcode
 ```
 
-✅ **Checkpoint** : code 2 (changes detected).
+✅ **Checkpoint** : code 2 (changes detected). Observez le diff montrant la divergence de commentaire.
 
 ### 📝 Étape 4.4 — Corriger la dérive
 
@@ -623,6 +625,18 @@ terraform plan -detailed-exitcode
 ```
 
 ✅ **Checkpoint** : code 0.
+
+### 🌐 Étape 4.6 — Audit Visuel Multi-Console (Snowsight, Portail Azure, Azure DevOps)
+
+1. **❄️ Snowflake Snowsight (`app.snowflake.com`) :**
+   - Naviguez dans **Data > Databases** : vérifiez l'arborescence `APP01_M12_RAW_DEV` avec ses schemas `INGESTION` et `STAGING`.
+   - Naviguez dans **Admin > Warehouses** : vérifiez que `WH_APP01_M12_ETL_DEV` est suspendu avec taille `X-SMALL`.
+   - Naviguez dans **Admin > Users & Roles** : confirmez les rôles créés et l'utilisateur technique `TF_APP01_M12_SVC`.
+2. **🔵 Portail Microsoft Azure (`portal.azure.com`) :**
+   - Ouvrez le conteneur Blob hébergeant le state : constatez que la clé d'état `training/APP01/m12/terraform.tfstate` est présente et chiffrée.
+   - Vérifiez dans Azure Key Vault que les secrets utilisés par la chaîne de déploiement sont intacts.
+3. **🚀 Azure DevOps Web (`dev.azure.com`) :**
+   - Vérifiez que la Pull Request a été auditée et que les tests automatiques de la pipeline CI/CD sont au vert.
 
 ## 📝 Partie 5 — Documenter l'architecture
 
@@ -662,6 +676,33 @@ terraform output -json > docs/m12-outputs.json
 ```
 
 > 🔒 **SECURITY** Vérifiez qu'aucun secret n'apparaît dans le JSON avant de commiter.
+
+---
+
+## 🤖 Validation Automatisée & Score Capstone (100 Pts)
+
+Le projet Capstone est évalué par le moteur d'audit de formation. Lancez la vérification complète pour obtenir votre rapport et score d'ingénierie :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 12 -All -Report
+```
+
+<details>
+<summary>✅ <b>Critères d'évaluation de l'audit automatisé</b></summary>
+
+```text
+[PASS] T1 Azure Blob remote backend configured
+[PASS] T2 Landing zone module composed
+[PASS] T3 RBAC architecture composed
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Capstone plan evidence
+Result: 5/5 Tasks Passed.
+Score : 100/100 points
+Rapport exporté : student-track/_reports/module-12-APP01.md
+```
+</details>
+
+---
 
 ## 🏆 Challenge
 

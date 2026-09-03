@@ -463,6 +463,17 @@ Remplacez `APP01` par votre préfixe.
 
 ✅ **Checkpoint** : la ligne `RSA_PUBLIC_KEY_FP` contient une empreinte.
 
+### 🌐 Étape 4.8 — Vérification Visuelle dans Azure Key Vault & Snowflake Snowsight
+
+1. **Dans le Portail Microsoft Azure (`portal.azure.com`) :**
+   - Accédez à votre coffre **Azure Key Vault**.
+   - Ouvrez la section **Secrets** et constatez la présence du secret `APP01-RSA-PRIVATE-KEY` contenant la clé privée RSA chiffrée.
+   - Vérifiez l'historique des versions et confirmez que la clé n'a jamais transité en clair dans le code HCL.
+2. **Dans Snowflake Snowsight (`app.snowflake.com`) :**
+   - Connectez-vous avec vos identifiants apprenant et basculez sur le rôle `SYSADMIN` (ou `SECURITYADMIN`).
+   - Naviguez dans **Admin > Users & Roles**, recherchez l'utilisateur `TF_APP01_M10_SVC`.
+   - Cliquez sur l'utilisateur : vérifiez que le statut est actif, qu'aucun mot de passe n'est configuré et que l'empreinte publique RSA est bien enregistrée.
+
 ## 📝 Partie 5 — Rotation sans interruption
 
 ### 📝 Étape 5.1 — Principe
@@ -524,6 +535,64 @@ module "security" {
 ```
 
 > Pendant la transition, les deux clés sont valides. Une fois la nouvelle clé testée, vous inversez les rôles et retirez l'ancienne.
+
+---
+
+## 🐛 Partie 6 — Chaos Lab : Rejet d'authentification par clé non correspondante (JWT Token Invalid)
+
+*Dans ce Chaos Lab, vous allez observer le comportement de sécurité de Snowflake lorsque la clé publique configurée ne correspond pas à la clé privée présentée.*
+
+### Symptôme & Injection de Dérive
+1. Générez une clé temporaire corrompue ou dissymétrique.
+2. Tentez d'exécuter une requête SQL Snowflake en forçant l'utilisation d'une mauvaise clé privée :
+   ```bash
+   snow connection test -c invalid_key_profile
+   ```
+3. Observez l'erreur retournée par Snowflake :
+   ```text
+   250001 (08001): Failed to connect to DB: JWT token is invalid.
+   ```
+
+### Diagnostic & Audit
+Dans **Snowflake Snowsight**, naviguez dans **Admin > Query History** ou exécutez la vue d'audit des connexions :
+```sql
+SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY 
+WHERE USER_NAME = 'TF_APP01_M10_SVC' 
+ORDER BY EVENT_TIMESTAMP DESC LIMIT 5;
+```
+Vous constaterez que la tentative d'intrusion avec une clé non appairée est enregistrée avec le code d'erreur `INCORRECT_RSA_KEY`.
+
+### Remédiation
+1. Réalignez l'empreinte de clé publique sur l'utilisateur technique via Terraform :
+   ```bash
+   terraform apply
+   ```
+2. Re-testez la connexion valide : le statut retourne `OK`.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Validez votre avancement avec le moteur d'évaluation autonome :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 10 -All -Report
+```
+
+<details>
+<summary>✅ <b>Sortie attendue du validateur</b></summary>
+
+```text
+[PASS] T1 Service user resource declared
+[PASS] T2 RSA public key configured
+[PASS] T3 Zero private keys in HCL
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Plan evidence
+Result: 5/5 Tasks Passed.
+```
+</details>
+
+---
 
 ## 🏆 Challenge
 

@@ -704,7 +704,9 @@ Pour ancrer votre compréhension de l'infrastructure cloud :
 
 ---
 
-## 📝 Partie 5 — Tester le verrouillage
+## � Partie 5 — Chaos Lab : Tester le verrouillage (State Lock Concurrency)
+
+*Dans ce Chaos Lab, vous allez provoquer intentionnellement un conflit de verrouillage de state pour observer le mécanisme de bail exclusif (Blob Lease) d'Azure Storage.*
 
 ### 📝 Étape 5.1 — Ouvrir et préparer deux terminaux
 

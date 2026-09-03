@@ -273,6 +273,70 @@ Les marts FinOps permettent d'attribuer les coûts par :
 - rôle (attribution métier);
 - environnement (DEV, UAT, PROD).
 
+### 🌐 Étape 5.4 — Inspection des Resource Monitors & Cost Management dans Snowsight UI
+
+1. Connectez-vous à **Snowflake Snowsight (`app.snowflake.com`)** avec le rôle `ACCOUNTADMIN` ou `SYSADMIN`.
+2. Naviguez vers **Admin > Cost Management**.
+3. Cliquez sur l'onglet **Resource Monitors** :
+   - Constatez la présence du moniteur rattaché à votre warehouse d'atelier.
+   - Inspectez la jauge de crédit mensuelle et les seuils d'alerte configurés (ex: 80% Notification, 100% Suspension stricte).
+4. Naviguez vers l'onglet **Consumption** et observez les graphiques de consommation horaire et par entrepôt virtuel.
+
+---
+
+## 🐛 Partie 6 — Chaos Lab : Dépassement budgétaire & suspension stricte
+
+*Dans ce Chaos Lab, vous allez simuler un dépassement de quota budgétaire pour observer le blocage immédiat imposé par le Resource Monitor de Snowflake.*
+
+### Symptôme & Injection de Dérive
+1. Modifiez temporairement le quota du Resource Monitor pour lui assigner un seuil inférieur à la consommation actuelle :
+   ```sql
+   ALTER RESOURCE MONITOR RM_APP01_M13_DEV SET CREDIT_QUOTA = 1;
+   ```
+2. Tentez de démarrer le warehouse pour exécuter une requête lourde :
+   ```sql
+   ALTER WAREHOUSE WH_APP01_M13_FINOPS_DEV RESUME;
+   ```
+3. Observez l'erreur immédiate renvoyée par Snowflake :
+   ```text
+   000670 (57014): Warehouse cannot be resumed because resource monitor quota has been exceeded.
+   ```
+
+### Diagnostic & Audit
+Dans **Snowsight UI > Admin > Cost Management > Resource Monitors**, le moniteur apparaît avec un statut d'alerte rouge `Suspended (100% reached)`.
+
+### Remédiation
+1. Rétablissez le quota nominal avec Terraform :
+   ```bash
+   terraform apply
+   ```
+2. Le warehouse redevient immédiatement disponible pour l'ingestion et les transformations.
+
+---
+
+## 🤖 Validation Automatisée de votre Progression
+
+Validez la configuration FinOps et dbt avec le runner de formation :
+
+```powershell
+.\scripts\SelfPacedLab.ps1 -Module 13 -All -Report
+```
+
+<details>
+<summary>✅ <b>Sortie attendue du validateur</b></summary>
+
+```text
+[PASS] T1 snowflake_resource_monitor resource declared
+[PASS] T2 Credit quota threshold set
+[PASS] T3 Resource monitor attached to warehouse
+[PASS] T4 terraform fmt & validate
+[PASS] T5 Plan evidence
+Result: 5/5 Tasks Passed.
+```
+</details>
+
+---
+
 ## 🏆 Challenge
 
 Créez un mart personnalisé `mart_cost_by_environment` qui agrège les crédits par environnement en utilisant le préfixe du nom de warehouse.
