@@ -38,11 +38,17 @@
 > Si le pre-flight affiche `READY`, lancez `terraform plan -out "m14.tfplan"`.
 > Sinon, suivez les corrections indiquees.
 
-## 🎯 Mission
+## 🎯 1. Mission Métier & User Story
 
 Les domaines SALES et FINANCE doivent livrer des données avec autonomie sans contourner sécurité, coûts et standards. Vous allez créer un module `data-product` qui déploie la structure (database, schemas RAW/SILVER/GOLD, rôles, stage) et publier le contenu SQL avec Snow CLI.
 
-## 🏗️ Architecture
+> **En tant que :** Data Product Owner  
+> **Je veux :** déployer des data products avec un module Terraform réutilisable et Snow CLI  
+> **Afin de :** livrer des données en autonomie tout en respectant sécurité, coûts et standards
+
+---
+
+## 🏗️ 2. Architecture & Modèle Mental
 
 ```mermaid
 flowchart LR
@@ -51,7 +57,7 @@ flowchart LR
     STRUCT --> SQL
 ```
 
-## 🎯 Objectifs
+## 🎯 3. Objectifs Pédagogiques Vérifiables
 
 - créer un module `data-product` réutilisable;
 - déployer deux domaines (SALES et FINANCE) avec `for_each`;
@@ -59,22 +65,26 @@ flowchart LR
 - publier le contenu SQL avec Snow CLI, pas avec `local-exec`;
 - vérifier ownership, rôles, Future Grants et zero-drift.
 
-## 📋 Prérequis
+## � 4. Pre-Flight Diagnostic (Vérification Initiale)
+
+### Prérequis
 
 - [ ] `snow sql -c training` fonctionne.
 - [ ] Le dossier `labs/m14-data-products/` contient `provider.tf`, `versions.tf`, `variables.tf` et `terraform.tfvars.example` (fournis).
 - [ ] Le sous-dossier `labs/m14-data-products/modules/data-product/` existe (avec `versions.tf` fourni).
 
-## 📝 Partie 1 — Créer le module data-product
+## 📝 5. Étapes d'Implémentation Pas-à-Pas (80% Hands-On)
 
-### 📝 Étape 1.1 — Créer la structure
+### 📝 Étape 5.1 — Créer le module data-product
+
+#### Créer la structure
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform/labs/m14-data-products
 mkdir -p modules/data-product
 ```
 
-### 📝 Étape 1.2 — Créer `modules/data-product/variables.tf`
+#### Créer `modules/data-product/variables.tf`
 
 ```hcl
 variable "learner_prefix" {
@@ -104,7 +114,7 @@ variable "warehouse_size" {
 }
 ```
 
-### 📝 Étape 1.3 — Créer `modules/data-product/main.tf`
+#### Créer `modules/data-product/main.tf`
 
 ```hcl
 locals {
@@ -206,7 +216,7 @@ resource "snowflake_stage" "raw" {
 }
 ```
 
-### 📝 Étape 1.4 — Créer `modules/data-product/outputs.tf`
+#### Créer `modules/data-product/outputs.tf`
 
 ```hcl
 output "database_name" {
@@ -230,7 +240,7 @@ output "stage_name" {
 }
 ```
 
-### 📝 Étape 1.5 — Formater et valider
+#### Formater et valider
 
 ```bash
 cd modules/data-product
@@ -238,9 +248,9 @@ terraform fmt
 terraform validate
 ```
 
-## 📝 Partie 2 — Déployer deux domaines avec for_each
+### 📝 Étape 5.2 — Déployer deux domaines avec for_each
 
-### 📝 Étape 2.1 — Écrire `labs/m14-data-products/main.tf`
+#### Écrire `labs/m14-data-products/main.tf`
 
 ```hcl
 locals {
@@ -266,7 +276,7 @@ module "data_product" {
 }
 ```
 
-### 📝 Étape 2.2 — Ajouter les outputs dans `outputs.tf`
+#### Ajouter les outputs dans `outputs.tf`
 
 ```hcl
 output "data_products" {
@@ -282,7 +292,7 @@ output "data_products" {
 }
 ```
 
-### 📝 Étape 2.3 — Planifier et appliquer
+#### Planifier et appliquer
 
 ```bash
 cd labs/m14-data-products
@@ -295,7 +305,7 @@ terraform apply "m14.tfplan"
 
 ✅ **Checkpoint** : 2 databases, 6 schemas, 2 warehouses, 4 rôles, 2 stages, grants.
 
-### 📝 Étape 2.4 — Vérifier
+#### Vérifier
 
 ```bash
 snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M14_SALES_DEV'"
@@ -303,9 +313,9 @@ snow sql -c training -q "SHOW DATABASES LIKE 'APP01_M14_FINANCE_DEV'"
 snow sql -c training -q "SHOW SCHEMAS IN DATABASE APP01_M14_SALES_DEV"
 ```
 
-## 📝 Partie 3 — Publier le contenu SQL avec Snow CLI
+### 📝 Étape 5.3 — Publier le contenu SQL avec Snow CLI
 
-### 📝 Étape 3.1 — Créer les fichiers SQL
+#### Créer les fichiers SQL
 
 ```bash
 cd labs/m14-data-products
@@ -342,21 +352,21 @@ SELECT
   300.00 AS AMOUNT;
 ```
 
-### 📝 Étape 3.2 — Exécuter le SQL avec Snow CLI
+#### Exécuter le SQL avec Snow CLI
 
 ```bash
 snow sql -c training -f sql/sales/orders.sql
 snow sql -c training -f sql/finance/ledger.sql
 ```
 
-### 📝 Étape 3.3 — Vérifier
+#### Vérifier
 
 ```bash
 snow sql -c training -q "SELECT * FROM APP01_M14_SALES_DEV.GOLD.DAILY_REVENUE"
 snow sql -c training -q "SELECT * FROM APP01_M14_FINANCE_DEV.SILVER.LEDGER"
 ```
 
-### 📝 Étape 3.4 — Prouver le zero-drift
+#### Prouver le zero-drift
 
 ```bash
 terraform plan -detailed-exitcode
@@ -366,9 +376,9 @@ terraform plan -detailed-exitcode
 
 > C'est la séparation des responsabilités : Terraform gère la structure, Snow CLI gère le contenu.
 
-## 📝 Partie 4 — Vérifier les Future Grants
+### 📝 Étape 5.4 — Vérifier les Future Grants
 
-### 📝 Étape 4.1 — Lister les Future Grants
+#### Lister les Future Grants
 
 ```bash
 snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA APP01_M14_SALES_DEV.GOLD"
@@ -376,7 +386,7 @@ snow sql -c training -q "SHOW FUTURE GRANTS IN SCHEMA APP01_M14_SALES_DEV.GOLD"
 
 ✅ **Checkpoint** : `GRANT SELECT ON FUTURE TABLES TO ROLE ROLE_APP01_M14_SALES_RDR_DEV`.
 
-### 📝 Étape 4.2 — Tester le Future Grant
+#### Tester le Future Grant
 
 Créez une table manuellement dans GOLD :
 
@@ -387,13 +397,13 @@ snow sql -c training -q "SHOW GRANTS ON TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTU
 
 ✅ **Checkpoint** : le rôle reader a déjà SELECT grâce au Future Grant.
 
-### 📝 Étape 4.3 — Nettoyer
+#### Nettoyer
 
 ```bash
 snow sql -c training -q "DROP TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTURE"
 ```
 
-### 🌐 Étape 4.4 — Vérification Graphique du Data Mesh & Masquage dans Snowsight
+#### Vérification Graphique du Data Mesh & Masquage dans Snowsight
 
 1. Ouvrez **Snowflake Snowsight (`https://app.snowflake.com`)**.
 2. Naviguez vers **Data > Databases > APP01_M14_SALES_DEV > GOLD**.
@@ -409,24 +419,35 @@ snow sql -c training -q "DROP TABLE APP01_M14_SALES_DEV.GOLD.TEST_FUTURE"
 
 ---
 
-## 🐛 Chaos Lab M14 — Dérive Manuelle d'un Tag de Gouvernance
+## 🐛 6. Incident Contrôlé (*Chaos Engineering Lab*)
 
 *Pour garantir l'intégrité de votre catalogue de données d'entreprise :*
 
-1. **Injection de dérive dans Snowsight :** Dans Snowsight, modifiez manuellement la valeur d'un tag sur la table `DAILY_REVENUE` (ex: passez `Confidentiality` de `HIGH` à `PUBLIC`).
-2. **Détection au terminal :**
-   ```powershell
-   terraform plan
-   ```
-3. Observez le diff détecté par Terraform sur l'association de tags :
-   ```text
-   ~ tag_value = "PUBLIC" -> "HIGH"
-   ```
-4. **Remédiation :** Lancez `terraform apply -auto-approve` pour réaligner immédiatement la gouvernance sur la politique officielle as-code.
+### Symptôme & Injection
+
+Dans Snowsight, modifiez manuellement la valeur d'un tag sur la table `DAILY_REVENUE` (ex: passez `Confidentiality` de `HIGH` à `PUBLIC`).
+
+### Diagnostic & Observation
+
+Détection au terminal :
+
+```powershell
+terraform plan
+```
+
+Observez le diff détecté par Terraform sur l'association de tags :
+
+```text
+~ tag_value = "PUBLIC" -> "HIGH"
+```
+
+### Remédiation
+
+Lancez `terraform apply -auto-approve` pour réaligner immédiatement la gouvernance sur la politique officielle as-code.
 
 ---
 
-## 🤖 Validation Automatisée de votre Progression
+## 🤖 7. Validation Automatisée (*Check My Progress*)
 
 Exécutez le script d'auto-évaluation pour valider le module Data Products :
 
@@ -446,18 +467,24 @@ Result: 5/5 Tasks Passed.
 
 ---
 
-## 🏆 Challenge
+## 🏆 8. Défi Autonome (*Unguided Challenge*)
 
-Ajoutez un troisième domaine `MARKETING` avec un owner et un warehouse dédié. Publiez une vue `CAMPAIGN_PERFORMANCE` dans le schema GOLD.
+> **Scénario :** Ajoutez un troisième domaine `MARKETING` avec un owner et un warehouse dédié. Publiez une vue `CAMPAIGN_PERFORMANCE` dans le schema GOLD.
+> **Contraintes :**
+> - `terraform plan` crée les ressources MARKETING;
+> - `snow sql -f` publie la vue;
+> - `terraform plan -detailed-exitcode` retourne 0;
+> - le Future Grant est configuré pour le reader.
 
-Critères :
+| Critère d'Évaluation | Points |
+|---|---:|
+| Syntaxe HCL et respect des standards | 30 pts |
+| Preuve d'exécution fonctionnelle | 30 pts |
+| Idempotence (`0 to add, 0 to change, 0 to destroy`) | 20 pts |
+| Respect des budgets FinOps & Sécurité | 20 pts |
+| **Total** | **100 pts** |
 
-- [ ] `terraform plan` crée les ressources MARKETING;
-- [ ] `snow sql -f` publie la vue;
-- [ ] `terraform plan -detailed-exitcode` retourne 0;
-- [ ] le Future Grant est configuré pour le reader.
-
-## 🧹 Cleanup
+## 🧹 9. Nettoyage Contrôlé (*FinOps Teardown*)
 
 Détruisez toutes les ressources créées dans ce lab :
 
