@@ -44,8 +44,8 @@ Exemples : `ABC_RAW_DEV`, `ABC_ETL_UAT`. Les environnements sont **DEV**, **UAT*
 | Séquence | Durée | Support actuel / cible |
 |---|---:|---|
 | Orientation, sécurité et coûts | 0 h 45 | [Point d’entrée Day 0](day-00/README.md) |
-| Préflight Windows/Unix | 1 h 00 | [Installation et vérification](day-00/module-00-tools-setup/lab.md) |
-| Accès Snowflake et préfixe apprenant | 1 h 00 | [Lab Day 0 actif](day-00/module-00-day0-setup/lab.md) |
+| Préflight Windows/Unix | 1 h 00 | [Lab Jour 0](day-00/module-00-setup/lab.md) |
+| Accès Snowflake et préfixe apprenant | 1 h 00 | [Lab Jour 0](day-00/module-00-setup/lab.md) |
 | Premier projet créé depuis zéro | 2 h 15 | M1 refondu |
 | Workflow Terraform et preuves | 0 h 45 | M1 refondu |
 | Évaluation et cleanup | 0 h 15 | M1 refondu |

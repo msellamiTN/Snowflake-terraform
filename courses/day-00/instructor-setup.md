@@ -4,7 +4,7 @@
 > administratives à effectuer **avant** le Jour 0 pour que les apprenants puissent
 > démarrer sans friction.
 
-**Retour au parcours :** [Jour 0 — Commencer ici](../../day-00/README.md)
+**Retour au parcours :** [Jour 0 — Commencer ici](README.md)
 
 ## Vue d'ensemble
 
@@ -266,4 +266,4 @@ flowchart TD
 ## Suite
 
 Une fois cette préparation terminée, les apprenants peuvent suivre le
-[Jour 0](../../day-00/README.md) de façon autonome.
+[Jour 0](README.md) de façon autonome.

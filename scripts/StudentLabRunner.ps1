@@ -6,7 +6,7 @@
     Day folder under courses/ (e.g. "day-00").
 
 .PARAMETER Module
-    Module folder name (e.g. "module-00-environment-pre-setup").
+    Module folder name (e.g. "module-00-setup").
 
 .PARAMETER StopOnError
     Stop the whole run when a step fails (default: true).
@@ -42,7 +42,8 @@ foreach ($line in (Get-Content $envFile)) {
 $env:SNOWFLAKE_CLI_ENCODING_FILE_IO   = 'utf-8'
 $env:SNOWFLAKE_CLI_ENCODING_SUBPROCESS = 'utf-8'
 $env:SNOWFLAKE_CLI_ENCODING_STDOUT     = 'utf-8'
-$env:PYTHONUTF8 = '1'
+# DO NOT set PYTHONUTF8=1: it makes Python decode subprocess output (e.g. icacls)
+# as UTF-8, which crashes on French Windows where icacls emits cp1252 bytes.
 
 $env:PATH = "$repoRoot\tools\tf-bin;$env:PATH"
 

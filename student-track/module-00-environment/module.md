@@ -47,4 +47,4 @@ Remplacez `ABC` par deux à quatre lettres majuscules.
 - [ ] aucun secret n’apparaît dans Git;
 - [ ] votre workspace se trouve sous `$HOME/Data2AI-Labs`.
 
-En cas d’erreur, utilisez le [troubleshooting Day 0](../../courses/day-00/module-00-day0-setup/troubleshooting.md) et rejouez uniquement le dernier checkpoint.
+En cas d'erreur, utilisez le [troubleshooting Day 0](../../courses/day-00/module-00-setup/troubleshooting.md) et rejouez uniquement le dernier checkpoint.

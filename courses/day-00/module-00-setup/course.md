@@ -126,4 +126,4 @@ Le flux est :
 
 ## Suite
 
-Passez à l'[atelier pratique](../module-00-tools-setup/lab.md) pour exécuter les scripts.
+Passez à l'[atelier pratique](lab.md) pour exécuter les scripts.

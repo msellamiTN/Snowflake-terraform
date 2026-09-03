@@ -91,7 +91,8 @@ if (-not $env:TEAM) { $env:TEAM = 'DATA_ENG' }
 $env:SNOWFLAKE_CLI_ENCODING_FILE_IO   = 'utf-8'
 $env:SNOWFLAKE_CLI_ENCODING_SUBPROCESS = 'utf-8'
 $env:SNOWFLAKE_CLI_ENCODING_STDOUT     = 'utf-8'
-$env:PYTHONUTF8 = '1'
+# DO NOT set PYTHONUTF8=1: it makes Python decode subprocess output (e.g. icacls)
+# as UTF-8, which crashes on French Windows where icacls emits cp1252 bytes.
 
 # ── Locate validate.ps1 ──────────────────────────────────────────────────────
 $validateScript = Join-Path $moduleDir 'validate.ps1'

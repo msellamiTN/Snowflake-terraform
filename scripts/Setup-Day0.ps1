@@ -101,5 +101,5 @@ if ($failed.Count -eq 0) {
 }
 
 Write-Host "Not ready: $($failed.Count) required check(s) failed."
-Write-Host 'Open courses/day-00/module-00-day0-setup/troubleshooting.md and rerun this script.'
+Write-Host 'Open courses/day-00/module-00-setup/troubleshooting.md and rerun this script.'
 exit 1

@@ -33,8 +33,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Force UTF-8 for Python subprocesses on Windows (cp1252 locale vs utf-8 filesystem)
-$env:PYTHONUTF8 = '1'
+# Force UTF-8 for Python stdout/stderr on Windows (cp1252 locale).
+# DO NOT set PYTHONUTF8=1: it makes Python decode subprocess output (e.g. icacls)
+# as UTF-8, which crashes on French Windows where icacls emits cp1252 bytes.
 $env:PYTHONIOENCODING = 'utf-8'
 
 # ------------------------------------------------------------------
@@ -270,6 +271,27 @@ try {
 }
 
 Write-Host "[OK] Connection '$ConnectionName' written to $snowflakeConfigFile" -ForegroundColor Green
+
+# ------------------------------------------------------------------
+# Restrict config.toml permissions so Snow CLI doesn't warn about
+# unauthorized users (Administrateurs/Système) having access.
+# Grant full control to the current user only, remove inherited ACEs
+# and the local Administrators group.
+# ------------------------------------------------------------------
+try {
+    # Use whoami to get "DOMAIN\user" — more reliable than $env:USERNAME
+    # which can contain spaces (e.g. "Formation Terraform") that break
+    # icacls argument parsing when combined with :(F) permissions syntax.
+    $currentUser = (whoami).Trim()
+    & icacls $snowflakeConfigFile /inheritance:r 2>&1 | Out-Null
+    & icacls $snowflakeConfigFile /grant:r "${currentUser}:(F)" 2>&1 | Out-Null
+    # Remove the local Administrators group (French: "Administrateurs")
+    & icacls $snowflakeConfigFile /remove:g 'Administrateurs' 2>&1 | Out-Null
+    & icacls $snowflakeConfigFile /remove:g 'Administrators' 2>&1 | Out-Null
+    Write-Host '[OK] Config file permissions restricted to current user.' -ForegroundColor Green
+} catch {
+    Write-Host '[WARN] Could not restrict config.toml permissions. Snow CLI may show a warning.' -ForegroundColor Yellow
+}
 
 # ------------------------------------------------------------------
 # Test the connection - token comes from file, no env var needed

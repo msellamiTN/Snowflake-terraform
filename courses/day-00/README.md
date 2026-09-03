@@ -1,18 +1,18 @@
-﻿# Jour 0 — Préparer votre environnement
+﻿# Jour 0 — Preparer votre environnement
 
-**Durée totale : 1 h 30**
+**Duree totale : 1 h 30**
 
-**Résultat final : `Ready for Day 1`**
+**Resultat final : `Ready for Day 1`**
 
-Bienvenue dans le point de départ de la formation. Le Jour 0 est **automatisé** : vous clonez le projet type, exécutez les scripts qu'il contient, puis comprenez ce qu'ils ont fait. Aucune ressource Cloud n'est créée.
+Bienvenue dans le point de depart de la formation. Le Jour 0 est **automatise** : vous clonez le projet type, executez les scripts qu'il contient, puis comprenez ce qu'ils ont fait. Aucune ressource Cloud n'est creee.
 
 ## Votre mission
 
-À la fin du Jour 0, vous devez disposer de :
+A la fin du Jour 0, vous devez disposer de :
 
-- le **projet type** cloné sous `$HOME/Data2AI-Labs/data-platform` — c'est votre racine de travail pour toute la formation;
+- le **projet type** clone sous `$HOME/Data2AI-Labs/data-platform` — c'est votre racine de travail pour toute la formation;
 - Git, Terraform, Snowflake CLI, Azure CLI et dbt disponibles dans le terminal;
-- une connexion Snowflake `training` testée via PAT saisi de façon sécurisée;
+- une connexion Snowflake `training` testee via PAT saisi de facon securisee;
 - un rapport de validation sans erreur ni secret.
 
 ## Le projet type est votre racine
@@ -23,39 +23,43 @@ Le projet type `data-platform-starter` contient :
 - la **structure** de dossiers (`environments/`, `modules/`, `docs/`);
 - la **gouvernance** (`.gitignore`, `.tflint.hcl`, `azure-pipelines.yml`, `CODEOWNERS`).
 
-Il **ne contient pas** de fichiers `.tf` de ressource. Vous les créerez au fil des modules.
+Il **ne contient pas** de fichiers `.tf` de ressource. Vous les creerez au fil des modules.
 
 ```mermaid
 flowchart TD
     CLONE[Cloner le projet type] --> DIAG[Diagnostic initial]
-    DIAG --> INSTALL[Exécuter le script d'installation]
+    DIAG --> INSTALL[Executer le script d'installation]
     INSTALL --> REPORT[Lire le rapport]
     REPORT --> FIX{Erreurs ?}
-    FIX -->|Oui| MANUAL[Suivre la procédure manuelle]
+    FIX -->|Oui| MANUAL[Suivre la procedure manuelle]
     MANUAL --> REPORT
-    FIX -->|Non| SNOW[Configurer la connexion Snowflake]
-    SNOW --> VALIDATE[Validation finale]
+    FIX -->|Non| ENV[Configurer .env]
+    ENV --> SNOW[Configurer la connexion Snowflake]
+    SNOW --> AZURE[Authentifier Azure]
+    AZURE --> VALIDATE[Validation finale]
     VALIDATE --> READY[Ready for Day 1]
 ```
 
 ## Progression obligatoire
 
-| Étape | Temps | Action | Preuve pour continuer |
+Le lab est un seul module avec 7 etapes :
+
+| Etape | Temps | Action | Preuve pour continuer |
 |---:|---:|---|---|
-| 1 | 5 min | Lire objectifs et règles de sécurité | Vous savez ce qui sera installé |
-| 2 | 5 min | [Cloner le projet type et diagnostic initial](module-00-tools-setup/lab.md) | Clone présent, rapport généré |
-| 3 | 20 min | [Exécuter le script d'installation](module-00-tools-setup/lab.md) | Outils installés ou procédure manuelle affichée |
-| 4 | 10 min | Lire le rapport et corriger les échecs | Tous les outils Core en PASS |
-| 5 | 10 min | [Authentifier Azure avec le SP partagé](module-00-day0-setup/lab.md) | `az account show` affiche la souscription |
-| 6 | 20 min | [Configurer la connexion Snowflake](module-00-day0-setup/lab.md) | `snow sql -q 'SELECT 1' -c training` retourne un résultat |
-| 7 | 10 min | [Inspecter la structure du projet type](module-00-day0-setup/lab.md) | Dossiers `environments/`, `modules/`, `docs/` présents |
-| 8 | 10 min | Validation finale | `Toolchain status: READY` |
-| 9 | 10 min | Explication : ce que le script a fait | Vous savez où sont installés les outils et pourquoi |
+| 1 | 5 min | Cloner le projet type | Clone present, scripts visibles |
+| 2 | 20 min | Installer et verifier les outils | `Toolchain status: READY` |
+| 3 | 10 min | Configurer `.env` | `git check-ignore .env` retourne `.env` |
+| 4 | 10 min | Authentifier Azure avec le SP partage | `az account show` affiche la souscription |
+| 5 | 20 min | Configurer la connexion Snowflake | `snow sql -q 'SELECT 1' -c training` retourne un resultat |
+| 6 | 10 min | Inspecter la structure du projet type | Dossiers `environments/`, `modules/`, `docs/` presents |
+| 7 | 10 min | Validation finale | `Toolchain status: READY` + Snowflake + Azure |
 | **Total** | **1 h 30** | | |
+
+> Le lab detaille est dans [module-00-setup/lab.md](module-00-setup/lab.md).
 
 ## Avant de commencer
 
-### 1. Votre système
+### 1. Votre systeme
 
 - [ ] **Windows 10/11** avec PowerShell 5.1 ou 7;
 - [ ] **Linux** avec Bash;
@@ -63,7 +67,7 @@ flowchart TD
 
 ### 2. Votre URL de projet type
 
-Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
+Le depot du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`
 
 > `[IMPORTANT] Windows` : utilisez `$HOME` entre guillemets, pas `~` :
 > ```powershell
@@ -72,74 +76,74 @@ Le dépôt du projet type est : `https://github.com/msellamiTN/data-platform-sta
 
 ### 3. Vos identifiants Snowflake
 
-Le formateur a pré-rempli le fichier `.env.example` du projet type avec :
+Le formateur a pre-rempli le fichier `.env.example` du projet type avec :
 
 - l'identifiant d'organisation Snowflake;
 - l'identifiant de compte Snowflake;
 - le nom d'utilisateur Snowflake;
-- le rôle (généralement `SYSADMIN`);
-- les paramètres Azure et Azure DevOps.
+- le role (generalement `SYSADMIN`);
+- les parametres Azure et Azure DevOps.
 
 Vous copiez `.env.example` en `.env`, puis vous ajoutez uniquement :
 
-- votre **préfixe apprenant** unique (3 à 5 lettres);
+- votre **prefixe apprenant** unique (3 a 5 lettres);
 - votre **PAT** temporaire.
 
-Le formateur vous fournit également un **username + password Snowflake** individuel
-pour accéder à l'interface web (https://app.snowflake.com).
+Le formateur vous fournit egalement un **username + password Snowflake** individuel
+pour acceder a l'interface web (https://app.snowflake.com).
 
-> `[NOTE]` Le PAT est utilisé par la CLI et Terraform. Le password est utilisé pour
+> `[NOTE]` Le PAT est utilise par la CLI et Terraform. Le password est utilise pour
 > l'interface web uniquement. Les deux sont individuels.
 
-### 4. Vos identifiants Azure (service principal partagé)
+### 4. Vos identifiants Azure (service principal partage)
 
 Le formateur vous fournit un fichier `secrets/shared-sp.txt` contenant les identifiants
-d'un **service principal partagé** (app ID, secret, tenant, subscription).
+d'un **service principal partage** (app ID, secret, tenant, subscription).
 
 > `[SECURITY]` Ce fichier est gitignored. Ne le commitez jamais.
 > Ne le partagez pas en dehors de la formation.
 
 Ce service principal **contourne l'authentification MFA** d'Azure.
-Vous l'utilisez via le script `Learner-Login` (voir Étape 5).
+Vous l'utilisez via le script `Learner-Login` (voir Etape 4 du lab).
 
 L'isolation entre apprenants se fait via votre `LEARNER_PREFIX` :
 vos ressources Snowflake et votre state Terraform sont uniques.
 
-## Règles de sécurité
+## Regles de securite
 
-1. Le PAT est saisi via une invite masquée — jamais affiché, jamais collé dans une commande.
-2. Aucun PAT, mot de passe ou clé privée n'est placé dans un fichier du dépôt.
-3. Le script de connexion efface le token de l'environnement dès que possible.
-4. N'ajoutez pas `ACCOUNTADMIN` pour résoudre une erreur de privilège.
+1. Le PAT est saisi via une invite masquee — jamais affiche, jamais colle dans une commande.
+2. Aucun PAT, mot de passe ou cle privee n'est place dans un fichier du depot.
+3. Le script de connexion efface le token de l'environnement des que possible.
+4. N'ajoutez pas `ACCOUNTADMIN` pour resoudre une erreur de privilege.
 5. Ne créez pas de network policy, utilisateur global ou ressource Cloud pendant ce module.
-6. Arrêtez-vous si `git check-ignore .env` ne retourne pas `.env`.
+6. Arretez-vous si `git check-ignore .env` ne retourne pas `.env`.
 
-## Formateur — Préparation
+## Formateur — Preparation
 
-> Si vous êtes formateur, consultez le [guide de préparation](module-00-environment-pre-setup/instructor-setup.md)
-> avant la formation. Il décrit la création du SP partagé, des utilisateurs Snowflake,
+> Si vous etes formateur, consultez le [guide de preparation](instructor-setup.md)
+> avant la formation. Il decrit la creation du SP partage, des utilisateurs Snowflake,
 > des PAT, et la configuration d'Azure DevOps.
 
 ## Besoin d'aide ?
 
-Utilisez cette séquence, sans recommencer tout le module :
+Utilisez cette sequence, sans recommencer tout le module :
 
-1. relisez le dernier résultat attendu;
-2. confirmez votre répertoire courant (`pwd`);
-3. ouvrez le [guide de troubleshooting](module-00-day0-setup/troubleshooting.md);
-4. exécutez uniquement le diagnostic non destructif indiqué;
+1. relisez le dernier resultat attendu;
+2. confirmez votre repertoire courant (`pwd`);
+3. ouvrez le [guide de troubleshooting](module-00-setup/troubleshooting.md);
+4. executez uniquement le diagnostic non destructif indique;
 5. corrigez puis rejouez le dernier checkpoint.
 
-## Critère de fin
+## Critere de fin
 
-Le Jour 0 est terminé uniquement lorsque :
+Le Jour 0 est termine uniquement lorsque :
 
 ```text
 Toolchain status: READY
 ```
 
-et que la connexion Snowflake répond à `snow sql -q 'SELECT 1' -c training`.
+et que la connexion Snowflake repond a `snow sql -q 'SELECT 1' -c training`.
 
 ## Suite
 
-Passez à [M1 — Premier déploiement Terraform Snowflake](../day-01/module-01-iac-workflow/lab.md). M1 vous fera créer chaque fichier Terraform depuis le projet type cloné, en mode manuel pas à pas. **Tous les fichiers `.tf` que vous créerez iront dans le clone** sous `environments/dev/`.
+Passez a [M1 — Premier deploiement Terraform Snowflake](../day-01/module-01-iac-workflow/lab.md). M1 vous fera creer chaque fichier Terraform depuis le projet type clone, en mode manuel pas a pas. **Tous les fichiers `.tf` que vous creerez iront dans le clone** sous `environments/dev/`.

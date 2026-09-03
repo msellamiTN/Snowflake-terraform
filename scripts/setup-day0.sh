@@ -54,5 +54,5 @@ if (( failed == 0 )); then
   exit 0
 fi
 printf 'Not ready: %d required check(s) failed.\n' "$failed"
-printf 'Open courses/day-00/module-00-day0-setup/troubleshooting.md and rerun this script.\n'
+printf 'Open courses/day-00/module-00-setup/troubleshooting.md and rerun this script.\n'
 exit 1

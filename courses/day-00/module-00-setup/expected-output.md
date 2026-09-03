@@ -1,12 +1,12 @@
-# Jour 0 — Résultats attendus
+# Jour 0 — Resultats attendus
 
 **Retour au parcours :** [Jour 0 — Commencer ici](../README.md)
 
-## Rapport de la chaîne d'outils
+## Rapport de la chaine d'outils
 
 ### Format
 
-Le rapport est généré par `Install-Tools.ps1 -ReportPath` ou `install-tools.sh --report-path`.
+Le rapport est genere par `Install-Tools.ps1 -ReportPath` ou `install-tools.sh --report-path`.
 
 **Fichier Markdown (`preflight.md`) :**
 
@@ -42,17 +42,17 @@ Warnings: 0
 ]
 ```
 
-### Critères de succès
+### Criteres de succes
 
-| Critère | Condition |
+| Critere | Condition |
 |---|---|
 | Outils Core | Tous en `PASS` |
-| Outils Course | Tous en `PASS` ou procédure manuelle affichée |
+| Outils Course | Tous en `PASS` ou procedure manuelle affichee |
 | Statut final | `Toolchain status: READY` |
 | Code de sortie | 0 |
-| Secret | Aucune valeur secrète dans le rapport |
+| Secret | Aucune valeur secrete dans le rapport |
 
-## Authentification Azure (service principal partagé)
+## Authentification Azure (service principal partage)
 
 ### Sortie attendue du script Learner-Login
 
@@ -81,7 +81,7 @@ Avec `secrets/shared-sp.txt` fourni par le formateur :
 ============================================================
 ```
 
-### Vérification
+### Verification
 
 ```bash
 az account show --query 'name' -o tsv
@@ -89,37 +89,35 @@ az account show --query 'name' -o tsv
 
 **Attendu :** `Azure subscription 1`
 
-> `[IMPORTANT]` Relancez `Learner-Login` au début de chaque nouvelle session.
+> `[IMPORTANT]` Relancez `Learner-Login` au debut de chaque nouvelle session.
 
-## Accès Snowflake web (optionnel)
+## Acces Snowflake web (optionnel)
 
-L'apprenant peut se connecter à l'interface web Snowflake avec son username + password
+L'apprenant peut se connecter a l'interface web Snowflake avec son username + password
 individuel (fourni par le formateur).
 
 - URL : https://app.snowflake.com
-- Username : `apprenant01` à `apprenant10`
-- Password : 14+ caractères (respecte la politique Snowflake)
+- Username : `apprenant01` a `apprenant10`
+- Password : 14+ caracteres (respecte la politique Snowflake)
 
-> Le PAT (CLI/Terraform) et le password (web) sont deux méthodes distinctes.
+> Le PAT (CLI/Terraform) et le password (web) sont deux methodes distinctes.
 
 ## Connexion Snowflake
 
 ### Sortie attendue du script de connexion
 
-Avec `.env` pré-rempli par le formateur et `SNOWFLAKE_PAT` renseigné :
+Avec `.env` pre-rempli par le formateur et `SNOWFLAKE_PAT` renseigne :
 
 ```text
 ============================================================
  Snowflake CLI connection setup
 ============================================================
 
-The PAT is read from .env or entered securely.
-It is never displayed or logged.
-
 [INFO] Loading .env from .../.env
 
 Creating the connection...
-[OK] Connection 'training' created.
+[OK] Connection 'training' written to .../.snowflake/config.toml
+[OK] Config file permissions restricted to current user.
 
 Testing the connection...
 [OK] Connection test succeeded.
@@ -128,23 +126,32 @@ Done.
 
 Next steps:
   - Use the connection:  snow sql -q 'SELECT 1' -c training
+  - The token is read from the file automatically - no env var needed.
   - Do not store the PAT in any committed file.
   - Rotate the PAT when the training module is complete.
 ```
 
-Si `SNOWFLAKE_PAT` était vide dans `.env`, le script demande le PAT de façon masquée avant de continuer.
+Si `SNOWFLAKE_PAT` etait vide dans `.env`, le script demande le PAT de facon masquee avant de continuer.
 
-### Vérification de la connexion
+### Verification de la connexion
 
 ```bash
 snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
 ```
 
-**Attendu :** une ligne contenant votre utilisateur, votre rôle et votre compte.
+**Attendu :** une ligne contenant votre utilisateur, votre role et votre compte.
 
-## Projet type cloné
+```text
++-----------------------------------------------------+
+| CURRENT_USER() | CURRENT_ROLE() | CURRENT_ACCOUNT() |
+|----------------+----------------+-------------------|
+| DATA2AI        | SYSADMIN       | HQ33884           |
++-----------------------------------------------------+
+```
 
-### Commandes exécutées depuis le clone
+## Projet type clone
+
+### Commandes executees depuis le clone
 
 ```bash
 cd $HOME/Data2AI-Labs/data-platform
@@ -201,21 +208,21 @@ $HOME/Data2AI-Labs/data-platform/
 find $HOME/Data2AI-Labs/data-platform -name '*.tf' -type f
 ```
 
-**Attendu :** aucun résultat.
+**Attendu :** aucun resultat.
 
 ## Checklist finale
 
 - [ ] `Toolchain status: READY`
 - [ ] Tous les outils Core en `PASS`
-- [ ] `.env` copié depuis `.env.example` et complété avec `LEARNER_PREFIX` et `SNOWFLAKE_PAT`
+- [ ] `.env` copie depuis `.env.example` et complete avec `LEARNER_PREFIX` et `SNOWFLAKE_PAT`
 - [ ] `git check-ignore .env` retourne `.env`
-- [ ] `secrets/shared-sp.txt` présent et gitignored
-- [ ] `Learner-Login` exécuté avec votre préfixe (`APP01`, `APP02`...)
+- [ ] `secrets/shared-sp.txt` present et gitignored
+- [ ] `Learner-Login` execute avec votre prefixe (`APP01`, `APP02`...)
 - [ ] `az account show --query 'name' -o tsv` affiche la souscription
-- [ ] `snow sql -q 'SELECT 1' -c training` retourne un résultat
-- [ ] Projet type cloné sous `$HOME/Data2AI-Labs/data-platform`
-- [ ] Scripts présents dans `scripts/` du clone
+- [ ] `snow sql -q 'SELECT 1' -c training` retourne un resultat
+- [ ] Projet type clone sous `$HOME/Data2AI-Labs/data-platform`
+- [ ] Scripts presents dans `scripts/` du clone
 - [ ] Aucun fichier `.tf` dans le projet type
 - [ ] Aucun secret dans le rapport ou l'historique de commandes
-- [ ] Vous savez où sont installés les outils et pourquoi
+- [ ] Vous savez ou sont installes les outils et pourquoi
 - [ ] Vous savez que tous les fichiers `.tf` futurs iront dans ce clone
