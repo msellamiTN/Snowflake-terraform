@@ -79,8 +79,11 @@ Le SP doit avoir les permissions Microsoft Graph suivantes pour `02-azuread-lear
 
 ```powershell
 cd project/00-bootstrap
-Copy-Item terraform.tfvars.example terraform.tfvars
-# Éditer terraform.tfvars avec les valeurs du SP
+
+# If terraform.tfvars doesn't exist yet:
+# Copy-Item terraform.tfvars.example terraform.tfvars
+
+# If terraform.tfvars already exists, just edit it with updated SP credentials:
 code terraform.tfvars
 ```
 
