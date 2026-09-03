@@ -75,11 +75,11 @@ Lors d'un `plan`, Terraform :
 ```json
 {
   "version": 4,
-  "terraform_version": "1.9.0",
+  "terraform_version": "1.14.5",
   "serial": 3,
   "lineage": "abc-123-def",
   "outputs": {
-    "database_name": {
+    "raw_database_name": {
       "value": "DB_RAW_DEV",
       "type": "string"
     }
@@ -113,11 +113,11 @@ Lors d'un `plan`, Terraform :
 ```hcl
 terraform {
   backend "azurerm" {
-    resource_group_name  = "mycompany-terraform-state"
-    key            = "snowflake/dev/terraform.tfstate"
-    
-    
-    # locking natif Azure via Blob Leases "terraform-locks"
+    resource_group_name  = "rg-data2ai-tf-state"
+    storage_account_name = "sadata2aitfstatemsn"
+    container_name       = "tfstate"
+    key                  = "training/APP01/dev/terraform.tfstate"
+    use_azuread_auth     = true
   }
 }
 ```

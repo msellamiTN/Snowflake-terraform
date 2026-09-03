@@ -1,25 +1,25 @@
-﻿# Module 2 ? Slides : Gestion du State
+﻿# Module 2 — Slides : Gestion du State
 
 ---
 
-## Slide 1 ? Titre
+## Slide 1 — Titre
 
 **Module 2 : State Management**  
 *Durée : 2h*
 
 ---
 
-## Slide 2 ? Qu'est-ce que le State ?
+## Slide 2 — Qu'est-ce que le State ?
 
 - Fichier JSON `.tfstate` (ou distant)
-- Mappe adresses Terraform ? IDs réels Snowflake
+- Mappe adresses Terraform ↔ IDs réels Snowflake
 - Contient métadonnées, outputs, dépendances
 
 > **Sans state**, Terraform ne sait pas qu'il a déjà créé `DB_RAW_DEV`.
 
 ---
 
-## Slide 3 ? Anatomy du .tfstate
+## Slide 3 — Anatomy du .tfstate
 
 ```json
 {
@@ -38,7 +38,7 @@
 
 ---
 
-## Slide 4 ? Risques du state local
+## Slide 4 — Risques du state local
 
 ```mermaid
 flowchart TD
@@ -50,7 +50,7 @@ flowchart TD
 
 ---
 
-## Slide 5 ? Backend distant Azure Blob Storage (azurerm)
+## Slide 5 — Backend distant Azure Blob Storage (azurerm)
 
 ```mermaid
 flowchart LR
@@ -63,7 +63,7 @@ flowchart LR
 
 ---
 
-## Slide 6 ? State Locking
+## Slide 6 — State Locking
 
 | Sans lock | Avec lock |
 |-----------|-----------|
@@ -74,7 +74,7 @@ Message typique : `Error acquiring the state lock`
 
 ---
 
-## Slide 7 ? Migration state local ? distant
+## Slide 7 — Migration state local → distant
 
 ```mermaid
 stateDiagram-v2
@@ -86,14 +86,14 @@ stateDiagram-v2
 
 ---
 
-## Slide 8 ? Atelier M2
+## Slide 8 — Atelier M2
 
-Migration vers backend Azure Blob sécurisé  
-? Lab : [lab.md](lab.md)
+Migration vers backend Azure Blob sécurisé
+→ Lab : [lab.md](lab.md)
 
 ---
 
-## Slide 9 ? Règles d'or
+## Slide 9 — Règles d'or
 
 1. **Ne jamais** committer `.tfstate` dans Git
 2. Chiffrer le Storage Account Azure (SSE-CMK ou Microsoft-managed)

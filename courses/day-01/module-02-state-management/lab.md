@@ -37,9 +37,39 @@ flowchart LR
 - [ ] M1 terminé : database, schema et warehouse existent dans Snowflake;
 - [ ] `terraform state list` affiche 3 ressources dans `environments/dev/`;
 - [ ] Azure CLI installé;
-- [ ] vous avez exécuté `Learner-Login` (le SP partagé a le rôle `Contributor` sur la souscription);
+- [ ] vous avez exécuté `Learner-Login` (le SP partagé a le rôle `Storage Blob Data Contributor` sur le Storage Account);
 - [ ] `az account show --query 'name' -o tsv` affiche la souscription Azure;
 - [ ] les variables Azure sont dans votre `.env` (`ARM_SUBSCRIPTION_ID`, `ARM_TENANT_ID`, `ARM_RESOURCE_GROUP`, `ARM_STORAGE_ACCOUNT`, `ARM_CONTAINER`, `ARM_LOCATION`).
+
+## 🚀 Préflight
+
+Avant de commencer, vérifiez que votre environnement M1 est intact :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform\environments\dev"
+terraform version
+terraform state list
+terraform plan
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+cd "$HOME/Data2AI-Labs/data-platform/environments/dev"
+terraform version
+terraform state list
+terraform plan
+```
+</details>
+
+✅ **Checkpoint préflight** : Terraform `v1.14.5`, les ressources M1 sont listées, et `terraform plan` affiche `No changes`.
+
+> 🔒 **Security** : n'affichez jamais `ARM_CLIENT_SECRET`, `SNOWFLAKE_PASSWORD` ou `TF_VAR_snowflake_token`.
 
 > ⚠️ **IMPORTANT** : Si vous avez ouvert un nouveau terminal, relancez `Learner-Login` avant de continuer.
 >
@@ -292,12 +322,13 @@ terraform {
     resource_group_name  = "rg-data2ai-tf-state"
     storage_account_name = "sadata2aitfstatemsn"
     container_name       = "tfstate"
-    key                  = "data-platform/dev/terraform.tfstate"
+    key                  = "training/APP01/dev/terraform.tfstate"
+    use_azuread_auth     = true
   }
 }
 ```
 
-Vérifiez le fichier avant de continuer :
+Remplacez `APP01` par votre préfixe apprenant. Vérifiez le fichier avant de continuer :
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -336,7 +367,8 @@ Créez ensuite `backend.hcl` dans le **même dossier** :
 resource_group_name  = "rg-data2ai-tf-state"
 storage_account_name = "sadata2aitfstatemsn"
 container_name       = "tfstate"
-key                  = "data-platform/dev/terraform.tfstate"
+key                  = "training/APP01/dev/terraform.tfstate"
+use_azuread_auth     = true
 ```
 
 Vérifiez que le fichier existe avant l'initialisation :
@@ -356,10 +388,23 @@ terraform init -migrate-state -backend-config="backend.hcl"
 
 ### 📝 Étape 2.3 — Formater avant l'initialisation
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform fmt
 terraform fmt -check
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform fmt
+terraform fmt -check
+```
+</details>
 
 ✅ **Checkpoint** : les commandes se terminent sans erreur.
 
@@ -371,9 +416,21 @@ terraform fmt -check
 
 Pour la **méthode A recommandée**, exécutez uniquement :
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform init -migrate-state
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform init -migrate-state
+```
+</details>
 
 N'ajoutez pas `-backend-config=backend.hcl` lorsque les paramètres sont déjà écrits dans `backend.tf`.
 
@@ -390,9 +447,21 @@ Terraform has automatically migrated your state from "local" to "azurerm".
 
 Validez ensuite la configuration initialisée :
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform validate
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform validate
+```
+</details>
 
 ✅ **Checkpoint** : `Success! The configuration is valid.`
 
@@ -420,15 +489,28 @@ ls terraform.tfstate* 2>/dev/null
 
 ### 📝 Étape 3.3 — Vérifier le state distant
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform state list
 ```
+</details>
 
-✅ **Checkpoint** : les 3 ressources de M1 :
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform state list
+```
+</details>
+
+✅ **Checkpoint** : les ressources de M1 :
 
 ```text
 snowflake_database.raw
-snowflake_schema.ingestion
+snowflake_schema.raw["FINANCE"]
+snowflake_schema.raw["SALES"]
 snowflake_warehouse.etl
 ```
 
@@ -458,7 +540,7 @@ az storage blob list \
 ```
 </details>
 
-✅ **Checkpoint** : `data-platform/dev/terraform.tfstate`.
+✅ **Checkpoint** : `training/APP01/dev/terraform.tfstate` (avec votre préfixe).
 
 > 💡 **Note** : `--auth-mode login` force Azure CLI à utiliser la session ouverte par `Learner-Login.ps1`. Sans cette option, Azure CLI affiche un avertissement puis tente de récupérer une account key. Si la commande retourne `AuthorizationPermissionMismatch`, demandez au formateur d'attribuer au service principal le rôle `Storage Blob Data Reader` ou `Storage Blob Data Contributor`.
 
@@ -494,23 +576,47 @@ Remplacez `APP01` par votre préfixe.
 
 ### 📝 Étape 4.2 — Maintenir le verrou dans le terminal 1
 
-Dans le terminal 1, lancez `terraform apply` **sans répondre à la confirmation** :
+Dans le terminal 1, lancez `terraform plan` **sans répondre à la confirmation** :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-terraform apply
+terraform plan
 ```
+</details>
 
-Quand Terraform affiche `Enter a value:`, laissez le terminal en attente. L'opération conserve alors le verrou du state.
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
-> ⚠️ **IMPORTANT** : Ne saisissez pas `yes`. Ce test ne doit appliquer aucun changement.
+```bash
+terraform plan
+```
+</details>
+
+Quand Terraform affiche `Enter a value:` ou commence à rafraîchir le state, laissez le terminal en attente. L'opération conserve alors le verrou du state.
+
+> ⚠️ **IMPORTANT** : Ne saisissez pas `yes` et ne fermez pas le terminal. Ce test ne doit appliquer aucun changement.
 
 ### 📝 Étape 4.3 — Vérifier le verrou dans le terminal 2
 
 Pendant que le terminal 1 attend toujours, exécutez dans le terminal 2 :
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform plan -lock-timeout=0s
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform plan -lock-timeout=0s
+```
+</details>
 
 ✅ **Checkpoint** : Terraform refuse l'accès au state avec une erreur similaire à :
 
@@ -522,11 +628,23 @@ C'est le comportement normal : le Blob Lease empêche les opérations concurrent
 
 ### 📝 Étape 4.4 — Libérer le verrou normalement
 
-Retournez dans le terminal 1 et utilisez `Ctrl+C` pour annuler l'apply. Attendez le retour du prompt, puis vérifiez dans le terminal 2 :
+Retournez dans le terminal 1 et utilisez `Ctrl+C` pour annuler le plan. Attendez le retour du prompt, puis vérifiez dans le terminal 2 :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform plan
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform plan
+```
+</details>
 
 ✅ **Checkpoint** : le plan fonctionne de nouveau et affiche `No changes.`
 
@@ -536,15 +654,39 @@ terraform plan
 
 ### 📝 Étape 5.1 — Lister les ressources
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform state list
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform state list
+```
+</details>
 
 ### 📝 Étape 5.2 — Afficher le détail d'une ressource
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
 terraform state show snowflake_database.raw
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform state show snowflake_database.raw
+```
+</details>
 
 ### 📝 Étape 5.3 — Voir la structure JSON du state
 
@@ -617,7 +759,8 @@ terraform {
     resource_group_name  = "rg-data2ai-tf-state"
     storage_account_name = "sadata2aitfstatemsn"
     container_name       = "tfstate"
-    key                  = "data-platform/dev-reader/terraform.tfstate"
+    key                  = "training/APP01/dev-reader/terraform.tfstate"
+    use_azuread_auth     = true
   }
 }
 
@@ -627,21 +770,35 @@ data "terraform_remote_state" "dev" {
     resource_group_name  = "rg-data2ai-tf-state"
     storage_account_name = "sadata2aitfstatemsn"
     container_name       = "tfstate"
-    key                  = "data-platform/dev/terraform.tfstate"
+    key                  = "training/APP01/dev/terraform.tfstate"
+    use_azuread_auth     = true
   }
 }
 
 output "raw_database_name" {
-  value = data.terraform_remote_state.dev.outputs.database_name
+  value = data.terraform_remote_state.dev.outputs.raw_database_name
 }
 ```
 
 ### 📝 Étape 6.3 — Initialiser et appliquer
 
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
 ```powershell
 terraform init
 terraform apply -auto-approve
 ```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+terraform init
+terraform apply -auto-approve
+```
+</details>
 
 ✅ **Checkpoint** : `raw_database_name` affiche le nom de la database créée en M1.
 
@@ -674,7 +831,7 @@ output "state_metadata" {
   value = {
     backend   = "azurerm"
     container = "tfstate"
-    key       = "data-platform/dev/terraform.tfstate"
+    key       = "training/APP01/dev/terraform.tfstate"
   }
 }
 ```
@@ -685,7 +842,7 @@ Critères :
 - [ ] `terraform validate` réussit;
 - [ ] `terraform output state_metadata` affiche les informations du backend;
 - [ ] `terraform plan` reste sans changement;
-- [ ] le blob `data-platform/dev/terraform.tfstate` existe dans Azure;
+- [ ] le blob `training/APP01/dev/terraform.tfstate` existe dans Azure (avec votre préfixe);
 - [ ] Terraform utilise le backend distant après réouverture du terminal.
 
 ## 🧹 Cleanup

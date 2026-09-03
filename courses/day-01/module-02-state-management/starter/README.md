@@ -1,18 +1,27 @@
-# Day 1 — State Management Lab
+# Code de départ — M2 : gestion du state
 
-Copie de `01-day1-basics` avec backend S3 activé.
+## Point de départ
 
-## Migration
+Ce starter reprend exactement le résultat du lab M1 :
 
-1. Déployer `00-bootstrap` pour créer bucket + DynamoDB
-2. Copier `backend.tf.example` ? `backend.tf` et renseigner les valeurs
-3. Exécuter :
+- database `DB_RAW_DEV` (`snowflake_database.raw`) ;
+- schemas `SALES` et `FINANCE` (`snowflake_schema.raw`) ;
+- warehouse `WH_ETL_DEV` (`snowflake_warehouse.etl`) ;
+- outputs `raw_database_name`, `etl_warehouse_name` et `schema_names`.
 
-```powershell
-terraform init -migrate-state
-terraform plan
+## Travail à réaliser pendant M2
+
+`backend.tf` est volontairement neutralisé : aucun backend distant prêt à l'emploi n'est activé dans le starter. Pendant le lab, l'apprenant construit le bloc `backend "azurerm"`, configure l'authentification Microsoft Entra ID avec `use_azuread_auth = true`, puis migre le state local du M1.
+
+`backend.tf.example` sert uniquement de référence pour les paramètres Azure actuels et la convention de clé canonique :
+
+```text
+training/APP01/dev/terraform.tfstate
 ```
 
-## Backend example
+Remplacez `APP01` par votre préfixe avant l'initialisation. Suivez ensuite les commandes et checkpoints du lab M2 pour effectuer la migration ; ne lancez pas `terraform init -migrate-state` tant que votre bloc backend n'est pas construit et vérifié.
 
-Voir `backend.tf.example` — ne pas committer `backend.tf` avec noms réels si politique stricte (utiliser tfvars ou CI vars).
+## Versions
+
+- Terraform `1.14.5`
+- provider Snowflake `2.14.0`
