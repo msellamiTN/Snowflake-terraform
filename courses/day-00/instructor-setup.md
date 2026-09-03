@@ -47,9 +47,17 @@ ARM_SUBSCRIPTION_ID=8c42d5b2-ab70-4051-ab0e-a96877557f6a
 Récupérer l'**object ID** du SP :
 
 ```powershell
-$spObjectId = az ad sp show --id $spName --query id -o tsv
+# --id expects the appId (UUID from the create output), NOT the display name
+$appId = "ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0"
+$spObjectId = az ad sp show --id $appId --query id -o tsv
 Write-Host "SP object ID (for 00-bootstrap): $spObjectId"
+
+# Alternative: query by display name
+$spObjectId = az ad sp list --filter "displayName eq 'sp-data2ai-learners'" --query '[0].id' -o tsv
 ```
+
+> `[IMPORTANT]` `az ad sp show --id` expects the **appId** (UUID), not the display name.
+> Using the display name returns "Service principal doesn't exist".
 
 > `[IMPORTANT]` Le SP a **deux identifiants distincts** :
 > - **appId** (`ARM_CLIENT_ID`) : utilisé pour `az login --service-principal`.
