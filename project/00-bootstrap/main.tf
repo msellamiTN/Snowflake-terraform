@@ -3,6 +3,15 @@ provider "azurerm" {
   features {}
 }
 
+locals {
+  # Avoid duplicate Key Vault Secrets User role assignments when the WIF SP
+  # and the learner SP are the same principal.
+  learner_kv_secret_users = [
+    for id in var.state_blob_contributor_object_ids
+    : id if id != var.wif_service_principal_object_id
+  ]
+}
+
 resource "azurerm_resource_group" "state" {
   name     = var.resource_group_name
   location = var.azure_location
@@ -214,9 +223,9 @@ resource "azurerm_role_assignment" "kv_secrets_user" {
 # so that Learner-Login.ps1 can retrieve the PAT at runtime.
 # The object ID is the same SP that has Storage Blob Data Contributor above.
 resource "azurerm_role_assignment" "kv_secrets_user_learner" {
-  count                = length(var.state_blob_contributor_object_ids)
+  count                = length(local.learner_kv_secret_users)
   scope                = azurerm_key_vault.secrets.id
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = var.state_blob_contributor_object_ids[count.index]
+  principal_id         = local.learner_kv_secret_users[count.index]
   depends_on           = [azurerm_role_assignment.kv_admin]
 }

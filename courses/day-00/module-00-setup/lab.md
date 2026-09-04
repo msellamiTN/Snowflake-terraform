@@ -110,7 +110,7 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
 > `[IMPORTANT]` `Learner-Login.ps1` récupère le PAT depuis **Azure Key Vault**
-> (secret `SnowflakePAT-APP01` pour l'apprenant APP01). Si Key Vault est inaccessible,
+> (secret partagé `SnowflakePAT`). Si Key Vault est inaccessible,
 > il utilise `secrets/snowflake_pat.txt` comme fallback (créé par `New-SnowflakeConnection.ps1`).
 > Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
 
@@ -369,8 +369,8 @@ git check-ignore .env
 ### 📝 Étape 5.3 — Configurer la connexion Snowflake (20 min)
 
 > `[IMPORTANT]` Cette etape configure Snow CLI et cree un fichier PAT local.
-> Le PAT est ensuite stocke dans **Azure Key Vault** par le formateur
-> (secret `SnowflakePAT-APP01`) pour que `Learner-Login.ps1` puisse le recuperer.
+> Le PAT est également stocké dans **Azure Key Vault** par le formateur
+> (secret partagé `SnowflakePAT`) pour que `Learner-Login.ps1` puisse le recuperer.
 > Le fichier `secrets/snowflake_pat.txt` sert de **fallback** si Key Vault est inaccessible.
 
 Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de facon masquee.
@@ -443,20 +443,16 @@ pour acceder a l'interface web.
 
 ---
 
-### 📝 Étape 5.4 — Authentifier Azure avec le service principal partagé (10 min)
+### 📝 Étape 5.4 — Authentifier Azure (KV-first) (10 min)
 
 > `[IMPORTANT]` Cette etape doit etre executee **apres** l'etape 4 (Snowflake).
-> Le script `Learner-Login.ps1` recupere le PAT depuis **Azure Key Vault**
-> (secret `SnowflakePAT-APP01`) et definit `TF_VAR_snowflake_token` pour Terraform.
-> Si Key Vault est inaccessible, il utilise `secrets/snowflake_pat.txt` comme fallback.
-> Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
+> Le script `Learner-Login.ps1` utilise le **mode KV-first** :
+> 1. Login avec votre compte AAD (navigateur)
+> 2. Récupère les credentials SP + PAT depuis Key Vault
+> 3. Login avec le SP pour Terraform
+> 4. Définit `TF_VAR_snowflake_token` + variables `ARM_*`
 
-Le formateur vous a fourni un fichier `secrets/shared-sp.txt` contenant les identifiants
-d'un **service principal partage**. Ce SP contourne l'authentification MFA d'Azure.
-
-> `secrets/shared-sp.txt` est gitignored. Ne le commitez jamais.
-
-#### Lancer le script de login
+#### Mode KV-first (recommandé — aucun fichier secret requis)
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -466,35 +462,61 @@ d'un **service principal partage**. Ce SP contourne l'authentification MFA d'Azu
 ```
 </details>
 
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+Une fenêtre de navigateur s'ouvre. Connectez-vous avec votre **compte apprenant**
+(fourni par le formateur, ex: `apprenant01@mokhtarsellamigmail.onmicrosoft.com`).
 
-```bash
-chmod +x scripts/learner-login.sh
-./scripts/learner-login.sh APP01
+Le script va :
+1. Vous authentifier avec votre compte AAD
+2. Récupérer les secrets SP depuis Key Vault
+3. Re-s'authentifier avec le SP (pour Terraform)
+4. Récupérer le PAT Snowflake depuis Key Vault
+5. Définir toutes les variables d'environnement
+
+#### Mode fallback (recovery — si KV-first échoue)
+
+Si vous n'avez pas accès au Key Vault ou si votre compte AAD n'est pas configuré :
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01 -ForceFallback
+```
+
+Ce mode utilise les fichiers locaux `secrets/shared-sp.txt` et `secrets/snowflake_pat.txt`
+(distribués par le formateur en secours uniquement).
+
+> `[SECURITY]` Les fichiers `secrets/` sont gitignored. Ne les commitez jamais.
+> Préférez le mode KV-first qui ne stocke aucun secret sur votre VM.
 ```
 </details>
 
 > Remplacez `APP01` par votre prefixe apprenant fourni par le formateur.
 
-Le script :
-- lit `config/shared.env` (config partagee, committee);
+Le script (mode KV-first) :
+- lit `config/shared.env` (config partagée, commitée);
 - lit `.env` (valeurs personnelles : `LEARNER_PREFIX`);
-- lit `secrets/shared-sp.txt` (meme fichier pour tous les apprenants);
-- se connecte a Azure avec le service principal (pas de MFA);
-- definit les variables `ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`;
-- recupere le PAT depuis **Azure Key Vault** (`SnowflakePAT-APP01`) et definit `TF_VAR_snowflake_token`;
-- fallback : si Key Vault est inaccessible, lit `secrets/snowflake_pat.txt`;
-- definit `LEARNER_PREFIX` pour l'isolation de vos ressources.
+- **vous authentifie avec votre compte AAD** (navigateur interactif);
+- récupère les credentials SP depuis **Key Vault** (`ArmClientId`, `ArmClientSecret`, etc.);
+- **se reconnecte avec le SP** (pour Terraform, pas de MFA);
+- récupère le PAT depuis **Key Vault** (`SnowflakePAT` — secret partagé);
+- définit `TF_VAR_snowflake_token`, `ARM_*`, et `LEARNER_PREFIX`.
 
-**Checkpoint** :
+Le script (mode fallback avec `-ForceFallback`) :
+- lit `secrets/shared-sp.txt` (credentials SP);
+- se connecte à Azure avec le SP;
+- récupère le PAT depuis Key Vault ou `secrets/snowflake_pat.txt`;
+- définit toutes les variables d'environnement.
+
+**Checkpoint** (mode KV-first) :
 
 ```text
 ============================================================
  Learner Login: APP01
 ============================================================
 
-[INFO] Logging in with shared service principal...
+[INFO] KV-first mode: authenticating with your AAD account...
+[PASS] AAD login successful
+[INFO] Fetching SP credentials from Key Vault...
+[PASS] SP credentials retrieved from Key Vault
+[PASS] Snowflake PAT retrieved from Key Vault
 [PASS] Logged in to Azure
        Subscription: Azure subscription 1 (...)
        Tenant: ...
@@ -704,7 +726,7 @@ L'apprentissage professionnel associe les commandes du terminal à la maîtrise 
    ```
 3. Naviguez vers le groupe de ressources de la formation et repérez :
    - Le compte de stockage Azure Blob Storage qui hébergera votre state Terraform distant (étudié au Jour 1).
-   - Le coffre **Azure Key Vault** contenant votre secret PAT Snowflake (`SnowflakePAT-APP01`).
+   - Le coffre **Azure Key Vault** contenant le secret PAT Snowflake partagé (`SnowflakePAT`).
 
 ---
 

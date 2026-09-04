@@ -600,7 +600,262 @@ Remove-Item -Recurse -Force "$HOME\.data2ai\venv-dbt" -ErrorAction SilentlyConti
 
 ---
 
-## Escalade
+### 20. `Set-SnowflakePATs.ps1` échoue avec `Could not parse PAT from Snowflake output`
+
+**Symptôme :**
+
+```text
+-- APP01 (apprenant01)
+   [FAIL] Could not parse PAT from Snowflake output
+         Raw output: ... "status": "Statement executed successfully." ...
+```
+
+**Cause :**
+
+La syntaxe `ALTER USER ... ADD PROGRAMMATIC_ACCESS_TOKEN` n'est pas supportée
+sur toutes les éditions Snowflake ou ne retourne pas le token dans la sortie
+JSON du CLI. Le script ne peut pas extraire le PAT.
+
+**Correction :**
+
+Utiliser le **PAT partagé** au lieu de per-learner PATs. Voir la section
+"Step 5 — Stocker le PAT partagé dans Key Vault" dans
+[`instructor-setup.md`](../instructor-setup.md#6-step-5--stocker-le-pat-partagé-dans-key-vault).
+
+1. Générer un PAT depuis Snowflake UI (DATA2AI → Programmatic Access Tokens)
+2. Le stocker dans `secrets/snowflake_pat.txt`
+3. Le stocker dans Key Vault sous le nom `SnowflakePAT`
+4. Le distribuer sur les VMs apprenants
+
+> `[NOTE]` Le script `Set-SnowflakePATs.ps1` est conservé pour référence mais
+> n'est plus l'approche recommandée. Tous les apprenants utilisent le même PAT
+> partagé avec isolation par `LEARNER_PREFIX` et states Terraform séparés.
+
+---
+
+### 21. `terraform destroy` échoue sur `00-bootstrap` avec `prevent_destroy`
+
+**Symptôme :**
+
+```text
+Error: azurerm_storage_account.state has lifecycle.prevent_destroy set
+```
+
+**Cause :**
+
+Le module `00-bootstrap` contient `lifecycle { prevent_destroy = true }` sur
+la storage account pour empêcher la destruction accidentelle du state Terraform.
+
+**Correction :**
+
+Pour un cleanup intentionnel et complet uniquement :
+
+1. Éditer `project/00-bootstrap/main.tf`
+2. Changer temporairement `prevent_destroy = false`
+3. Exécuter `terraform destroy -auto-approve`
+4. **Restaurer immédiatement** `prevent_destroy = true`
+
+> `[SECURITY]` Ne jamais laisser `prevent_destroy = false` en production.
+> Cette opération ne doit être effectuée que pour un cleanup complet de fin
+> de formation.
+
+---
+
+### 22. `03-devops-setup` échoue avec `AADSTS70025` ou `ForbiddenByRbac` sur le variable group
+
+**Symptôme :**
+
+```text
+Error: Expanding variable group resource data: Failed to get the Azure Key value.
+Error: ( code: badRequest, messge: Microsoft Entra rejected the token issued by
+Azure DevOps with error code AADSTS70025: The client ... has no configured
+federated identity credentials
+```
+
+ou :
+
+```text
+Error: ( code: forbidden, messge: Failed to query service connection API ...
+Status Code: 'Forbidden', Response from server: '{"error":{"code":"Forbidden",
+"message":"Caller is not authorized to perform action on resource..."}}'
+```
+
+**Cause :**
+
+Le provider Azure DevOps crée la service connection WIF et la federated
+identity credential automatiquement, mais **ne peut pas accorder le RBAC
+Key Vault** au service principal ADO créé dynamiquement (son object ID
+n'est pas connu à l'avance).
+
+**Correction (Formateur) :**
+
+```powershell
+# 1. Récupérer l'appId du SP ADO depuis le message d'erreur
+$spAppId = "<appId depuis l'erreur>"
+
+# 2. Récupérer son object ID
+$spObjectId = (az ad sp show --id $spAppId --query id -o tsv)
+
+# 3. Accorder Key Vault Secrets User
+az role assignment create `
+  --role "Key Vault Secrets User" `
+  --scope "/subscriptions/8c42d5b2-ab70-4051-ab0e-a96877557f6a/resourceGroups/rg-data2ai-tf-state/providers/Microsoft.KeyVault/vaults/kvdata2aitfsecretsmsn" `
+  --assignee-object-id $spObjectId `
+  --assignee-principal-type ServicePrincipal
+
+# 4. Attendre ~30s, puis relancer
+cd project/03-devops-setup
+terraform plan -out devops-setup.tfplan
+terraform apply devops-setup.tfplan
+```
+
+---
+
+### 23. `Set-SnowflakePATs.ps1` échoue avec `KEY_VAULT_NAME not set`
+
+**Symptôme :**
+
+```text
+[FAIL] KEY_VAULT_NAME not set. Pass -KeyVaultName or set in config/shared.env.
+```
+
+**Cause :**
+
+Le script recherche `config/shared.env` à la racine du dépôt, mais le fichier
+n'existe qu'à `templates/data-platform-starter/config/shared.env`.
+
+**Correction :**
+
+```powershell
+# Copier shared.env à la racine du dépôt
+Copy-Item templates/data-platform-starter/config/shared.env config/shared.env
+```
+
+> `[NOTE]` Le fichier `config/shared.env` à la racine est nécessaire pour
+> que les scripts instructor puissent résoudre `KEY_VAULT_NAME` sans
+> paramètre explicite. Les deux copies doivent rester synchronisées.
+
+---
+
+### 24. Connexion Snowflake CLI `training` pointe vers le mauvais compte
+
+**Symptôme :**
+
+```text
+Failed to connect to DB: VYUJNGZ-DY31329.snowflakecomputing.com:443.
+Your free trial has ended...
+```
+
+**Cause :**
+
+La connexion `training` dans `~/.snowflake/config.toml` pointe vers un
+ancien compte Snowflake au lieu du compte de formation actuel.
+
+**Correction :**
+
+Vérifier et corriger `~/.snowflake/config.toml` :
+
+```toml
+[connections.training]
+account = "ZVFXOZW-PM71247"
+user = "DATA2AI"
+host = "ZVFXOZW-PM71247.snowflakecomputing.com"
+role = "SYSADMIN"
+authenticator = "PROGRAMMATIC_ACCESS_TOKEN"
+token_file_path = "D:\\Data2AI Academy\\Snowflake-terraform\\secrets\\snowflake_pat.txt"
+```
+
+Tester :
+
+```powershell
+snow sql -c training -q "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()"
+```
+
+**Expected :** `DATA2AI` / `SYSADMIN` / `HQ33884`
+
+---
+
+### 25. `terraform apply` échoue avec `RoleAssignmentExists` (409 Conflict)
+
+**Symptôme :**
+
+```text
+Error: unexpected status 409 (409 Conflict) with error: RoleAssignmentExists
+```
+
+**Cause :**
+
+Deux ressources Terraform tentent d'attribuer le même rôle au même principal
+au même scope. Cela arrive quand `wif_service_principal_object_id` et
+`state_blob_contributor_object_ids[0]` pointent vers le même SP.
+
+**Correction :**
+
+Le module `00-bootstrap` a été corrigé pour filtrer les doublons : si le SP
+WIF est le même que le SP apprenant, l'attribution de rôle dupliquée est
+omise. Si vous rencontrez encore cette erreur, vérifiez que vos
+`terraform.tfvars` ne référencent pas le même object ID dans les deux
+variables.
+
+---
+
+### 26. `Learner-Login.ps1` KV-first échoue : `AAD login failed or cancelled`
+
+**Symptôme :**
+
+```text
+[INFO] KV-first mode: authenticating with your AAD account...
+[WARN] AAD login failed or cancelled.
+       Falling back to local secrets file.
+```
+
+**Causes possibles :**
+
+| Cause | Correction |
+|---|---|
+| Navigateur annulé | Relancez le script, complétez le login dans le navigateur |
+| Compte AAD non configuré | Le formateur doit créer votre compte AAD (`02-azuread-learners`) |
+| Compte AAD sans accès KV | Le formateur doit accorder `Key Vault Secrets User` au groupe `Data2AI-Learners` |
+| Tenant incorrect | Vérifiez que vous utilisez le compte dans le bon tenant |
+| Réseau bloqué | Vérifiez la connectivité vers `login.microsoftonline.com` |
+
+**Solution de secours :**
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01 -ForceFallback
+```
+
+Ce mode utilise les fichiers locaux `secrets/shared-sp.txt` et `secrets/snowflake_pat.txt`.
+
+---
+
+### 27. `Learner-Login.ps1` KV-first : `Missing SP secrets in Key Vault`
+
+**Symptôme :**
+
+```text
+[WARN] Missing SP secrets in Key Vault: ArmClientId, ArmClientSecret
+       Falling back to local secrets file.
+```
+
+**Cause :**
+
+Les secrets SP (`ArmClientId`, `ArmClientSecret`, `ArmTenantId`, `ArmSubscriptionId`)
+ne sont pas présents dans Key Vault, ou l'apprenant n'a pas le RBAC pour les lire.
+
+**Correction (Formateur) :**
+
+```powershell
+# Vérifier que les secrets existent
+az keyvault secret list --vault-name kvdata2aitfsecretsmsn --query "[?starts_with(name,'Arm')].name" -o tsv
+
+# Vérifier que le groupe learners a accès
+az role assignment list --scope "/subscriptions/.../vaults/kvdata2aitfsecretsmsn" --query "[?roleDefinitionName=='Key Vault Secrets User']" -o table
+```
+
+Si les secrets manquent, relancez `00-bootstrap` (ils sont créés par ce module).
+
+---
 
 Si aucun diagnostic ne resout le probleme :
 

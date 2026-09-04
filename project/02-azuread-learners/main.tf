@@ -69,3 +69,16 @@ resource "azurerm_role_assignment" "learner_group" {
   role_definition_name = var.rbac_role
   principal_id         = azuread_group.learners.object_id
 }
+
+# ============================================================
+# Key Vault access for learners (KV-first auth model)
+# Allows learners to fetch SP credentials + PAT from Key Vault
+# without manual secret distribution.
+# ============================================================
+
+resource "azurerm_role_assignment" "learner_group_kv" {
+  count                = (var.grant_kv_access && var.key_vault_id != "") ? 1 : 0
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azuread_group.learners.object_id
+}

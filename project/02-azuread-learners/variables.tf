@@ -64,3 +64,19 @@ variable "assign_rbac" {
   description = "Whether to assign the RBAC role to the learner group."
   default     = true
 }
+
+# ============================================================
+# Key Vault access for learners (KV-first auth model)
+# ============================================================
+
+variable "key_vault_id" {
+  type        = string
+  description = "Resource ID of the Key Vault. Learners group will be granted Key Vault Secrets User to fetch SP credentials and PAT."
+  default     = ""
+}
+
+variable "grant_kv_access" {
+  type        = bool
+  description = "Whether to grant the learner group Key Vault Secrets User on the Key Vault."
+  default     = true
+}

@@ -25,3 +25,8 @@ group_name = "Data2AI-Learners"
 subscription_id = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
 rbac_role       = "Reader"
 assign_rbac     = true
+
+# Key Vault access for learners (KV-first auth model)
+# Learners group gets Key Vault Secrets User to fetch SP credentials + PAT
+key_vault_id    = "/subscriptions/8c42d5b2-ab70-4051-ab0e-a96877557f6a/resourceGroups/rg-data2ai-tf-state/providers/Microsoft.KeyVault/vaults/kvdata2aitfsecretsmsn"
+grant_kv_access = true
