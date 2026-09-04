@@ -544,6 +544,62 @@ Copiez la nouvelle valeur générée dans `secrets/shared-sp.txt` et redistribue
 
 ---
 
+### 19. Outils préinstallés sur la VM mais `command not found` ou version incorrecte
+
+> Ce cas concerne les **VMs préconfigurées** où le formateur a déjà installé les outils.
+> L'apprenant doit **vérifier** l'installation, pas la réinstaller aveuglément.
+
+**Diagnostic :**
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Test-VMReadiness.ps1 -SkipConnectivity
+```
+
+Le rapport affiche chaque outil avec son statut (`PASS` / `FAIL` / `WARN`) et la version détectée.
+
+**Causes possibles selon la classification du rapport :**
+
+| Catégorie | Cause | Action |
+|---|---|---|
+| `learner-tool` (command not found) | Le PATH n'inclut pas `$HOME\.data2ai\bin` ou `$HOME\.data2ai\venv\Scripts` | Fermez et rouvrez le terminal. Si le problème persiste, relancez `Install-Tools.ps1`. |
+| `learner-tool` (version incorrecte) | La version installée ne correspond pas à la politique | Relancez `Install-Tools.ps1` (il épinglera les versions correctes). |
+| `learner-tool` (runtime broken) | Le venv Snowflake CLI a été cassé par une installation dbt dans le même environnement | Relancez `Install-Tools.ps1 -Force` (recrée les deux venvs séparés). |
+| `learner-config` | `.env` ou `LEARNER_PREFIX` non configuré | Suivez l'étape 5.2 du lab (configuration `.env`). |
+| `credential` | PAT ou connexion Snowflake manquant | Suivez l'étape 5.3 du lab (`New-SnowflakeConnection.ps1`). |
+| `instructor-side` | RBAC Blob/Key Vault manquant | **Escalade formateur** — le SP n'a pas les droits ou la propagation n'est pas effective. |
+
+**Remédiation pour un outil cassé :**
+
+```powershell
+# Réinstaller les outils (idempotent — n'installe que ce qui manque ou est cassé)
+.\scripts\Install-Tools.ps1
+
+# Re-vérifier
+.\scripts\Test-VMReadiness.ps1 -SkipConnectivity
+```
+
+**Remédiation pour un venv cassé par dbt :**
+
+```powershell
+# Forcer la recréation des deux venvs séparés (Snowflake CLI + dbt)
+Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "$HOME\.data2ai\venv-dbt" -ErrorAction SilentlyContinue
+.\scripts\Install-Tools.ps1 -Force
+
+# Rouvrir le terminal, puis re-vérifier
+.\scripts\Test-VMReadiness.ps1 -SkipConnectivity
+```
+
+> `[NOTE]` Snowflake CLI (`>= 3.23.0`) nécessite `snowflake-connector-python >= 4.0`,
+> tandis que `dbt-snowflake < 3.0.0` nécessite `snowflake-connector-python < 4.0.0`.
+> Ces deux packages **ne peuvent pas coexister dans le même venv**.
+> `Install-Tools.ps1` utilise deux venvs séparés (`.data2ai/venv` et `.data2ai/venv-dbt`).
+> Si un apprenant a installé dbt dans le venv Snowflake CLI, le venv est cassé et
+> doit être recréé avec `-Force`.
+
+---
+
 ## Escalade
 
 Si aucun diagnostic ne resout le probleme :

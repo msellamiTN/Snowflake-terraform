@@ -115,6 +115,65 @@ Vous l'utilisez via le script `Learner-Login` (voir Etape 4 du lab).
 L'isolation entre apprenants se fait via votre `LEARNER_PREFIX` :
 vos ressources Snowflake et votre state Terraform sont uniques.
 
+## Si votre poste est une VM préconfigurée
+
+Si vous travaillez sur une VM où les outils ont **déjà été installés** par le formateur,
+commencez par **vérifier** l'installation existante avant de suivre les étapes d'installation.
+Le préflight est non destructif : il n'installe rien, il vérifie seulement.
+
+### Procédure rapide
+
+1. Clonez le projet type (étape 1 inchangée — voir le lab).
+2. Exécutez le préflight VM :
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Test-VMReadiness.ps1 -LearnerPrefix APP01
+```
+
+> Remplacez `APP01` par le préfixe qui vous a été assigné.
+
+3. **Si le rapport affiche `READY`** → passez directement à la validation finale (étape 7 du lab).
+4. **Si un outil est en `FAIL`** (catégorie `learner-tool`) → exécutez l'installation normale :
+
+```powershell
+.\scripts\Install-Tools.ps1
+```
+
+   Puis relancez le préflight :
+
+```powershell
+.\scripts\Test-VMReadiness.ps1 -LearnerPrefix APP01
+```
+
+5. **Si une connectivité est en `FAIL`** → suivez la classification du rapport :
+
+| Catégorie | Cause probable | Action |
+|---|---|---|
+| `credential` (Snowflake) | PAT ou connexion Snowflake invalide | Étape 5 : `.\scripts\New-SnowflakeConnection.ps1` |
+| `credential` (Azure) | Service principal non configuré | Étape 4 : `.\scripts\Learner-Login.ps1 -LearnerPrefix APP01` |
+| `learner-config` | `.env` ou `.gitignore` incorrect | Étape 3 : corrigez `.env` |
+| `instructor-side` | RBAC Blob/Key Vault manquant | **Contactez le formateur** (problème infrastructure) |
+
+### Préflight outil seul (avant configuration)
+
+Si vous n'avez pas encore configuré `.env` ni exécuté `Learner-Login`, vous pouvez
+vérifier uniquement les outils :
+
+```powershell
+.\scripts\Test-VMReadiness.ps1 -SkipConnectivity
+```
+
+### Rapport
+
+Le préflight écrit un rapport consolidé dans `reports/vm-readiness.md` et `reports/vm-readiness.json`.
+Ce rapport contient : le nom de la VM, le préfixe apprenant, le statut par phase, la classification
+des échecs et l'action recommandée. **Aucun secret n'y apparaît.**
+
+> `[IMPORTANT]` Le préflight ne remplace pas la validation finale.
+> Même si le préflight affiche `READY`, exécutez l'étape 7 du lab (`Test-LabConnectivity.ps1`)
+> pour confirmer la connectivité complète.
+
 ## Regles de securite
 
 1. Le PAT est saisi via une invite masquee — jamais affiche, jamais colle dans une commande.

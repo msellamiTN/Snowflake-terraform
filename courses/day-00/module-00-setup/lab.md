@@ -51,6 +51,35 @@ flowchart LR
 
 > **Toutes les commandes s'exécutent depuis la racine du clone** (`$HOME/Data2AI-Labs/data-platform`).
 
+### Si votre VM a des outils préinstallés (vérification rapide)
+
+> `[IMPORTANT]` Si vous travaillez sur une **VM préconfigurée** (outils déjà installés
+> par le formateur), commencez par vérifier l'installation existante **avant** de
+> lancer l'installation. Le préflight est **non destructif** : il n'installe rien.
+
+```powershell
+# Vérification des outils uniquement (avant configuration .env / Azure / Snowflake)
+.\scripts\Test-VMReadiness.ps1 -SkipConnectivity
+```
+
+**Résultat attendu si les outils sont corrects :**
+
+```text
+Status: READY
+```
+
+- ✅ Si tous les outils sont en `PASS` → **sautez l'étape 5.1** (installation) et passez directement à l'étape 5.2 (configuration `.env`).
+- ❌ Si un ou plusieurs outils sont en `FAIL` → suivez l'étape 5.1 normale ci-dessous (`Install-Tools.ps1`), puis relancez le préflight.
+
+Une fois `.env` configuré et `Learner-Login` exécuté, lancez le préflight complet :
+
+```powershell
+.\scripts\Test-VMReadiness.ps1 -LearnerPrefix APP01
+```
+
+> Remplacez `APP01` par votre préfixe. Le rapport consolidé est écrit dans
+> `reports/vm-readiness.md`. Aucun secret n'y apparaît.
+
 ### Ordre d'exécution des scripts
 
 > `[IMPORTANT]` L'ordre des scripts est important. Suivez cette séquence exacte.

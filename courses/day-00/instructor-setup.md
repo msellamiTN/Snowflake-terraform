@@ -458,6 +458,105 @@ foreach ($i in 1..12) {
 # 3. Supprimer les VMs apprenants
 ```
 
+## 12. Préparer les VMs préconfigurées (optionnel)
+
+> `[NOTE]` Cette section est **optionnelle**. Elle s'applique uniquement si vous
+> distribuez des VMs avec les outils **déjà installés** pour que les apprenants
+> puissent démarrer plus rapidement. Les apprenants doivent **vérifier**
+> l'installation existante, pas la réinstaller aveuglément.
+
+### 12.1 — Installer les outils sur chaque VM (une seule fois)
+
+Sur chaque VM apprenant, exécutez une fois :
+
+```powershell
+# Cloner le projet type
+New-Item -ItemType Directory -Path "$HOME\Data2AI-Labs" -Force | Out-Null
+git clone https://github.com/msellamiTN/data-platform-starter.git "$HOME\Data2AI-Labs\data-platform"
+cd "$HOME\Data2AI-Labs\data-platform"
+
+# Autoriser les scripts locaux
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# Installer les outils (Terraform, Snow CLI, dbt, tflint, Azure CLI)
+.\scripts\Install-Tools.ps1
+```
+
+### 12.2 — Distribuer les secrets
+
+Copiez les fichiers suivants sur chaque VM dans `secrets/` :
+
+| Fichier | Contenu | Source |
+|---|---|---|
+| `secrets/shared-sp.txt` | Identifiants du SP partagé (`ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`) | Étape 1.1 ci-dessus |
+| `secrets/snowflake_pat.txt` | PAT Snowflake partagé (utilisateur `DATA2AI`, rôle `SYSADMIN`) | Généré par `Set-SnowflakePATs.ps1` ou manuellement |
+
+> `[SECURITY]` Ces fichiers sont gitignored. Ne les commitez jamais.
+> Distribuez-les de façon sécurisée (clé USB, partage restreint, etc.).
+
+### 12.3 — Vérifier la readiness de chaque VM
+
+Sur chaque VM, exécutez le préflight VM pour confirmer que tout est prêt :
+
+```powershell
+cd "$HOME\Data2AI-Labs\data-platform"
+.\scripts\Test-VMReadiness.ps1 -LearnerPrefix APPxx
+```
+
+> Remplacez `APPxx` par le préfixe assigné à cette VM (APP01, APP02, etc.).
+
+**Résultat attendu :**
+
+```text
+Status: READY
+Ready for Day 1
+```
+
+Si le rapport affiche `NOT READY`, corrigez les éléments en `FAIL` :
+
+| Catégorie | Action |
+|---|---|
+| `learner-tool` | Relancez `.\scripts\Install-Tools.ps1` sur la VM |
+| `learner-config` | Vérifiez `.env` et `.gitignore` |
+| `credential` | Vérifiez `secrets/snowflake_pat.txt` et `secrets/shared-sp.txt` |
+| `instructor-side` | Vérifiez les RBAC (Storage Blob Data Contributor, Key Vault Secrets User) |
+
+### 12.4 — Rapport consolidé pour le formateur
+
+Le préflight écrit un rapport sur chaque VM dans :
+
+```text
+reports/vm-readiness.md
+reports/vm-readiness.json
+```
+
+Pour vérifier toutes les VMs rapidement, demandez à chaque apprenant d'exécuter le
+préflight au début du Jour 0 et de vous transmettre le statut (`READY` / `NOT READY`)
+et la liste des `FAIL` avec leur classification. Le rapport JSON est exploitable
+par script pour un suivi centralisé.
+
+```mermaid
+flowchart TD
+    PREP["🔧 Formateur prépare les VMs"] --> INSTALL["Install-Tools.ps1 sur chaque VM"]
+    INSTALL --> SECRETS["Copier shared-sp.txt + snowflake_pat.txt"]
+    SECRETS --> CHECK["Test-VMReadiness.ps1 -LearnerPrefix APPxx"]
+    CHECK --> READY{READY?}
+    READY -->|Oui| OK["✅ VM prête pour l'apprenant"]
+    READY -->|Non| FIX["❌ Corriger les FAIL"]
+    FIX --> CHECK
+    OK --> LEARNER["🧑‍💻 Apprenant vérifie au début du Jour 0"]
+    LEARNER --> LEARNER_CHECK["Test-VMReadiness.ps1 -SkipConnectivity"]
+    LEARNER_CHECK --> LEARNER_READY{READY?}
+    LEARNER_READY -->|Oui| DAY1["→ Étape 5.2 (.env) puis validation finale"]
+    LEARNER_READY -->|Non| LEARNER_FIX["Suivre les étapes 5.1-5.5 du lab"]
+    LEARNER_FIX --> DAY1
+```
+
+> `[IMPORTANT]` Même sur une VM préconfigurée, l'apprenant doit **vérifier**
+> l'installation au début du Jour 0 avec `Test-VMReadiness.ps1`. Le préflight est
+> non destructif et confirme que rien n'a été cassé entre la préparation et le
+> début de la formation.
+
 ## Suite
 
 Une fois cette préparation terminée, les apprenants peuvent suivre le
