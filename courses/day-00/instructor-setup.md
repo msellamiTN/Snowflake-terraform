@@ -25,7 +25,7 @@ Le formateur prépare trois environnements à l'aide de **4 modules Terraform** 
 > (utilisateur `DATA2AI`, rôle `SYSADMIN`). L'isolation se fait via `LEARNER_PREFIX`
 > et les states Terraform séparés. Le PAT est stocké dans Key Vault sous le nom
 > `SnowflakePAT` et distribué via `secrets/snowflake_pat.txt`.
-> La génération de per-learner PATs via `Set-SnowflakePATs.ps1` n'est plus nécessaire
+> La génération de per-learner PATs via `Set-SnowflakePATs.ps1` (archivé dans `scripts/_archive/`) n'est plus nécessaire
 > car la syntaxe `ALTER USER ... ADD PROGRAMMATIC_ACCESS_TOKEN` n'est pas supportée
 > sur toutes les éditions Snowflake.
 
@@ -133,13 +133,13 @@ Générer `config/shared.env` (deux emplacements) :
 # Pour le starter template (commité dans le dépôt)
 terraform output -raw shared_env_snippet > ../../templates/data-platform-starter/config/shared.env
 
-# Pour les scripts instructor au niveau racine (Set-SnowflakePATs.ps1, etc.)
+# Pour les scripts au niveau racine (Learner-Login.ps1, etc.)
 New-Item -ItemType Directory -Path ../../config -Force | Out-Null
 terraform output -raw shared_env_snippet > ../../config/shared.env
 ```
 
 > `[IMPORTANT]` Le fichier `config/shared.env` à la racine est nécessaire pour
-> que les scripts instructor (`Set-SnowflakePATs.ps1`, etc.) puissent résoudre
+> que les scripts (`Learner-Login.ps1`, etc.) puissent résoudre
 > `KEY_VAULT_NAME` sans paramètre explicite.
 
 > `[IMPORTANT]` La propagation RBAC peut prendre **jusqu'à 10 minutes**.
@@ -309,7 +309,7 @@ terraform output variable_group_id
 > l'interface web Snowflake (Programmatic Access Tokens) avec une durée de
 > validité suffisante (30 jours recommandés).
 >
-> La génération de per-learner PATs via `Set-SnowflakePATs.ps1` n'est plus
+> La génération de per-learner PATs via `Set-SnowflakePATs.ps1` (archivé) n'est plus
 > nécessaire car la syntaxe `ALTER USER ... ADD PROGRAMMATIC_ACCESS_TOKEN`
 > n'est pas supportée sur toutes les éditions Snowflake.
 
@@ -660,7 +660,7 @@ Copiez les fichiers suivants sur chaque VM dans `secrets/` :
 | Fichier | Contenu | Source |
 |---|---|---|
 | `secrets/shared-sp.txt` | Identifiants du SP partagé (`ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`) | Étape 1.1 ci-dessus |
-| `secrets/snowflake_pat.txt` | PAT Snowflake partagé (utilisateur `DATA2AI`, rôle `SYSADMIN`) | Généré par `Set-SnowflakePATs.ps1` ou manuellement |
+| `secrets/snowflake_pat.txt` | PAT Snowflake partagé (utilisateur `DATA2AI`, rôle `SYSADMIN`) | Généré depuis Snowflake UI ou manuellement |
 
 > `[SECURITY]` Ces fichiers sont gitignored. Ne les commitez jamais.
 > Distribuez-les de façon sécurisée (clé USB, partage restreint, etc.).

@@ -627,8 +627,8 @@ Utiliser le **PAT partagé** au lieu de per-learner PATs. Voir la section
 3. Le stocker dans Key Vault sous le nom `SnowflakePAT`
 4. Le distribuer sur les VMs apprenants
 
-> `[NOTE]` Le script `Set-SnowflakePATs.ps1` est conservé pour référence mais
-> n'est plus l'approche recommandée. Tous les apprenants utilisent le même PAT
+> `[NOTE]` Le script `Set-SnowflakePATs.ps1` est archivé dans `scripts/_archive/`
+> et n'est plus l'approche recommandée. Tous les apprenants utilisent le même PAT
 > partagé avec isolation par `LEARNER_PREFIX` et states Terraform séparés.
 
 ---
