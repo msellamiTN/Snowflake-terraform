@@ -502,6 +502,48 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPre
 
 ---
 
+### 18. `Learner-Login` échoue avec `AADSTS7000215: Invalid client secret provided`
+
+**Symptôme :**
+
+```text
+[INFO] Logging in with shared service principal...
+[FAIL] Login failed
+       ERROR: AADSTS7000215: Invalid client secret provided. Ensure the secret being sent in the request is the client secret value, not the client secret ID, for a secret added to app 'ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0'. ... The error may be caused by passing a service principal certificate with --password. Please note that --password no longer accepts a service principal certificate. To pass a service principal certificate, use --certificate instead.
+```
+
+**Cause :**
+
+1. La valeur passée pour `ARM_CLIENT_SECRET` dans `secrets/shared-sp.txt` (ou `.env`) n'est pas le secret valide de l'application Entra ID :
+   - Le **Secret ID** (GUID / UUID) a été copié au lieu de la **Valeur du secret** (*Value*).
+   - Le secret a expiré ou a été réinitialisé/révoqué côté Azure.
+   - Des guillemets parasites (`"`, `'`) ou des espaces entourent la valeur dans le fichier.
+2. L'avertissement relatif aux certificats (*"The error may be caused by passing a service principal certificate with --password"*) est un message générique produit par Azure CLI dès qu'un échec d'authentification par mot de passe survient.
+
+**Correction (Apprenant) :**
+
+1. Ouvrez `secrets\shared-sp.txt` à la racine de votre clone (`data-platform`) :
+   ```text
+   ARM_CLIENT_ID=ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0
+   ARM_TENANT_ID=<votre_tenant_id>
+   ARM_SUBSCRIPTION_ID=<votre_subscription_id>
+   ARM_CLIENT_SECRET=<valeur_du_secret_sans_guillemets>
+   ```
+2. Vérifiez que la valeur de `ARM_CLIENT_SECRET` ne contient ni guillemets, ni espaces superflus, et qu'il s'agit bien de la **Valeur** (ex. `wBZ8Q~ub...`) et non du **Secret ID**.
+3. Si le secret a expiré ou été révoqué, demandez au formateur la version à jour de `secrets/shared-sp.txt`.
+
+**Correction (Formateur / Administrateur) :**
+
+Réinitialisez le secret du Service Principal dans Azure CLI ou via le portail Azure :
+
+```bash
+az ad sp credential reset --id ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0 --query "password" -o tsv
+```
+
+Copiez la nouvelle valeur générée dans `secrets/shared-sp.txt` et redistribuez le fichier aux apprenants.
+
+---
+
 ## Escalade
 
 Si aucun diagnostic ne resout le probleme :

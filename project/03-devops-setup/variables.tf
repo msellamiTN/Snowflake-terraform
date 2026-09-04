@@ -2,6 +2,17 @@
 # 03-devops-setup — Variables
 # ============================================================
 
+variable "ado_organization_url" {
+  type        = string
+  description = "Azure DevOps organization URL (e.g. https://dev.azure.com/myorg)."
+}
+
+variable "ado_pat" {
+  type        = string
+  description = "Azure DevOps Personal Access Token (PAT) with full access."
+  sensitive   = true
+}
+
 variable "project_name" {
   type        = string
   description = "Azure DevOps project name."

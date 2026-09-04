@@ -11,9 +11,13 @@
 #   - 00-bootstrap must be applied first (provides Key Vault)
 # ============================================================
 
-provider "azuredevops" {}
+provider "azuredevops" {
+  org_service_url       = var.ado_organization_url
+  personal_access_token = var.ado_pat
+}
 
 provider "azurerm" {
+  subscription_id = var.subscription_id
   features {}
 }
 

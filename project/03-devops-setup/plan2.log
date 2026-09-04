@@ -1,0 +1,129 @@
+﻿[0m[1mazuredevops_user_entitlement.learners["apprenant05@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=a731c168-8762-48aa-b03c-c96482604a9d][0m
+[0m[1mazuredevops_project.training: Refreshing state... [id=5a60d52c-87e1-4702-bb33-420de6265591][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant09@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=d11110d2-39a8-4a50-86f0-d9bc61d8af15][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant03@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=804d6764-18db-4a70-8926-e6123a8d2c87][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant02@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=657d60d7-0a8f-408d-9739-cc80a506fd1a][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant08@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=70d4101d-9a57-4cc0-ad18-0ea21789b699][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant06@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=eaaee042-990f-4819-8573-37bffc042415][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant10@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=062e506d-b942-490d-ba86-b0ef9af45bea][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant01@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=47bcac50-6226-4afc-9c86-90062a03ed03][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant07@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=748a2285-94a4-43ff-b9ee-ffba6c0f21a2][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant04@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=c45db8ca-349a-4551-a62f-9b10f285e233][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+  [33m~[0m update in-place[0m
+ [36m<=[0m read (data resources)[0m
+
+Terraform will perform the following actions:
+
+[1m  # data.azuredevops_group.contributors[0m will be read during apply
+  # (depends on a resource or a module with changes pending)
+[0m [36m<=[0m[0m data "azuredevops_group" "contributors" {
+      [32m+[0m[0m descriptor = (known after apply)
+      [32m+[0m[0m group_id   = (known after apply)
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m name       = "Contributors"
+      [32m+[0m[0m origin     = (known after apply)
+      [32m+[0m[0m origin_id  = (known after apply)
+      [32m+[0m[0m project_id = "5a60d52c-87e1-4702-bb33-420de6265591"
+    }
+
+[1m  # azuredevops_group_membership.learners[0m will be created
+[0m  [32m+[0m[0m resource "azuredevops_group_membership" "learners" {
+      [32m+[0m[0m group   = (known after apply)
+      [32m+[0m[0m id      = (known after apply)
+      [32m+[0m[0m members = (known after apply)
+      [32m+[0m[0m mode    = "add"
+    }
+
+[1m  # azuredevops_project.training[0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuredevops_project" "training" {
+      [33m~[0m[0m description         = "Terraform & Snowflake Training CI/CD" [33m->[0m[0m "Formation Terraform & Snowflake ΓÇö Data2AI Academy"
+        id                  = "5a60d52c-87e1-4702-bb33-420de6265591"
+        name                = "terraform-snowflake"
+        [90m# (5 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuredevops_serviceendpoint_azurerm.kv[0m will be created
+[0m  [32m+[0m[0m resource "azuredevops_serviceendpoint_azurerm" "kv" {
+      [32m+[0m[0m authorization                          = (known after apply)
+      [32m+[0m[0m azurerm_spn_tenantid                   = "55fca982-2372-4352-8b7e-c28ac00ae8e3"
+      [32m+[0m[0m azurerm_subscription_id                = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
+      [32m+[0m[0m azurerm_subscription_name              = "Azure subscription 1"
+      [32m+[0m[0m description                            = "Service connection for Key Vault variable group"
+      [32m+[0m[0m environment                            = "AzureCloud"
+      [32m+[0m[0m id                                     = (known after apply)
+      [32m+[0m[0m project_id                             = "5a60d52c-87e1-4702-bb33-420de6265591"
+      [32m+[0m[0m server_url                             = (known after apply)
+      [32m+[0m[0m service_endpoint_authentication_scheme = "WorkloadIdentityFederation"
+      [32m+[0m[0m service_endpoint_name                  = "AzureKeyVault-Connection"
+      [32m+[0m[0m service_principal_id                   = (known after apply)
+      [32m+[0m[0m workload_identity_federation_issuer    = (known after apply)
+      [32m+[0m[0m workload_identity_federation_subject   = (known after apply)
+    }
+
+[1m  # azuredevops_user_entitlement.learners["apprenant11@mokhtarsellamigmail.onmicrosoft.com"][0m will be created
+[0m  [32m+[0m[0m resource "azuredevops_user_entitlement" "learners" {
+      [32m+[0m[0m account_license_type = "express"
+      [32m+[0m[0m descriptor           = (known after apply)
+      [32m+[0m[0m id                   = (known after apply)
+      [32m+[0m[0m licensing_source     = "account"
+      [32m+[0m[0m origin               = (known after apply)
+      [32m+[0m[0m origin_id            = (known after apply)
+      [32m+[0m[0m principal_name       = "apprenant11@mokhtarsellamigmail.onmicrosoft.com"
+    }
+
+[1m  # azuredevops_user_entitlement.learners["apprenant12@mokhtarsellamigmail.onmicrosoft.com"][0m will be created
+[0m  [32m+[0m[0m resource "azuredevops_user_entitlement" "learners" {
+      [32m+[0m[0m account_license_type = "express"
+      [32m+[0m[0m descriptor           = (known after apply)
+      [32m+[0m[0m id                   = (known after apply)
+      [32m+[0m[0m licensing_source     = "account"
+      [32m+[0m[0m origin               = (known after apply)
+      [32m+[0m[0m origin_id            = (known after apply)
+      [32m+[0m[0m principal_name       = "apprenant12@mokhtarsellamigmail.onmicrosoft.com"
+    }
+
+[1m  # azuredevops_variable_group.secrets[0m will be created
+[0m  [32m+[0m[0m resource "azuredevops_variable_group" "secrets" {
+      [32m+[0m[0m allow_access = true
+      [32m+[0m[0m description  = "Secrets linked from Azure Key Vault (kvdata2aitfsecrets)"
+      [32m+[0m[0m id           = (known after apply)
+      [32m+[0m[0m name         = "data-platform-secrets"
+      [32m+[0m[0m project_id   = "5a60d52c-87e1-4702-bb33-420de6265591"
+
+      [32m+[0m[0m key_vault {
+          [32m+[0m[0m name                = "kvdata2aitfsecretsmsn"
+          [32m+[0m[0m search_depth        = 20
+          [32m+[0m[0m service_endpoint_id = (known after apply)
+        }
+
+      [32m+[0m[0m variable {
+          # At least one attribute in this block is (or was) sensitive,
+          # so its contents will not be displayed.
+        }
+      [32m+[0m[0m variable {
+          # At least one attribute in this block is (or was) sensitive,
+          # so its contents will not be displayed.
+        }
+    }
+
+[1mPlan:[0m [0m5 to add, 1 to change, 0 to destroy.
+
+Changes to Outputs:
+  [33m~[0m[0m learner_entitlements = {
+      [32m+[0m[0m "apprenant11@mokhtarsellamigmail.onmicrosoft.com" = (known after apply)
+      [32m+[0m[0m "apprenant12@mokhtarsellamigmail.onmicrosoft.com" = (known after apply)
+        [90m# (10 unchanged attributes hidden)[0m[0m
+    }
+  [32m+[0m[0m service_endpoint_id  = (known after apply)
+  [32m+[0m[0m variable_group_id    = (known after apply)
+  [32m+[0m[0m wif_issuer           = (known after apply)
+  [32m+[0m[0m wif_subject          = (known after apply)
+[90m
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.

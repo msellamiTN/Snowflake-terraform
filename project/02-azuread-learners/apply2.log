@@ -1,0 +1,303 @@
+﻿[0m[1mdata.azuread_client_config.current: Reading...[0m[0m
+[0m[1mazuread_user.learners["APP05"]: Refreshing state... [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6][0m
+[0m[1mazuread_user.learners["APP11"]: Refreshing state... [id=/users/840bcdda-37bd-4e63-97df-6015dea0b3b7][0m
+[0m[1mazuread_user.learners["APP01"]: Refreshing state... [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084][0m
+[0m[1mazuread_user.learners["APP03"]: Refreshing state... [id=users/531a040d-c50a-469b-9764-cd10602bab9f][0m
+[0m[1mazuread_user.learners["APP12"]: Refreshing state... [id=/users/4a088280-0f29-4820-87aa-e9cfd5f86863][0m
+[0m[1mazuread_user.learners["APP10"]: Refreshing state... [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a][0m
+[0m[1mazuread_user.learners["APP08"]: Refreshing state... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1][0m
+[0m[1mazuread_user.learners["APP04"]: Refreshing state... [id=users/421c4537-a941-46a2-89eb-40adb13d5458][0m
+[0m[1mdata.azuread_client_config.current: Read complete after 0s [id=55fca982-2372-4352-8b7e-c28ac00ae8e3-04b07795-8ddb-461a-bbee-02f9e1bf7b46-95f2a05e-553b-440c-8741-c05e57dfe070][0m
+[0m[1mazuread_user.learners["APP07"]: Refreshing state... [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578][0m
+[0m[1mazuread_user.learners["APP06"]: Refreshing state... [id=users/a5ccec47-66af-4e7a-8dd1-34502b24419c][0m
+[0m[1mazuread_user.learners["APP02"]: Refreshing state... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26][0m
+[0m[1mazuread_user.learners["APP09"]: Refreshing state... [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+  [33m~[0m update in-place[0m
+
+Terraform will perform the following actions:
+
+[1m  # azuread_group.learners[0m will be created
+[0m  [32m+[0m[0m resource "azuread_group" "learners" {
+      [32m+[0m[0m auto_subscribe_new_members     = (known after apply)
+      [32m+[0m[0m display_name                   = "Data2AI-Learners"
+      [32m+[0m[0m external_senders_allowed       = (known after apply)
+      [32m+[0m[0m hide_from_address_lists        = (known after apply)
+      [32m+[0m[0m hide_from_outlook_clients      = (known after apply)
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m mail                           = (known after apply)
+      [32m+[0m[0m mail_nickname                  = (known after apply)
+      [32m+[0m[0m members                        = [
+          [32m+[0m[0m "2801f1df-e93f-48fd-abe8-e529232fe56a",
+          [32m+[0m[0m "421c4537-a941-46a2-89eb-40adb13d5458",
+          [32m+[0m[0m "44e8c254-3bbe-49fa-9cf3-6e763321b084",
+          [32m+[0m[0m "4a088280-0f29-4820-87aa-e9cfd5f86863",
+          [32m+[0m[0m "531a040d-c50a-469b-9764-cd10602bab9f",
+          [32m+[0m[0m "7ebd5ed6-c039-4515-9ecd-78bc1b731f26",
+          [32m+[0m[0m "83d28a98-760b-4d6f-91b3-07ea801d8de6",
+          [32m+[0m[0m "840bcdda-37bd-4e63-97df-6015dea0b3b7",
+          [32m+[0m[0m "97ce53ca-492a-4bb5-8f48-8b9d0168a578",
+          [32m+[0m[0m "a4bcf6fd-bd59-48e0-9617-c98bb15f71e1",
+          [32m+[0m[0m "a5ccec47-66af-4e7a-8dd1-34502b24419c",
+          [32m+[0m[0m "df0288c0-92c0-4681-ac52-0d1c892d6358",
+        ]
+      [32m+[0m[0m object_id                      = (known after apply)
+      [32m+[0m[0m onpremises_domain_name         = (known after apply)
+      [32m+[0m[0m onpremises_group_type          = (known after apply)
+      [32m+[0m[0m onpremises_netbios_name        = (known after apply)
+      [32m+[0m[0m onpremises_sam_account_name    = (known after apply)
+      [32m+[0m[0m onpremises_security_identifier = (known after apply)
+      [32m+[0m[0m onpremises_sync_enabled        = (known after apply)
+      [32m+[0m[0m owners                         = [
+          [32m+[0m[0m "95f2a05e-553b-440c-8741-c05e57dfe070",
+        ]
+      [32m+[0m[0m preferred_language             = (known after apply)
+      [32m+[0m[0m prevent_duplicate_names        = false
+      [32m+[0m[0m proxy_addresses                = (known after apply)
+      [32m+[0m[0m security_enabled               = true
+      [32m+[0m[0m visibility                     = (known after apply)
+      [32m+[0m[0m writeback_enabled              = false
+    }
+
+[1m  # azuread_user.learners["APP01"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant01" [33m->[0m[0m "Apprenant 01"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/44e8c254-3bbe-49fa-9cf3-6e763321b084"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP02"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant02" [33m->[0m[0m "Apprenant 02"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP03"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant03" [33m->[0m[0m "Apprenant 03"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/531a040d-c50a-469b-9764-cd10602bab9f"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP04"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant04" [33m->[0m[0m "Apprenant 04"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/421c4537-a941-46a2-89eb-40adb13d5458"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP05"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant05" [33m->[0m[0m "Apprenant 05"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/83d28a98-760b-4d6f-91b3-07ea801d8de6"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP06"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant06" [33m->[0m[0m "Apprenant 06"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/a5ccec47-66af-4e7a-8dd1-34502b24419c"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP07"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant07" [33m->[0m[0m "Apprenant 07"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/97ce53ca-492a-4bb5-8f48-8b9d0168a578"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP08"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant08" [33m->[0m[0m "Apprenant 08"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP09"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant09" [33m->[0m[0m "Apprenant 09"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/df0288c0-92c0-4681-ac52-0d1c892d6358"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azuread_user.learners["APP10"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "azuread_user" "learners" {
+      [33m~[0m[0m display_name                   = "apprenant10" [33m->[0m[0m "Apprenant 10"
+      [32m+[0m[0m force_password_change          = false
+        id                             = "users/2801f1df-e93f-48fd-abe8-e529232fe56a"
+      [32m+[0m[0m password                       = (sensitive value)
+      [33m~[0m[0m show_in_address_list           = false [33m->[0m[0m true
+        [90m# (43 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # azurerm_role_assignment.learner_group[0][0m will be created
+[0m  [32m+[0m[0m resource "azurerm_role_assignment" "learner_group" {
+      [32m+[0m[0m condition_version                = (known after apply)
+      [32m+[0m[0m id                               = (known after apply)
+      [32m+[0m[0m name                             = (known after apply)
+      [32m+[0m[0m principal_id                     = (known after apply)
+      [32m+[0m[0m principal_type                   = (known after apply)
+      [32m+[0m[0m role_definition_id               = (known after apply)
+      [32m+[0m[0m role_definition_name             = "Reader"
+      [32m+[0m[0m scope                            = "/subscriptions/8c42d5b2-ab70-4051-ab0e-a96877557f6a"
+      [32m+[0m[0m skip_service_principal_aad_check = (known after apply)
+    }
+
+[1mPlan:[0m [0m2 to add, 10 to change, 0 to destroy.
+
+Changes to Outputs:
+  [32m+[0m[0m group_name         = "Data2AI-Learners"
+  [32m+[0m[0m group_object_id    = (known after apply)
+[0m[1mazuread_user.learners["APP10"]: Modifying... [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a][0m[0m
+[0m[1mazuread_user.learners["APP05"]: Modifying... [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6][0m[0m
+[0m[1mazuread_user.learners["APP04"]: Modifying... [id=users/421c4537-a941-46a2-89eb-40adb13d5458][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Modifying... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26][0m[0m
+[0m[1mazuread_user.learners["APP01"]: Modifying... [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Modifying... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1][0m[0m
+[0m[1mazuread_user.learners["APP07"]: Modifying... [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578][0m[0m
+[0m[1mazuread_user.learners["APP09"]: Modifying... [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358][0m[0m
+[0m[1mazuread_user.learners["APP06"]: Modifying... [id=users/a5ccec47-66af-4e7a-8dd1-34502b24419c][0m[0m
+[0m[1mazuread_user.learners["APP04"]: Still modifying... [id=users/421c4537-a941-46a2-89eb-40adb13d5458, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP05"]: Still modifying... [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP10"]: Still modifying... [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Still modifying... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Still modifying... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP01"]: Still modifying... [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP07"]: Still modifying... [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP09"]: Still modifying... [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP06"]: Still modifying... [id=users/a5ccec47-66af-4e7a-8dd1-34502b24419c, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP03"]: Modifying... [id=users/531a040d-c50a-469b-9764-cd10602bab9f][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Still modifying... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP05"]: Still modifying... [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP04"]: Still modifying... [id=users/421c4537-a941-46a2-89eb-40adb13d5458, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP10"]: Still modifying... [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP09"]: Still modifying... [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Still modifying... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP07"]: Still modifying... [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP06"]: Still modifying... [id=users/a5ccec47-66af-4e7a-8dd1-34502b24419c, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP01"]: Still modifying... [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP03"]: Still modifying... [id=users/531a040d-c50a-469b-9764-cd10602bab9f, 00m10s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP10"]: Still modifying... [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Still modifying... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP05"]: Still modifying... [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP04"]: Still modifying... [id=users/421c4537-a941-46a2-89eb-40adb13d5458, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP01"]: Still modifying... [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP06"]: Still modifying... [id=users/a5ccec47-66af-4e7a-8dd1-34502b24419c, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Still modifying... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP07"]: Still modifying... [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP09"]: Still modifying... [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP03"]: Still modifying... [id=users/531a040d-c50a-469b-9764-cd10602bab9f, 00m20s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP10"]: Still modifying... [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP05"]: Still modifying... [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP04"]: Still modifying... [id=users/421c4537-a941-46a2-89eb-40adb13d5458, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Still modifying... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP09"]: Still modifying... [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Still modifying... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP01"]: Still modifying... [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP06"]: Still modifying... [id=users/a5ccec47-66af-4e7a-8dd1-34502b24419c, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP07"]: Still modifying... [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP03"]: Still modifying... [id=users/531a040d-c50a-469b-9764-cd10602bab9f, 00m30s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP06"]: Modifications complete after 48s [id=users/a5ccec47-66af-4e7a-8dd1-34502b24419c][0m
+[0m[1mazuread_user.learners["APP07"]: Still modifying... [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP09"]: Still modifying... [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP04"]: Still modifying... [id=users/421c4537-a941-46a2-89eb-40adb13d5458, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Still modifying... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP05"]: Still modifying... [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Still modifying... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP10"]: Still modifying... [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP01"]: Still modifying... [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP03"]: Still modifying... [id=users/531a040d-c50a-469b-9764-cd10602bab9f, 00m40s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP01"]: Modifications complete after 55s [id=users/44e8c254-3bbe-49fa-9cf3-6e763321b084][0m
+[0m[1mazuread_user.learners["APP09"]: Modifications complete after 56s [id=users/df0288c0-92c0-4681-ac52-0d1c892d6358][0m
+[0m[1mazuread_user.learners["APP10"]: Modifications complete after 57s [id=users/2801f1df-e93f-48fd-abe8-e529232fe56a][0m
+[0m[1mazuread_user.learners["APP07"]: Modifications complete after 59s [id=users/97ce53ca-492a-4bb5-8f48-8b9d0168a578][0m
+[0m[1mazuread_user.learners["APP05"]: Modifications complete after 1m0s [id=users/83d28a98-760b-4d6f-91b3-07ea801d8de6][0m
+[0m[1mazuread_user.learners["APP04"]: Still modifying... [id=users/421c4537-a941-46a2-89eb-40adb13d5458, 01m00s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Still modifying... [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26, 01m00s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Still modifying... [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1, 01m00s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP08"]: Modifications complete after 1m1s [id=users/a4bcf6fd-bd59-48e0-9617-c98bb15f71e1][0m
+[0m[1mazuread_user.learners["APP03"]: Still modifying... [id=users/531a040d-c50a-469b-9764-cd10602bab9f, 00m50s elapsed][0m[0m
+[0m[1mazuread_user.learners["APP02"]: Modifications complete after 1m2s [id=users/7ebd5ed6-c039-4515-9ecd-78bc1b731f26][0m
+[0m[1mazuread_user.learners["APP04"]: Modifications complete after 1m4s [id=users/421c4537-a941-46a2-89eb-40adb13d5458][0m
+[0m[1mazuread_user.learners["APP03"]: Modifications complete after 54s [id=users/531a040d-c50a-469b-9764-cd10602bab9f][0m
+[0m[1mazuread_group.learners: Creating...[0m[0m
+[0m[1mazuread_group.learners: Still creating... [00m10s elapsed][0m[0m
+[0m[1mazuread_group.learners: Still creating... [00m20s elapsed][0m[0m
+[0m[1mazuread_group.learners: Still creating... [00m30s elapsed][0m[0m
+[0m[1mazuread_group.learners: Still creating... [00m40s elapsed][0m[0m
+[0m[1mazuread_group.learners: Still creating... [00m50s elapsed][0m[0m
+[0m[1mazuread_group.learners: Still creating... [01m00s elapsed][0m[0m
+[0m[1mazuread_group.learners: Creation complete after 1m3s [id=/groups/35bb222a-b9c3-4ba7-a09a-cff05020e87d][0m
+[0m[1mazurerm_role_assignment.learner_group[0]: Creating...[0m[0m
+[0m[1mazurerm_role_assignment.learner_group[0]: Still creating... [00m10s elapsed][0m[0m
+[0m[1mazurerm_role_assignment.learner_group[0]: Still creating... [00m20s elapsed][0m[0m
+[0m[1mazurerm_role_assignment.learner_group[0]: Still creating... [00m30s elapsed][0m[0m
+[0m[1mazurerm_role_assignment.learner_group[0]: Creation complete after 32s [id=/subscriptions/8c42d5b2-ab70-4051-ab0e-a96877557f6a/providers/Microsoft.Authorization/roleAssignments/6458785e-9d1d-c12d-524b-7a1a4bcf7fa2][0m
+[0m[1m[32m
+Apply complete! Resources: 2 added, 10 changed, 0 destroyed.[0m
+[0m[1m[32m
+Outputs:
+
+[0mgroup_name = "Data2AI-Learners"
+group_object_id = "35bb222a-b9c3-4ba7-a09a-cff05020e87d"
+learner_count = 12
+learner_object_ids = {
+  "APP01" = "44e8c254-3bbe-49fa-9cf3-6e763321b084"
+  "APP02" = "7ebd5ed6-c039-4515-9ecd-78bc1b731f26"
+  "APP03" = "531a040d-c50a-469b-9764-cd10602bab9f"
+  "APP04" = "421c4537-a941-46a2-89eb-40adb13d5458"
+  "APP05" = "83d28a98-760b-4d6f-91b3-07ea801d8de6"
+  "APP06" = "a5ccec47-66af-4e7a-8dd1-34502b24419c"
+  "APP07" = "97ce53ca-492a-4bb5-8f48-8b9d0168a578"
+  "APP08" = "a4bcf6fd-bd59-48e0-9617-c98bb15f71e1"
+  "APP09" = "df0288c0-92c0-4681-ac52-0d1c892d6358"
+  "APP10" = "2801f1df-e93f-48fd-abe8-e529232fe56a"
+  "APP11" = "840bcdda-37bd-4e63-97df-6015dea0b3b7"
+  "APP12" = "4a088280-0f29-4820-87aa-e9cfd5f86863"
+}
+learner_upns = {
+  "APP01" = "apprenant01@mokhtarsellamigmail.onmicrosoft.com"
+  "APP02" = "apprenant02@mokhtarsellamigmail.onmicrosoft.com"
+  "APP03" = "apprenant03@mokhtarsellamigmail.onmicrosoft.com"
+  "APP04" = "apprenant04@mokhtarsellamigmail.onmicrosoft.com"
+  "APP05" = "apprenant05@mokhtarsellamigmail.onmicrosoft.com"
+  "APP06" = "apprenant06@mokhtarsellamigmail.onmicrosoft.com"
+  "APP07" = "apprenant07@mokhtarsellamigmail.onmicrosoft.com"
+  "APP08" = "apprenant08@mokhtarsellamigmail.onmicrosoft.com"
+  "APP09" = "apprenant09@mokhtarsellamigmail.onmicrosoft.com"
+  "APP10" = "apprenant10@mokhtarsellamigmail.onmicrosoft.com"
+  "APP11" = "apprenant11@mokhtarsellamigmail.onmicrosoft.com"
+  "APP12" = "apprenant12@mokhtarsellamigmail.onmicrosoft.com"
+}

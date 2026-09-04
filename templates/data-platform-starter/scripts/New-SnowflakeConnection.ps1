@@ -251,7 +251,7 @@ $configLines = @(
     "organization = `"$organizationValue`"",
     "user = `"$User`"",
     "role = `"$Role`"",
-    "authenticator = `"PROGRAMMATIC_ACCESS_TOKEN`"",
+    "authenticator = `"SNOWFLAKE_JWT`"",
     "token_file_path = `"$patFilePathTOML`"",
     "host = `"$hostValue`""
 )

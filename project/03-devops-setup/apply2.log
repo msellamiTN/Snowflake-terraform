@@ -1,0 +1,80 @@
+﻿[0m[1mazuredevops_user_entitlement.learners["apprenant02@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=657d60d7-0a8f-408d-9739-cc80a506fd1a][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant08@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=70d4101d-9a57-4cc0-ad18-0ea21789b699][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant06@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=eaaee042-990f-4819-8573-37bffc042415][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant07@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=748a2285-94a4-43ff-b9ee-ffba6c0f21a2][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant01@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=47bcac50-6226-4afc-9c86-90062a03ed03][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant10@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=062e506d-b942-490d-ba86-b0ef9af45bea][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant12@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=13d40ac3-1c7f-4090-8595-242ef6578ae6][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant09@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=d11110d2-39a8-4a50-86f0-d9bc61d8af15][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant03@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=804d6764-18db-4a70-8926-e6123a8d2c87][0m
+[0m[1mazuredevops_project.training: Refreshing state... [id=5a60d52c-87e1-4702-bb33-420de6265591][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant04@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=c45db8ca-349a-4551-a62f-9b10f285e233][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant11@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=7a8e9887-f2f7-43aa-b20a-2645d29fb84d][0m
+[0m[1mazuredevops_user_entitlement.learners["apprenant05@mokhtarsellamigmail.onmicrosoft.com"]: Refreshing state... [id=a731c168-8762-48aa-b03c-c96482604a9d][0m
+[0m[1mdata.azuredevops_group.contributors: Reading...[0m[0m
+[0m[1mazuredevops_serviceendpoint_azurerm.kv: Refreshing state... [id=f2d295a9-e9d4-4f90-86c3-f1f4eb318d84][0m
+[0m[1mdata.azuredevops_group.contributors: Read complete after 1s [id=vssgp.Uy0xLTktMTU1MTM3NDI0NS03NTIxODEzMzgtMzc4MzcyMTU0My0zMTQwNjk4NjM3LTM4NjEyNzE5NTMtMS0xNTY2OTI2NTc4LTIxODM5ODc3NzgtMjc3ODQ2NDY4MS0xNTkxODEyNzY0][0m
+[0m[1mazuredevops_group_membership.learners: Refreshing state... [id=774264429][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform will perform the following actions:
+
+[1m  # azuredevops_variable_group.secrets[0m will be created
+[0m  [32m+[0m[0m resource "azuredevops_variable_group" "secrets" {
+      [32m+[0m[0m allow_access = true
+      [32m+[0m[0m description  = "Secrets linked from Azure Key Vault (kvdata2aitfsecrets)"
+      [32m+[0m[0m id           = (known after apply)
+      [32m+[0m[0m name         = "data-platform-secrets"
+      [32m+[0m[0m project_id   = "5a60d52c-87e1-4702-bb33-420de6265591"
+
+      [32m+[0m[0m key_vault {
+          [32m+[0m[0m name                = "kvdata2aitfsecretsmsn"
+          [32m+[0m[0m search_depth        = 20
+          [32m+[0m[0m service_endpoint_id = "f2d295a9-e9d4-4f90-86c3-f1f4eb318d84"
+        }
+
+      [32m+[0m[0m variable {
+          # At least one attribute in this block is (or was) sensitive,
+          # so its contents will not be displayed.
+        }
+      [32m+[0m[0m variable {
+          # At least one attribute in this block is (or was) sensitive,
+          # so its contents will not be displayed.
+        }
+    }
+
+[1mPlan:[0m [0m1 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  [32m+[0m[0m variable_group_id    = (known after apply)
+[0m[1mazuredevops_variable_group.secrets: Creating...[0m[0m
+[0m[1mazuredevops_variable_group.secrets: Still creating... [00m10s elapsed][0m[0m
+[0m[1mazuredevops_variable_group.secrets: Creation complete after 17s [id=2][0m
+[0m[1m[32m
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.[0m
+[0m[1m[32m
+Outputs:
+
+[0mlearner_entitlements = {
+  "apprenant01@mokhtarsellamigmail.onmicrosoft.com" = "47bcac50-6226-4afc-9c86-90062a03ed03"
+  "apprenant02@mokhtarsellamigmail.onmicrosoft.com" = "657d60d7-0a8f-408d-9739-cc80a506fd1a"
+  "apprenant03@mokhtarsellamigmail.onmicrosoft.com" = "804d6764-18db-4a70-8926-e6123a8d2c87"
+  "apprenant04@mokhtarsellamigmail.onmicrosoft.com" = "c45db8ca-349a-4551-a62f-9b10f285e233"
+  "apprenant05@mokhtarsellamigmail.onmicrosoft.com" = "a731c168-8762-48aa-b03c-c96482604a9d"
+  "apprenant06@mokhtarsellamigmail.onmicrosoft.com" = "eaaee042-990f-4819-8573-37bffc042415"
+  "apprenant07@mokhtarsellamigmail.onmicrosoft.com" = "748a2285-94a4-43ff-b9ee-ffba6c0f21a2"
+  "apprenant08@mokhtarsellamigmail.onmicrosoft.com" = "70d4101d-9a57-4cc0-ad18-0ea21789b699"
+  "apprenant09@mokhtarsellamigmail.onmicrosoft.com" = "d11110d2-39a8-4a50-86f0-d9bc61d8af15"
+  "apprenant10@mokhtarsellamigmail.onmicrosoft.com" = "062e506d-b942-490d-ba86-b0ef9af45bea"
+  "apprenant11@mokhtarsellamigmail.onmicrosoft.com" = "7a8e9887-f2f7-43aa-b20a-2645d29fb84d"
+  "apprenant12@mokhtarsellamigmail.onmicrosoft.com" = "13d40ac3-1c7f-4090-8595-242ef6578ae6"
+}
+project_id = "5a60d52c-87e1-4702-bb33-420de6265591"
+project_name = "terraform-snowflake"
+service_endpoint_id = "f2d295a9-e9d4-4f90-86c3-f1f4eb318d84"
+variable_group_id = "2"
+wif_issuer = "https://login.microsoftonline.com/55fca982-2372-4352-8b7e-c28ac00ae8e3/v2.0"
+wif_subject = "/eid1/c/pub/t/gqn8VXIjUkOLfsKKwAro4w/a/rISbSSETf0KqFyZ8ppdXmA/sc/abe93160-17ed-40af-90a8-3cbc41e646c9/f2d295a9-e9d4-4f90-86c3-f1f4eb318d84"
