@@ -24,10 +24,17 @@ Une contrainte souple comme `~> 2.14.0` autorise la résolution automatique d'un
 | Outil | Version | Usage | Installé par |
 |---|---|---|---|
 | Python | 3.12 | Exécution de Snow CLI et dbt | `Install-Tools.ps1` / `install-tools.sh` |
-| Snowflake CLI (`snow`) | Dernière version stable | Connexions, SQL et publication d'objets | `Install-Tools.ps1` / `install-tools.sh` |
+| Snowflake CLI (`snow`) | >= 3.23.0 | Connexions PAT, SQL et publication d'objets | `Install-Tools.ps1` / `install-tools.sh` |
 | Azure CLI | 2.83.0 | Authentification et interactions Azure | `Install-Tools.ps1` / `install-tools.sh` |
 | dbt-core | `< 3.0.0` | Transformations et FinOps | `Install-Tools.ps1` / `install-tools.sh` |
 | dbt-snowflake | `< 3.0.0` | Adaptateur Snowflake | `Install-Tools.ps1` / `install-tools.sh` |
+
+> **Note de compatibilité** : `snowflake-cli` >= 3.23.0 nécessite `snowflake-connector-python` >= 4.0,
+> tandis que `dbt-snowflake` < 3.0.0 nécessite `snowflake-connector-python` < 4.0.0.
+> Ces deux packages **ne peuvent pas coexister dans le même venv**.
+> `Install-Tools.ps1` utilise deux venvs séparés :
+> - `.data2ai/venv` — Snowflake CLI (Core, requis Day 0-4)
+> - `.data2ai/venv-dbt` — dbt-core + dbt-snowflake (Course, requis Day 5+)
 
 ## Packages dbt
 

@@ -36,6 +36,7 @@
 param(
     [int]$LearnerCount = 12,
     [string]$KeyVaultName,
+    [string]$ConnectionName = 'enterprise-pat',
     [switch]$DryRun
 )
 
@@ -70,6 +71,7 @@ if (-not $KeyVaultName) {
 }
 
 Write-Host "[INFO] Key Vault: $KeyVaultName" -ForegroundColor DarkGray
+Write-Host "[INFO] Snowflake connection: $ConnectionName" -ForegroundColor DarkGray
 
 # ------------------------------------------------------------------
 # Verify Snowflake CLI connection
@@ -79,7 +81,7 @@ Write-Host '[INFO] Testing Snowflake connection (ACCOUNTADMIN)...' -ForegroundCo
 
 $prevEAP = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
-$testResult = & snow sql -c training -q "SELECT CURRENT_USER(), CURRENT_ROLE()" 2>&1
+$testResult = & snow sql -c $ConnectionName -q "SELECT CURRENT_USER(), CURRENT_ROLE()" 2>&1
 $ErrorActionPreference = $prevEAP
 
 if ($LASTEXITCODE -ne 0) {
@@ -143,12 +145,13 @@ for ($i = 1; $i -le $LearnerCount; $i++) {
     }
 
     # Generate PAT via Snowflake SQL
-    # The output contains the token in the query result
+    # Syntax: ALTER USER <username> ADD PROGRAMMATIC ACCESS TOKEN <token_name>
+    # The token_secret column in the output contains the PAT value.
+    $tokenName = "training_pat"
     $prevEAP = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
 
-    # ALTER USER returns the PAT in the output
-    $patResult = & snow sql -c training -q "ALTER USER $username ADD PROGRAMMATIC_ACCESS_TOKEN" --output json 2>&1
+    $patResult = & snow sql -c $ConnectionName -q "ALTER USER IF EXISTS $username ADD PROGRAMMATIC ACCESS TOKEN $tokenName DAYS_TO_EXPIRY = 30" --format json 2>&1
     $patExit = $LASTEXITCODE
     $ErrorActionPreference = $prevEAP
 

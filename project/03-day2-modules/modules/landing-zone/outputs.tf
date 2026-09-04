@@ -25,6 +25,22 @@ output "resource_monitor_name" {
   value = snowflake_resource_monitor.this.name
 }
 
+output "schema_map" {
+  value = merge(
+    { ingestion = snowflake_schema.ingestion.name },
+    { for k, s in snowflake_schema.business : k => s.name }
+  )
+}
+
+output "schemas_by_database" {
+  value = {
+    raw = concat(
+      [snowflake_schema.ingestion.name],
+      [for s in snowflake_schema.business : s.name]
+    )
+  }
+}
+
 output "tag_names" {
   value = {
     cost_center = snowflake_tag.cost_center.name
