@@ -490,6 +490,7 @@ Le formateur peut distribuer ces fichiers en secours uniquement.
 
 ### Distribution (KV-first)
 
+- [ ] Security Defaults Entra ID **désactivés** (voir section 12.0)
 - [ ] Key Vault Secrets User accordé au groupe `Data2AI-Learners`
 - [ ] Secrets `ArmClientId`, `ArmClientSecret`, `ArmTenantId`, `ArmSubscriptionId` présents dans KV
 - [ ] Secret `SnowflakePAT` présent dans Key Vault
@@ -637,7 +638,27 @@ cd ../00-bootstrap && terraform destroy -auto-approve
 > `[NOTE]` Cette section est **optionnelle**. Elle s'applique uniquement si vous
 > distribuez des VMs avec les outils **déjà installés** pour que les apprenants
 > puissent démarrer plus rapidement. Les apprenants doivent **vérifier**
-> l'installation existante, pas la réinstaller aveuglément.
+
+### 12.0 — Désactiver les Security Defaults Entra ID (OBLIGATOIRE avant distribution)
+
+> `[IMPORTANT]` Par défaut, tous les nouveaux tenants Entra ID ont les **Security Defaults**
+> activés, ce qui force l'authentification MFA pour tous les utilisateurs. Les comptes
+> apprenants créés par `02-azuread-learners` seront bloqués par un prompt Microsoft Authenticator
+> lors du login AAD dans `Learner-Login.ps1`.
+
+Pour désactiver les Security Defaults :
+
+1. Connectez-vous au portail Entra ID : `https://entra.microsoft.com`
+2. Allez dans **Identity > Overview > Properties**
+3. Cliquez sur **Manage security defaults** (en bas de page)
+4. Basculez **Security defaults** sur **Disabled**
+5. Cliquez **Save**
+
+> `[SECURITY]` Cette action désactive MFA pour **tout le tenant**. À ne faire que sur un
+> tenant dédié à la formation, jamais sur un tenant de production.
+> Si vous ne pouvez pas désactiver les Security Defaults, informez les apprenants qu'ils
+> devront configurer Microsoft Authenticator sur leur smartphone (voir `troubleshooting.md`
+> entrée 32).
 
 ### 12.1 — Installer les outils sur chaque VM (une seule fois)
 

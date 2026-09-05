@@ -1029,6 +1029,55 @@ ARM_CLIENT_SECRET=...
 
 ---
 
+### 32. Azure AD demande la configuration de Microsoft Authenticator (MFA)
+
+**Symptôme :**
+
+Lors du login AAD dans `Learner-Login.ps1` (mode KV-first), Azure AD affiche :
+
+```text
+Sécurisons votre compte
+Nous vous aiderons à configurer une autre façon de vérifier qu'il s'agit de vous.
+Suivez les invites pour télécharger et configurer l'application Microsoft Authenticator.
+```
+
+**Cause :**
+
+Le tenant Azure AD a les **Security Defaults** activés (par défaut sur tous les nouveaux tenants).
+Cela force l'authentification multi-facteurs (MFA) pour **tous les utilisateurs**, y compris les
+comptes apprenants créés par `02-azuread-learners`.
+
+**Correction (Formateur) — Option A : Désactiver les Security Defaults (recommandé pour la formation)**
+
+> `[IMPORTANT]` Cette action désactive MFA pour **tout le tenant**. À ne faire que sur un
+> tenant dédié à la formation, jamais sur un tenant de production.
+
+1. Connectez-vous au portail Entra ID : `https://entra.microsoft.com`
+2. Allez dans **Identity > Overview > Properties**
+3. Cliquez sur **Manage security defaults** (en bas de page)
+4. Basculez **Security defaults** sur **Disabled**
+5. Cliquez **Save**
+6. Attendez 1-2 minutes, puis demandez à l'apprenant de relancer `Learner-Login.ps1`
+
+**Correction (Apprenant) — Option B : Configurer Microsoft Authenticator (si Security Defaults doivent rester activés)**
+
+Si le formateur ne peut pas désactiver les Security Defaults :
+
+1. Téléchargez **Microsoft Authenticator** sur votre smartphone (App Store / Google Play)
+2. Dans l'écran « Sécurisons votre compte », cliquez sur **Suivant**
+3. Scannez le QR code affiché avec l'application Microsoft Authenticator
+4. Saisissez le code à 6 chiffres affiché dans l'application pour valider
+5. Une fois l'enregistrement terminé, le login AAD se poursuit normalement
+
+> `[NOTE]` Cette configuration MFA n'est nécessaire qu'**une seule fois** par compte apprenant.
+> Après l'enregistrement, les logins suivants demanderont uniquement l'approbation sur le téléphone.
+
+> `[SECURITY]` En environnement de formation, l'Option A (désactiver Security Defaults) est
+> préférable pour éviter aux apprenants de devoir installer Microsoft Authenticator sur leur
+> téléphone personnel.
+
+---
+
 Si aucun diagnostic ne resout le probleme :
 
 1. capturez l'erreur exacte (sans secret);

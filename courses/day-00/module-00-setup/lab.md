@@ -577,6 +577,14 @@ Connectez-vous avec votre compte apprenant (ex: `apprenant01@mokhtarsellamigmail
 > Ce mot de passe est **différent** du mot de passe Snowflake (utilisé pour l'interface web).
 > Si vous n'avez pas reçu vos identifiants AAD, demandez-les au formateur avant de continuer.
 
+> `[MFA]` **Si Azure AD affiche « Sécurisons votre compte »** et vous demande d'installer
+> Microsoft Authenticator, c'est que les Security Defaults sont activés sur le tenant.
+> Deux options :
+> - **Option A (recommandée) :** le formateur désactive les Security Defaults dans Entra ID
+>   (voir `troubleshooting.md` entrée 32), puis vous relancez le script.
+> - **Option B :** vous configurez Microsoft Authenticator sur votre smartphone (une seule fois).
+>   Voir `troubleshooting.md` entrée 32 pour les étapes détaillées.
+
 **3.** Le script récupère automatiquement les secrets depuis Key Vault et se reconnecte
 avec le service principal. Vous n'avez rien d'autre à faire.
 
@@ -586,7 +594,9 @@ avec le service principal. Vous n'avez rien d'autre à faire.
 [PASS] AAD login successful
 [INFO] Fetching SP credentials from Key Vault...
 [PASS] SP credentials retrieved from Key Vault
+[PASS] SP credentials persisted to secrets/shared-sp.txt
 [PASS] Snowflake PAT retrieved from Key Vault
+[PASS] Snowflake PAT persisted to secrets/snowflake_pat.txt
 [PASS] Logged in to Azure
        Subscription: Azure subscription 1 (...)
        Learner prefix: APP01
@@ -596,6 +606,7 @@ avec le service principal. Vous n'avez rien d'autre à faire.
        ARM_TENANT_ID
        ARM_SUBSCRIPTION_ID
        LEARNER_PREFIX = APP01
+       TF_VAR_snowflake_token (hidden)
 ============================================================
  Ready for labs
 ============================================================
@@ -605,10 +616,111 @@ avec le service principal. Vous n'avez rien d'autre à faire.
 
 ---
 
+#### Étape A-bis — Configurer Microsoft Authenticator (si MFA demandée)
+
+> Si Azure AD affiche **« Sécurisons votre compte »** lors de l'Étape A, suivez ces étapes.
+> Sinon, sautez cette section et passez à la vérification des secrets ci-dessous.
+
+**Prérequis :** un smartphone (iOS ou Android) avec accès à Internet.
+
+**1.** Téléchargez l'application **Microsoft Authenticator** :
+- **iOS** : App Store → recherchez « Microsoft Authenticator »
+- **Android** : Google Play → recherchez « Microsoft Authenticator »
+
+**2.** Ouvrez l'application et sélectionnez **Ajouter un compte** → **Compte professionnel ou scolaire**.
+
+**3.** Sur l'écran « Sécurisons votre compte » dans votre navigateur, cliquez sur **Suivant**.
+
+**4.** Un **QR code** s'affiche dans le navigateur. Scannez-le avec l'application Microsoft Authenticator.
+
+**5.** L'application affiche un code à 6 chiffres. Saisissez ce code dans le navigateur pour valider l'enregistrement.
+
+**6.** Une fois validé, le login AAD se poursuit automatiquement — le script récupère les secrets depuis Key Vault.
+
+> `[NOTE]` Cette configuration MFA n'est nécessaire qu'**une seule fois** par compte apprenant.
+> Les logins suivants demanderont uniquement une approbation sur le téléphone (notification push).
+
+> `[NOTE]` Si le formateur a désactivé les Security Defaults (recommandé), vous ne verrez **jamais**
+> cet écran MFA. Voir `troubleshooting.md` entrée 32 pour plus de détails.
+
+---
+
+#### Vérifier que tous les secrets sont stockés localement
+
+> `[IMPORTANT]` En mode KV-first, `Learner-Login.ps1` récupère **tous** les secrets depuis Key Vault
+> et les persiste dans `secrets/` pour les sessions futures. Vérifiez que les fichiers sont bien présents.
+
+**1.** Vérifiez que `secrets/shared-sp.txt` existe et contient les 4 variables SP :
+
+```powershell
+# Windows
+Test-Path secrets\shared-sp.txt
+Get-Content secrets\shared-sp.txt | Select-String 'ARM_'
+```
+```bash
+# Linux/macOS
+test -f secrets/shared-sp.txt && echo "OK"
+grep 'ARM_' secrets/shared-sp.txt
+```
+
+**Résultat attendu :** `True` / `OK` et 4 lignes :
+```text
+ARM_CLIENT_ID=...
+ARM_CLIENT_SECRET=...
+ARM_TENANT_ID=...
+ARM_SUBSCRIPTION_ID=...
+```
+
+**2.** Vérifiez que `secrets/snowflake_pat.txt` existe et contient le PAT :
+
+```powershell
+# Windows
+Test-Path secrets\snowflake_pat.txt
+```
+```bash
+# Linux/macOS
+test -f secrets/snowflake_pat.txt && echo "OK"
+```
+
+**Résultat attendu :** `True` / `OK`.
+
+> `[SECURITY]` Ces fichiers sont **gitignored**. Ne les commitez jamais.
+> Ils sont régénérés automatiquement à chaque login KV-first réussi.
+
+**3.** Vérifiez que les variables d'environnement sont définies dans la session courante :
+
+```powershell
+# Windows
+$env:ARM_CLIENT_ID
+$env:ARM_TENANT_ID
+$env:ARM_SUBSCRIPTION_ID
+$env:LEARNER_PREFIX
+$env:TF_VAR_snowflake_token
+```
+```bash
+# Linux/macOS
+echo $ARM_CLIENT_ID
+echo $ARM_TENANT_ID
+echo $ARM_SUBSCRIPTION_ID
+echo $LEARNER_PREFIX
+echo $TF_VAR_snowflake_token
+```
+
+**Résultat attendu :** chaque variable affiche une valeur non vide (le token est une longue chaîne JWT).
+
+> `[NOTE]` Les variables d'environnement ne persistent pas entre les sessions PowerShell.
+> Les fichiers `secrets/` persistent, mais vous devez relancer `Learner-Login.ps1` au début
+> de chaque nouvelle session pour recharger les variables d'environnement.
+
+---
+
 #### Étape B — Mode fallback (si KV-first échoue)
 
 > `[IMPORTANT]` Le mode fallback nécessite les fichiers `secrets/shared-sp.txt` et
-> `secrets/snowflake_pat.txt`. Ces fichiers sont distribués par le formateur en secours.
+> `secrets/snowflake_pat.txt`. Ces fichiers sont soit :
+> - **auto-générés** par un login KV-first réussi précédent (Étape A), soit
+> - **distribués par le formateur** en secours.
+>
 > **S'ils ne sont pas présents, le fallback échouera.** Demandez-les au formateur.
 
 **1.** Vérifiez que les fichiers secrets existent :
@@ -936,6 +1048,8 @@ Report written to: student-track/_reports/module-00-APP01.md
 4. Connexion confirmée dans **Snowflake Snowsight Web UI** avec le rôle `SYSADMIN`
 5. `Test-LabConnectivity.ps1` affiche `Status: READY` (0 FAIL)
 6. Le projet type est cloné et ne contient aucun fichier `.tf`
+7. `secrets/shared-sp.txt` et `secrets/snowflake_pat.txt` sont présents (persistés depuis KV)
+8. `$env:TF_VAR_snowflake_token` est défini (non vide)
 
 ```text
 Ready for Day 1
