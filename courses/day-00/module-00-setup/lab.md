@@ -143,8 +143,8 @@ validate.sh
 |---|---|---|---|
 | 0 | `Set-ExecutionPolicy` | Une seule fois | Autorise les scripts PowerShell (Windows) |
 | 1 | `Install-Tools.ps1` | Une seule fois | Installe Terraform, Snow CLI, dbt, tflint |
-| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + écrit le PAT dans `secrets/snowflake_pat.txt` (fallback) |
-| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + récupère le PAT depuis Key Vault + set `TF_VAR_snowflake_token` |
+| 2 | `Learner-Login.ps1` | **Chaque session** | Login Azure + récupère le PAT depuis Key Vault + écrit `secrets/shared-sp.txt` + `secrets/snowflake_pat.txt` + set `TF_VAR_snowflake_token` |
+| 3 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI (lit le PAT depuis `secrets/snowflake_pat.txt` créé par Learner-Login) |
 | 4 | `Test-LabConnectivity.ps1` | Vérification | Valide tous les accès (Snowflake + Azure + Git + Terraform) |
 | - | `Test-VMReadiness.ps1` | Diagnostic | Vérifie outils + config + connectivité (non destructif, voir Pre-Flight ci-dessus) |
 
@@ -155,11 +155,11 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 # 1. Installer les outils (une seule fois)
 .\scripts\Install-Tools.ps1
 
-# 2. Configurer Snowflake (une seule fois)
-.\scripts\New-SnowflakeConnection.ps1
-
-# 3. Login Azure + variables Terraform (Chaque session)
+# 2. Login Azure + récupérer les secrets depuis Key Vault (chaque session)
 .\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+
+# 3. Configurer Snowflake (une seule fois, après Learner-Login)
+.\scripts\New-SnowflakeConnection.ps1
 
 # 4. Vérifier tout
 .\scripts\Test-LabConnectivity.ps1 -SkipDevOps
@@ -433,94 +433,7 @@ test -f config/shared.env && echo "OK"
 
 ---
 
-### 📝 Étape 5.3 — Configurer la connexion Snowflake (20 min)
-
-> `[IMPORTANT]` **Prérequis :** l'étape 5.2 (configuration `.env`) doit être terminée.
-> Le script `New-SnowflakeConnection.ps1` lit `.env` — s'il est absent, il affiche
-> un avertissement et la connexion échouera.
-
-**Avant de continuer, vérifiez que `.env` existe :**
-
-```powershell
-# Windows
-Test-Path .env
-```
-```bash
-# Linux/macOS
-test -f .env && echo "OK"
-```
-
-**Si le résultat n'est pas `True` / `OK`, revenez à l'étape 5.2.**
-
-> `[IMPORTANT]` Cette étape configure Snow CLI et crée un fichier PAT local (`secrets/snowflake_pat.txt`).
-> En mode KV-first (étape 5.4 Étape A), le PAT est récupéré automatiquement depuis Key Vault —
-> cette étape est donc principalement nécessaire pour le mode fallback, ou pour vérifier la connexion Snowflake.
-> Le fichier `secrets/snowflake_pat.txt` créé ici sert de **fallback** si Key Vault est inaccessible.
-
-Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de façon masquée.
-
-**Suivez ces étapes dans l'ordre :**
-
-**1.** Lancez le script de connexion :
-
-<details>
-<summary>🪟 <b>Windows (PowerShell)</b></summary>
-
-```powershell
-.\scripts\New-SnowflakeConnection.ps1
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
-
-```bash
-chmod +x scripts/new-snowflake-connection.sh
-./scripts/new-snowflake-connection.sh
-```
-</details>
-
-**2.** Si le script demande un PAT, saisissez-le (il ne s'affiche pas à l'écran) :
-
-```text
-Snowflake PAT (token): ********
-```
-
-Le PAT vous a été fourni par le formateur.
-
-> `[NOTE]` Le PAT est partagé entre tous les apprenants (utilisateur `DATA2AI`, rôle `SYSADMIN`).
-> L'isolation se fait via votre `LEARNER_PREFIX`, pas via le PAT.
-
-**3.** Vérifiez que la connexion fonctionne :
-
-```bash
-snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
-```
-
-**Résultat attendu :** une ligne avec `DATA2AI`, `SYSADMIN` et votre compte.
-
-> `[NOTE]` Le script a créé `secrets/snowflake_pat.txt`. Ce fichier sera utilisé
-> automatiquement par `Learner-Login.ps1` en mode fallback (étape 5.4 Étape B).
-
-**Si vous voyez `[WARN] No .env file found`**, revenez à l'étape 5.2.
-
-#### Accéder à l'interface web Snowflake (optionnel)
-
-Le formateur vous a fourni un **identifiant Snowflake individuel** (username + password)
-pour acceder a l'interface web.
-
-1. Ouvrez **https://app.snowflake.com**
-2. Connectez-vous avec :
-   - **Username :** `apprenant01` (votre identifiant apprenant)
-   - **Password :** fourni par le formateur (14+ caracteres)
-
-> Le PAT (utilise par CLI et Terraform) ne fonctionne pas pour l'interface web.
-> L'interface web necessite un username + password.
-> Le formateur vous distribue votre password individuel de facon securisee.
-
----
-
-### 📝 Étape 5.4 — Authentifier Azure et définir les variables Terraform (10 min)
+### 📝 Étape 5.3 — Authentifier Azure et récupérer les secrets (10 min)
 
 > `[IMPORTANT]` **Prérequis :** l'étape 5.2 (`.env`) doit être terminée.
 > Le script `Learner-Login.ps1` lit `.env` pour récupérer votre préfixe apprenant.
@@ -529,8 +442,9 @@ pour acceder a l'interface web.
 > (nouveau terminal, redémarrage VM). Les variables d'environnement ne persistent
 > pas entre les sessions.
 
-Cette étape vous connecte à Azure et définit les variables `ARM_*` et `TF_VAR_snowflake_token`
-nécessaires pour Terraform. Il existe **deux modes** — choisissez selon votre situation :
+Cette étape vous connecte à Azure, récupère **tous les secrets** depuis Key Vault
+(identifiants SP + PAT Snowflake) et les persiste dans `secrets/` pour les sessions futures.
+Il existe **deux modes** — choisissez selon votre situation :
 
 #### Quel mode utiliser ?
 
@@ -799,6 +713,93 @@ echo $LEARNER_PREFIX
 
 > `[SECURITY]` Les fichiers `secrets/` sont gitignored. Ne les commitez jamais.
 > Préférez le mode KV-first (Étape A) qui ne stocke aucun secret sur votre VM.
+
+---
+
+### 📝 Étape 5.4 — Configurer la connexion Snowflake (20 min)
+
+> `[IMPORTANT]` **Prérequis :** l'étape 5.3 (Learner-Login) doit être terminée.
+> Le script `New-SnowflakeConnection.ps1` lit `.env` et `secrets/snowflake_pat.txt`
+> (créé par Learner-Login en mode KV-first). Si le PAT n'est pas disponible, il vous le demande.
+
+**Avant de continuer, vérifiez que `.env` existe :**
+
+```powershell
+# Windows
+Test-Path .env
+```
+```bash
+# Linux/macOS
+test -f .env && echo "OK"
+```
+
+**Si le résultat n'est pas `True` / `OK`, revenez à l'étape 5.2.**
+
+> `[IMPORTANT]` Cette étape configure Snow CLI et crée un fichier PAT local (`secrets/snowflake_pat.txt`).
+> En mode KV-first (étape 5.3 Étape A), le PAT est récupéré automatiquement depuis Key Vault —
+> cette étape est donc principalement nécessaire pour le mode fallback, ou pour vérifier la connexion Snowflake.
+> Le fichier `secrets/snowflake_pat.txt` créé ici sert de **fallback** si Key Vault est inaccessible.
+
+Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de façon masquée.
+
+**Suivez ces étapes dans l'ordre :**
+
+**1.** Lancez le script de connexion :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+.\scripts\New-SnowflakeConnection.ps1
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+chmod +x scripts/new-snowflake-connection.sh
+./scripts/new-snowflake-connection.sh
+```
+</details>
+
+**2.** Si le script demande un PAT, saisissez-le (il ne s'affiche pas à l'écran) :
+
+```text
+Snowflake PAT (token): ********
+```
+
+Le PAT vous a été fourni par le formateur.
+
+> `[NOTE]` Le PAT est partagé entre tous les apprenants (utilisateur `DATA2AI`, rôle `SYSADMIN`).
+> L'isolation se fait via votre `LEARNER_PREFIX`, pas via le PAT.
+
+**3.** Vérifiez que la connexion fonctionne :
+
+```bash
+snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
+```
+
+**Résultat attendu :** une ligne avec `DATA2AI`, `SYSADMIN` et votre compte.
+
+> `[NOTE]` Le script a créé `secrets/snowflake_pat.txt`. Ce fichier sera utilisé
+> automatiquement par `Learner-Login.ps1` en mode fallback (étape 5.3 Étape B).
+
+**Si vous voyez `[WARN] No .env file found`**, revenez à l'étape 5.2.
+
+#### Accéder à l'interface web Snowflake (optionnel)
+
+Le formateur vous a fourni un **identifiant Snowflake individuel** (username + password)
+pour acceder a l'interface web.
+
+1. Ouvrez **https://app.snowflake.com**
+2. Connectez-vous avec :
+   - **Username :** `apprenant01` (votre identifiant apprenant)
+   - **Password :** fourni par le formateur (14+ caracteres)
+
+> Le PAT (utilise par CLI et Terraform) ne fonctionne pas pour l'interface web.
+> L'interface web necessite un username + password.
+> Le formateur vous distribue votre password individuel de facon securisee.
 
 ---
 

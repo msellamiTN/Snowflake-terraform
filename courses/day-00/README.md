@@ -49,7 +49,7 @@ Le lab est un seul module avec 7 etapes :
 | 1 | 5 min | Cloner le projet type | Clone present, scripts visibles |
 | 2 | 20 min | Installer et verifier les outils | `Toolchain status: READY` |
 | 3 | 10 min | Configurer `.env` | `git check-ignore .env` retourne `.env` |
-| 4 | 10 min | Authentifier Azure avec le SP partage | `az account show` affiche la souscription |
+| 4 | 10 min | Authentifier Azure + recuperer les secrets KV | `az account show` affiche la souscription + `secrets/` crees |
 | 5 | 20 min | Configurer la connexion Snowflake | `snow sql -q 'SELECT 1' -c training` retourne un resultat |
 | 6 | 10 min | Inspecter la structure du projet type | Dossiers `labs/`, `modules/`, `docs/` presents |
 | 7 | 10 min | Validation finale | `Toolchain status: READY` + Snowflake + Azure |
