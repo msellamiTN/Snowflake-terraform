@@ -882,28 +882,23 @@ Les packages comme `cffi` et `pyyaml` n'ont pas de wheels binaires pour cp314 su
 
 **Correction :**
 
-1. **Installez Python 3.12** (la version requise par la politique) :
-
-```powershell
-winget install Python.Python.3.12
-```
-
-2. **Supprimez l'ancien venv** (créé avec la mauvaise version) :
-
-```powershell
-Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
-```
-
-3. **Relancez l'installation** — le script détecte Python 3.12 via `py -3.12` et crée un venv correct :
+Relancez simplement `Install-Tools.ps1` — le script :
+1. installe Python 3.12 via `winget` si nécessaire ;
+2. détecte que l'ancien venv utilise la mauvaise version ;
+3. supprime et recrée le venv avec Python 3.12 ;
+4. utilise `--prefer-binary` pour privilégier les wheels pre-compilés.
 
 ```powershell
 .\scripts\Install-Tools.ps1
 ```
 
-> `[NOTE]` Le script `Install-Tools.ps1` détecte désormais automatiquement si un venv
-> existant a été créé avec la mauvaise version de Python, le supprime et le recrée
-> avec Python 3.12. L'option `--prefer-binary` est également ajoutée à `pip install`
-> pour privilégier les wheels pre-compilés et éviter les builds depuis le source.
+Si le problème persiste après une nouvelle exécution, supprimez manuellement le venv
+et relancez :
+
+```powershell
+Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
+.\scripts\Install-Tools.ps1
+```
 
 ---
 
@@ -938,14 +933,17 @@ Si le résultat n'est pas `Python 3.12.x`, le venv doit être recréé.
 
 **Correction :**
 
+Relancez `Install-Tools.ps1` — le script installe Python 3.12, détecte l'ancien venv
+avec la mauvaise version, le supprime et le recrée correctement :
+
 ```powershell
-# 1. Installer Python 3.12
-winget install Python.Python.3.12
+.\scripts\Install-Tools.ps1
+```
 
-# 2. Supprimer l'ancien venv
+Si le problème persiste, supprimez manuellement le venv et relancez :
+
+```powershell
 Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
-
-# 3. Relancer l'installation
 .\scripts\Install-Tools.ps1
 ```
 

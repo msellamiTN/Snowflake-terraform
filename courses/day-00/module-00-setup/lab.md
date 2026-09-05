@@ -215,54 +215,11 @@ chmod +x scripts/install-tools.sh
 
 #### Installation
 
-> `[IMPORTANT]` **Python 3.12 est requis** (pas 3.13, pas 3.14).
-> Si votre VM a une autre version de Python (ex. 3.14), le script d'installation
-> tente automatiquement de trouver Python 3.12 via le launcher `py -3.12`.
-> Si Python 3.12 n'est pas installé, installez-le **avant** de continuer :
->
-> <details>
-> <summary>🪟 <b>Windows — Installer Python 3.12</b></summary>
->
-> ```powershell
-> # Option 1 : winget (recommandé)
-> winget install Python.Python.3.12
->
-> # Option 2 : téléchargement manuel
-> # https://www.python.org/downloads/release/python-3120/
-> # Cochez "Add python.exe to PATH" lors de l'installation.
-> ```
-> </details>
->
-> <details>
-> <summary>🐧 <b>Linux — Installer Python 3.12</b></summary>
->
-> ```bash
-> sudo apt-get update
-> sudo apt-get install -y python3.12 python3.12-venv
-> ```
-> </details>
->
-> <details>
-> <summary>🍎 <b>macOS — Installer Python 3.12</b></summary>
->
-> ```bash
-> brew install python@3.12
-> ```
-> </details>
->
-> Après l'installation de Python 3.12, **supprimez l'ancien venv** s'il existe
-> (il a pu être créé avec la mauvaise version) :
->
-> ```powershell
-> # Windows
-> Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
-> ```
-> ```bash
-> # Linux/macOS
-> rm -rf "$HOME/.data2ai/venv"
-> ```
->
-> Puis relancez `Install-Tools.ps1` — le script créera un venv avec Python 3.12.
+> `[NOTE]` Le script installe automatiquement Python 3.12 via `winget` si nécessaire.
+> Si votre système a Python 3.13+ ou 3.14, le script installe Python 3.12 en parallèle
+> et l'utilise pour créer le venv. Vous n'avez pas besoin d'installer Python 3.12 manuellement.
+> Si un ancien venv existe avec la mauvaise version de Python, le script le détecte,
+> le supprime et le recrée avec Python 3.12.
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -282,9 +239,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -ReportPath
 
 **Checkpoint** : le script installe les outils manquants sous `$HOME/.data2ai`. Les outils Python (Snow CLI, dbt) sont installes dans un environnement virtuel isole **avec Python 3.12**. Le rapport final indique `Toolchain status: READY`.
 
-> `[NOTE]` Si vous aviez déjà un venv créé avec une mauvaise version de Python,
-> le script le détecte automatiquement, le supprime et le recrée avec Python 3.12.
-> Vous pouvez aussi le supprimer manuellement (voir ci-dessus).
+> Si le rapport affiche `WARN` pour Python (ex. "Found Python 3.14, policy requires 3.12"),
+> ce n'est pas bloquant : le script a installé Python 3.12 en parallèle et l'utilise
+> pour le venv. Le `WARN` indique seulement que `python` (sans version) pointe encore
+> vers 3.14. Pour corriger, rouvrez le terminal ou réinstallez Python 3.12 avec
+> l'option "Add python.exe to PATH".
 
 #### Corriger les échecs
 
