@@ -434,6 +434,18 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPre
 .\scripts\Test-LabConnectivity.ps1 -SkipDevOps
 ```
 
+**Si le role est present, la propagation est effective, mais le test echoue encore :**
+
+Verifiez que la session `az` est bien le service principal (et non l'utilisateur AAD) :
+
+```powershell
+az account show --query "user.name" -o tsv
+```
+
+Si le resultat est `apprenantXX@...` (l'utilisateur AAD) au lieu de l'appId du SP
+(`ab35eee0-...`), le login SP a echoue silencieusement et la session est restee sur
+l'utilisateur AAD, qui n'a pas de role data-plane. Voir l'entree 34 pour ce cas.
+
 ---
 
 ### 16. `az ad sp show` retourne `Insufficient privileges`
@@ -540,13 +552,30 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Learner-Login.ps1 -LearnerPre
 
 **Correction (Formateur / Administrateur) :**
 
-Réinitialisez le secret du Service Principal dans Azure CLI ou via le portail Azure :
+Reinitialisez le secret du Service Principal dans Azure CLI ou via le portail Azure :
 
-```bash
-az ad sp credential reset --id ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0 --query "password" -o tsv
+```powershell
+# 1. Login avec un compte Owner (pas le SP)
+az login
+
+# 2. Reinitialiser le secret — noter la VALEUR du password (pas le Secret ID)
+az ad app credential reset --id ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0
+
+# 3. Stocker la VALEUR dans Key Vault (pas l'ID !)
+az keyvault secret set --vault-name kvdata2aitfsecretsmsn --name ArmClientSecret --value "<password-genere-etape-2>"
+
+# 4. Verifier (10 premiers caracteres)
+az keyvault secret show --vault-name kvdata2aitfsecretsmsn --name ArmClientSecret --query "value" -o tsv | ForEach-Object { $_.Substring(0, [Math]::Min(10, $_.Length)) }
 ```
 
-Copiez la nouvelle valeur générée dans `secrets/shared-sp.txt` et redistribuez le fichier aux apprenants.
+> `[IMPORTANT]` **Ne confondez pas Secret ID et Value :**
+> - Le **Secret ID** est un GUID (ex: `5a229d99-f645-...`) — c'est l'identifiant du secret.
+> - La **Valeur** (Value) est une chaine aleatoire (ex: `wBZ8Q~ub_C...`) — c'est le mot de passe.
+> - Copiez toujours la **Valeur**, jamais le Secret ID.
+
+Les apprenants peuvent ensuite relancer `Learner-Login.ps1` (mode KV-first) sans
+redistribution manuelle de fichiers. En mode fallback, copiez la nouvelle valeur
+dans `secrets/shared-sp.txt` et redistribuez le fichier.
 
 ---
 
@@ -1083,3 +1112,157 @@ Si aucun diagnostic ne resout le probleme :
 1. capturez l'erreur exacte (sans secret);
 2. notez votre systeme et votre repertoire courant;
 3. transmettez au formateur.
+
+---
+
+### 33. `snow sql` echoue avec `Private Key authentication requires authenticator set to SNOWFLAKE_JWT`
+
+**Symptome :**
+
+```text
+╭─ Error ──────────────────────────────────────────────────────────────╮
+│ Private Key authentication requires authenticator set to SNOWFLAKE_JWT │
+╰────────────────────────────────────────────────────────────────────────╯
+```
+
+**Cause :**
+
+La variable d'environnement `SNOWFLAKE_PRIVATE_KEY_FILE` est definie dans la session.
+Le Snowflake CLI lit toutes les variables `SNOWFLAKE_*` comme des overrides de connexion.
+Quand `SNOWFLAKE_PRIVATE_KEY_FILE` est present, le CLI injecte `private_key_file` dans
+la connexion et force le mode d'authentification par cle privee (JWT), meme si
+`config.toml` specifie `authenticator = "PROGRAMMATIC_ACCESS_TOKEN"`.
+
+Cette variable est necessaire a partir du **Jour 4** (authentification JWT key-pair pour
+dbt), mais elle **ne doit pas etre definie** pendant les Jours 0-3 (authentification PAT).
+
+**Diagnostic :**
+
+```powershell
+Get-ChildItem env: | Where-Object Name -match 'SNOW|PRIVATE|KEY'
+```
+
+Si `SNOWFLAKE_PRIVATE_KEY_FILE` apparait dans la liste, c'est la cause.
+
+**Correction immediate :**
+
+```powershell
+Remove-Item Env:\SNOWFLAKE_PRIVATE_KEY_FILE
+snow sql -q 'SELECT 1' -c training
+```
+
+**Correction permanente :**
+
+Les scripts `New-SnowflakeConnection.ps1` et `Test-LabConnectivity.ps1` suppriment
+automatiquement `SNOWFLAKE_PRIVATE_KEY_FILE` (et `SNOWFLAKE_PRIVATE_KEY_PATH`,
+`SNOWFLAKE_PRIVATE_KEY`) avant d'invoquer le CLI. Mettez a jour vos scripts avec
+`git pull` si vous utilisez une ancienne version.
+
+Si la variable persiste entre les sessions, verifiez qu'elle n'est pas definie au niveau
+utilisateur :
+
+```powershell
+[Environment]::GetEnvironmentVariable('SNOWFLAKE_PRIVATE_KEY_FILE', 'User')
+```
+
+Si elle existe au niveau utilisateur, supprimez-la :
+
+```powershell
+[Environment]::SetEnvironmentVariable('SNOWFLAKE_PRIVATE_KEY_FILE', $null, 'User')
+```
+
+> `[NOTE]` Le fichier `.env.example` a ete mis a jour : la ligne
+> `SNOWFLAKE_PRIVATE_KEY_FILE` est desormais commentee avec un avertissement.
+> Si vous avez un `.env` cree avant cette correction, commentez la ligne
+> `SNOWFLAKE_PRIVATE_KEY_FILE` dans votre `.env`.
+
+---
+
+### 34. `Blob write access` FAIL : la session az est l'utilisateur AAD au lieu du SP
+
+**Symptome :**
+
+```text
+[FAIL] Blob write access
+       Cannot write to container - check RBAC or access keys
+```
+
+et
+
+```powershell
+az account show --query "user.name" -o tsv
+# retourne : apprenant12@mokhtarsellamigmail.onmicrosoft.com
+# au lieu de : ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0
+```
+
+**Cause :**
+
+Le script `Learner-Login.ps1` doit toujours terminer la session en tant que service
+principal (SP), car seul le SP a le role `Storage Blob Data Contributor` (data-plane).
+L'utilisateur AAD (apprenantXX) n'a que le role `Reader` (management-plane).
+
+Si le login SP echoue (secret expire, secret invalide, reseau), le script doit signaler
+l'echec et quitter. Une ancienne version du script avait une **condition inversee** qui
+silencieusement passait le login SP et laissait la session sur l'utilisateur AAD. Le
+script affichait `[PASS] Logged in to Azure` de maniere trompeuse.
+
+**Diagnostic :**
+
+1. Verifiez qui est la session active :
+
+```powershell
+az account show --query "user.name" -o tsv
+```
+
+2. Si le resultat est `apprenantXX@...`, le SP login a echoue. Relancez
+   `Learner-Login.ps1` et observez le message d'erreur :
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+```
+
+3. Si le script affiche `[FAIL] SP login failed` avec `AADSTS7000215: Invalid client
+   secret provided`, le secret du SP est expire ou invalide dans Key Vault. Voir
+   l'entree 18 pour la correction.
+
+4. Si le script affiche `[WARN] SP login for KV fetch failed - will retry below.` suivi
+   de `[FAIL] SP login failed`, le secret dans Key Vault est invalide. Le formateur doit
+   le reinitialiser (voir entree 18, section "Correction (Formateur)").
+
+**Correction :**
+
+1. Mettez a jour les scripts avec `git pull` (la condition inversee est corrigee).
+2. Si le secret SP est expire, le formateur doit le reinitialiser et le stocker dans
+   Key Vault sous le nom `ArmClientSecret` (voir entree 18).
+3. Relancez `Learner-Login.ps1` et verifiez :
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+az account show --query "user.name" -o tsv
+# doit retourner : ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0
+```
+
+---
+
+### 35. `Learner-Login.ps1` reussit mais `az account show` montre encore l'utilisateur AAD
+
+**Symptome :**
+
+Le script affiche `[PASS] Logged in to Azure` mais :
+
+```powershell
+az account show --query "user.name" -o tsv
+# retourne : apprenant12@... (l'utilisateur AAD)
+```
+
+**Cause :**
+
+Le login SP a echoue mais le script n'a pas quitte (ancienne version avec la condition
+inversee). Le `[PASS] Logged in to Azure` reflete le login AAD initial, pas le login SP.
+
+**Correction :**
+
+1. `git pull` pour obtenir la version corrigee du script.
+2. Relancez `Learner-Login.ps1` — le script affichera maintenant `[FAIL] SP login failed`
+   avec l'erreur reelle si le SP login echoue.
+3. Corrigez la cause racine (généralement un secret expire — voir entree 18).

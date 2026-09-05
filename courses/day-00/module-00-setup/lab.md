@@ -499,8 +499,10 @@ Connectez-vous avec votre compte apprenant (ex: `apprenant01@mokhtarsellamigmail
 > - **Option B :** vous configurez Microsoft Authenticator sur votre smartphone (une seule fois).
 >   Voir `troubleshooting.md` entrée 32 pour les étapes détaillées.
 
-**3.** Le script récupère automatiquement les secrets depuis Key Vault et se reconnecte
-avec le service principal. Vous n'avez rien d'autre à faire.
+**3.** Le script récupère automatiquement les secrets depuis Key Vault, puis **se reconnecte
+avec le service principal** (SP) pour que la session Azure soit authentifiée en tant que SP.
+Ceci est nécessaire car seul le SP a le rôle `Storage Blob Data Contributor` (accès data-plane
+au storage account). L'utilisateur AAD n'a que le rôle `Reader`.
 
 **Résultat attendu :**
 
@@ -511,6 +513,7 @@ avec le service principal. Vous n'avez rien d'autre à faire.
 [PASS] SP credentials persisted to secrets/shared-sp.txt
 [PASS] Snowflake PAT retrieved from Key Vault
 [PASS] Snowflake PAT persisted to secrets/snowflake_pat.txt
+[INFO] Logging in with shared service principal...
 [PASS] Logged in to Azure
        Subscription: Azure subscription 1 (...)
        Learner prefix: APP01
@@ -525,6 +528,13 @@ avec le service principal. Vous n'avez rien d'autre à faire.
  Ready for labs
 ============================================================
 ```
+
+> `[IMPORTANT]` **Verifiez que la session est bien le SP** (et non l'utilisateur AAD) :
+> ```powershell
+> az account show --query "user.name" -o tsv
+> ```
+> Le resultat doit etre l'appId du SP (`ab35eee0-...`), pas `apprenantXX@...`.
+> Si vous voyez l'utilisateur AAD, voir `troubleshooting.md` entree 34.
 
 **Si le navigateur ne s'ouvre pas ou si la connexion AAD échoue**, passez à l'Étape B.
 
@@ -941,10 +951,19 @@ git status
 
 **Résultat attendu :** `Status: READY` avec 0 FAIL.
 
-> Si `Blob write access` est en FAIL, c'est un problème RBAC côté formateur.
-> Le role `Storage Blob Data Contributor` n'a pas été attribué au SP ou
-> la propagation n'est pas encore effective (jusqu'à 10 minutes).
-> Consultez le [guide de troubleshooting](troubleshooting.md) entrée 15.
+> Si `Blob write access` est en FAIL, c'est un probleme RBAC cote formateur.
+> Le role `Storage Blob Data Contributor` n'a pas ete attribue au SP ou
+> la propagation n'est pas encore effective (jusqu'a 10 minutes).
+> Consultez le [guide de troubleshooting](troubleshooting.md) entree 15.
+>
+> Si `Blob write access` est en FAIL **et** `az account show --query "user.name" -o tsv`
+> retourne `apprenantXX@...` au lieu de l'appId du SP, le login SP a echoue.
+> Consultez le [guide de troubleshooting](troubleshooting.md) entree 34.
+>
+> Si `Snowflake query` est en FAIL avec `Private Key authentication requires
+> authenticator set to SNOWFLAKE_JWT`, la variable `SNOWFLAKE_PRIVATE_KEY_FILE`
+> est definie dans la session. Consultez le [guide de troubleshooting](troubleshooting.md)
+> entree 33.
 
 ---
 

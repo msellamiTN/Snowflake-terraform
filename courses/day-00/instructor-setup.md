@@ -493,10 +493,14 @@ Le formateur peut distribuer ces fichiers en secours uniquement.
 - [ ] Security Defaults Entra ID **désactivés** (voir section 12.0)
 - [ ] Key Vault Secrets User accordé au groupe `Data2AI-Learners`
 - [ ] Secrets `ArmClientId`, `ArmClientSecret`, `ArmTenantId`, `ArmSubscriptionId` présents dans KV
+- [ ] Secret `ArmClientSecret` **valide et non expiré** (vérifier avec `az ad app credential list`)
 - [ ] Secret `SnowflakePAT` présent dans Key Vault
 - [ ] Secrets `SnowflakePassword-APP01` à `SnowflakePassword-APP12` présents dans KV
+- [ ] SP a le role `Storage Blob Data Contributor` sur le storage account
 - [ ] Apprenants peuvent s'authentifier via `Learner-Login.ps1` (mode KV-first)
+- [ ] `az account show --query "user.name"` retourne l'appId du SP (pas l'utilisateur AAD)
 - [ ] Fallback : `secrets/shared-sp.txt` + `secrets/snowflake_pat.txt` disponibles en secours
+- [ ] `.env.example` : ligne `SNOWFLAKE_PRIVATE_KEY_FILE` commentée (Day 4+ uniquement)
 - [ ] Identifiants AAD distribués individuellement (`secrets/learner-azure-passwords.txt`)
 - [ ] Identifiants Snowflake distribués individuellement (`secrets/learner-snowflake-passwords.txt`)
 - [ ] Dépôt `data-platform-starter` poussé sur GitHub
@@ -603,6 +607,27 @@ cd project/00-bootstrap
 terraform apply
 
 # 5. Distribuer le nouveau secrets/snowflake_pat.txt sur les VMs apprenants
+```
+
+### Rotation du secret du Service Principal
+
+> `[IMPORTANT]` Si les apprenants obtiennent l'erreur `AADSTS7000215: Invalid client secret
+> provided` lors du login SP, le secret a expire ou est invalide. Suivez cette procedure.
+
+```powershell
+# 1. Login avec un compte Owner (pas le SP)
+az login
+
+# 2. Reinitialiser le secret et recuperer la VALEUR (pas le Secret ID)
+az ad app credential reset --id ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0
+
+# 3. Stocker la VALEUR dans Key Vault (utiliser le mot de passe genere, pas l'ID)
+az keyvault secret set --vault-name kvdata2aitfsecretsmsn --name ArmClientSecret --value "<password-genere-etape-2>"
+
+# 4. Verifier que la valeur stockee est correcte (10 premiers caracteres)
+az keyvault secret show --vault-name kvdata2aitfsecretsmsn --name ArmClientSecret --query "value" -o tsv | ForEach-Object { $_.Substring(0, [Math]::Min(10, $_.Length)) }
+
+# 5. Les apprenants peuvent relancer Learner-Login.ps1 (pas de redistribution manuelle necessaire)
 ```
 
 ### Refresh MFA bypass (toutes les 4 heures)
