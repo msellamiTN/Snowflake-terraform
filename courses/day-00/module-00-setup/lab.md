@@ -176,6 +176,16 @@ validate.sh
 >
 > `RemoteSigned` est le paramètre standard pour un poste de formation.
 > Il autorise les scripts locaux mais bloque les scripts téléchargés non signés.
+>
+> `[NOTE]` Si vous voyez le message *"ce paramétrage est remplacé par une stratégie
+> définie dans un contexte plus spécifique"* et que votre stratégie actuelle est
+> `Bypass`, **c'est normal et sans conséquence**. La VM de formation a déjà
+> `Bypass` actif (qui autorise tout). La commande `Set-ExecutionPolicy` n'a aucun
+> effet dans ce cas, mais vous n'en avez pas besoin — vos scripts fonctionneront.
+> Vérifiez avec :
+> ```powershell
+> Get-ExecutionPolicy -List
+> ```
 
 ---
 
@@ -330,15 +340,21 @@ Repondez a ces questions pour valider votre comprehension :
 
 ### 📝 Étape 5.2 — Configurer votre fichier `.env` (10 min)
 
-Le formateur a pre-rempli `.env.example` avec les parametres d'acces Snowflake, Azure et Azure DevOps. Vous copiez ce fichier en `.env` et vous ajoutez uniquement vos valeurs personnelles.
+> `[IMPORTANT]` **Cette étape DOIT être terminée AVANT les étapes 5.3 et 5.4.**
+> Les scripts `New-SnowflakeConnection.ps1` et `Learner-Login.ps1` lisent `.env`.
+> Sans `.env`, ils affichent un avertissement et ne fonctionnent pas correctement.
 
-#### Copier `.env.example`
+Le formateur a pré-rempli `.env.example` avec les paramètres d'accès Snowflake, Azure et Azure DevOps. Vous copiez ce fichier en `.env` et vous ajoutez uniquement vos valeurs personnelles.
+
+**Suivez ces étapes dans l'ordre :**
+
+**1.** Copiez `.env.example` en `.env` :
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
 ```powershell
-cp .env.example .env
+Copy-Item .env.example .env
 ```
 </details>
 
@@ -350,32 +366,49 @@ cp .env.example .env
 ```
 </details>
 
-#### Mettre à jour vos valeurs personnelles
+**2.** Ouvrez `.env` dans VS Code :
 
-Ouvrez `.env` dans votre editeur. Mettez a jour uniquement :
+```powershell
+code .env
+```
+
+**3.** Mettez à jour **uniquement** votre préfixe apprenant dans le fichier :
 
 | Variable | Valeur |
 |---|---|
-| `LEARNER_PREFIX` | Votre prefixe apprenant (ex. `APP01`, fourni par le formateur) |
-| `ENVIRONMENT` | `DEV` (par defaut) |
+| `LEARNER_PREFIX` | Votre préfixe apprenant (ex. `APP01`, fourni par le formateur) |
+| `ENVIRONMENT` | `DEV` (par défaut, ne pas changer) |
 
-La configuration partagee (organisation, compte, utilisateur, Azure, Key Vault) est dans
-`config/shared.env` (committee, chargee automatiquement par `Learner-Login.ps1`).
+> Les autres valeurs (organisation, compte, utilisateur, Azure, Key Vault) sont dans
+> `config/shared.env` (commitée, chargée automatiquement par les scripts).
+> **Ne modifiez pas** les valeurs partagées dans `.env` — seul `LEARNER_PREFIX` est personnel.
 
-Le PAT n'est **pas** dans `.env` — il est recupere depuis Azure Key Vault par `Learner-Login.ps1`.
+**4.** Sauvegardez le fichier (`Ctrl+S`) et fermez l'éditeur.
 
-> Les identifiants Azure (service principal partage) sont dans `secrets/shared-sp.txt`.
-> Vous n'avez pas besoin de les copier dans `.env` — le script `Learner-Login` les lit automatiquement.
+**5.** Vérifiez que `.env` existe et contient votre préfixe :
 
-> `.env` est gitignored. Il ne sera jamais commite.
+```powershell
+# Windows
+Test-Path .env
+Get-Content .env | Select-String 'LEARNER_PREFIX'
+```
+```bash
+# Linux/macOS
+test -f .env && echo "OK"
+grep LEARNER_PREFIX .env
+```
 
-#### Vérifier que `.env` est ignoré
+**Résultat attendu :** `True` / `OK` et `LEARNER_PREFIX=APP01` (ou votre préfixe).
+
+**6.** Vérifiez que `.env` est ignoré par Git :
 
 ```bash
 git check-ignore .env
 ```
 
-**Checkpoint** : `.env` — Git confirme qu'il ignore le fichier.
+**Résultat attendu :** `.env` — Git confirme qu'il ignore le fichier.
+
+> `.env` est gitignored. Il ne sera jamais committé.
 
 ---
 
@@ -383,22 +416,31 @@ git check-ignore .env
 
 > `[IMPORTANT]` **Prérequis :** l'étape 5.2 (configuration `.env`) doit être terminée.
 > Le script `New-SnowflakeConnection.ps1` lit `.env` — s'il est absent, il affiche
-> un avertissement et la connexion échouera. Vérifiez :
->
-> ```powershell
-> Test-Path .env  # Windows
-> test -f .env    # Linux/macOS
-> ```
-> Le résultat doit être `True` / `0`.
+> un avertissement et la connexion échouera.
 
-> `[IMPORTANT]` Cette etape configure Snow CLI et cree un fichier PAT local.
+**Avant de continuer, vérifiez que `.env` existe :**
+
+```powershell
+# Windows
+Test-Path .env
+```
+```bash
+# Linux/macOS
+test -f .env && echo "OK"
+```
+
+**Si le résultat n'est pas `True` / `OK`, revenez à l'étape 5.2.**
+
+> `[IMPORTANT]` Cette étape configure Snow CLI et crée un fichier PAT local.
 > Le PAT est également stocké dans **Azure Key Vault** par le formateur
-> (secret partagé `SnowflakePAT`) pour que `Learner-Login.ps1` puisse le recuperer.
+> (secret partagé `SnowflakePAT`) pour que `Learner-Login.ps1` puisse le récupérer.
 > Le fichier `secrets/snowflake_pat.txt` sert de **fallback** si Key Vault est inaccessible.
 
-Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de facon masquee.
+Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de façon masquée.
 
-#### Lancer le script
+**Suivez ces étapes dans l'ordre :**
+
+**1.** Lancez le script de connexion :
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -417,38 +459,23 @@ chmod +x scripts/new-snowflake-connection.sh
 ```
 </details>
 
-Le script lit les parametres depuis `.env` et cree la connexion `training`.
-
-**Checkpoint** :
-
-```text
-[INFO] Loading .env from .../.env
-
-Creating the connection...
-[OK] Connection 'training' created.
-[OK] Config file permissions restricted to current user.
-
-Testing the connection...
-[OK] Connection test succeeded.
-
-Done.
-```
-
-Si `SNOWFLAKE_PAT` etait vide dans `.env`, le script affiche :
+**2.** Si le script demande un PAT, saisissez-le (il ne s'affiche pas à l'écran) :
 
 ```text
 Snowflake PAT (token): ********
 ```
 
-Saisissez votre PAT. Il ne s'affiche pas a l'ecran.
+Le PAT vous a été fourni par le formateur.
 
-#### Vérifier la connexion
+**3.** Vérifiez que la connexion fonctionne :
 
 ```bash
 snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
 ```
 
-**Checkpoint** : une ligne avec votre utilisateur, votre role et votre compte.
+**Résultat attendu :** une ligne avec votre utilisateur, votre rôle et votre compte.
+
+**Si vous voyez `[WARN] No .env file found`**, revenez à l'étape 5.2.
 
 #### Accéder à l'interface web Snowflake (optionnel)
 
@@ -466,16 +493,30 @@ pour acceder a l'interface web.
 
 ---
 
-### 📝 Étape 5.4 — Authentifier Azure (KV-first) (10 min)
+### 📝 Étape 5.4 — Authentifier Azure et définir les variables Terraform (10 min)
 
-> `[IMPORTANT]` Cette etape doit etre executee **apres** l'etape 4 (Snowflake).
-> Le script `Learner-Login.ps1` utilise le **mode KV-first** :
-> 1. Login avec votre compte AAD (navigateur)
-> 2. Récupère les credentials SP + PAT depuis Key Vault
-> 3. Login avec le SP pour Terraform
-> 4. Définit `TF_VAR_snowflake_token` + variables `ARM_*`
+> `[IMPORTANT]` **Prérequis :** l'étape 5.2 (`.env`) doit être terminée.
+> Le script `Learner-Login.ps1` lit `.env` pour récupérer votre préfixe apprenant.
 
-#### Mode KV-first (recommandé — aucun fichier secret requis)
+> `[IMPORTANT]` **Vous devez relancer cette étape au début de chaque session**
+> (nouveau terminal, redémarrage VM). Les variables d'environnement ne persistent
+> pas entre les sessions.
+
+Cette étape vous connecte à Azure et définit les variables `ARM_*` et `TF_VAR_snowflake_token`
+nécessaires pour Terraform. Il existe **deux modes** — choisissez selon votre situation :
+
+#### Quel mode utiliser ?
+
+| Situation | Mode | Commande |
+|---|---|---|
+| Vous avez un compte AAD apprenant (fourni par le formateur) | **KV-first** (recommandé) | Étape A ci-dessous |
+| Le compte AAD n'est pas configuré, ou vous n'avez pas de navigateur | **Fallback** | Étape B ci-dessous |
+
+---
+
+#### Étape A — Mode KV-first (recommandé, aucun fichier secret requis)
+
+**1.** Lancez le script **sans** `-ForceFallback` :
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -485,109 +526,135 @@ pour acceder a l'interface web.
 ```
 </details>
 
-Une fenêtre de navigateur s'ouvre. Connectez-vous avec votre **compte apprenant**
-(fourni par le formateur, ex: `apprenant01@mokhtarsellamigmail.onmicrosoft.com`).
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
 
-Le script va :
-1. Vous authentifier avec votre compte AAD
-2. Récupérer les secrets SP depuis Key Vault
-3. Re-s'authentifier avec le SP (pour Terraform)
-4. Récupérer le PAT Snowflake depuis Key Vault
-5. Définir toutes les variables d'environnement
-
-#### Mode fallback (recovery — si KV-first échoue)
-
-Si vous n'avez pas accès au Key Vault ou si votre compte AAD n'est pas configuré :
-
-```powershell
-.\scripts\Learner-Login.ps1 -LearnerPrefix APP01 -ForceFallback
+```bash
+./scripts/learner-login.sh --learner-prefix APP01
 ```
+</details>
 
-Ce mode utilise les fichiers locaux `secrets/shared-sp.txt` et `secrets/snowflake_pat.txt`
-(distribués par le formateur en secours uniquement).
+> Remplacez `APP01` par **votre** préfixe apprenant fourni par le formateur.
 
-> `[IMPORTANT]` **Vérifiez que les fichiers secrets existent avant d'utiliser le fallback :**
->
-> ```powershell
-> Test-Path secrets\shared-sp.txt      # Windows
-> Test-Path secrets\snowflake_pat.txt  # Windows
-> test -f secrets/shared-sp.txt        # Linux/macOS
-> test -f secrets/snowflake_pat.txt    # Linux/macOS
-> ```
->
-> Si ces fichiers sont absents, demandez-les au formateur. Le fallback échouera
-> sans `secrets/shared-sp.txt` (credentials Azure SP).
+**2.** Une fenêtre de navigateur s'ouvre automatiquement.
 
-> `[SECURITY]` Les fichiers `secrets/` sont gitignored. Ne les commitez jamais.
-> Préférez le mode KV-first qui ne stocke aucun secret sur votre VM.
+> `[IMPORTANT]` **C'est normal !** Le navigateur s'ouvre pour vous authentifier
+> avec votre compte AAD (work/school account). C'est le mode KV-first.
+> Si aucun navigateur ne s'ouvre, copiez l'URL affichée dans le terminal
+> et collez-la dans votre navigateur manuellement.
 
-> Remplacez `APP01` par votre prefixe apprenant fourni par le formateur.
+Connectez-vous avec votre compte apprenant (ex: `apprenant01@mokhtarsellamigmail.onmicrosoft.com`).
 
-Le script (mode KV-first) :
-- lit `config/shared.env` (config partagée, commitée);
-- lit `.env` (valeurs personnelles : `LEARNER_PREFIX`);
-- **vous authentifie avec votre compte AAD** (navigateur interactif);
-- récupère les credentials SP depuis **Key Vault** (`ArmClientId`, `ArmClientSecret`, etc.);
-- **se reconnecte avec le SP** (pour Terraform, pas de MFA);
-- récupère le PAT depuis **Key Vault** (`SnowflakePAT` — secret partagé);
-- définit `TF_VAR_snowflake_token`, `ARM_*`, et `LEARNER_PREFIX`.
+**3.** Le script récupère automatiquement les secrets depuis Key Vault et se reconnecte
+avec le service principal. Vous n'avez rien d'autre à faire.
 
-Le script (mode fallback avec `-ForceFallback`) :
-- lit `secrets/shared-sp.txt` (credentials SP);
-- se connecte à Azure avec le SP;
-- récupère le PAT depuis Key Vault ou `secrets/snowflake_pat.txt`;
-- définit toutes les variables d'environnement.
-
-**Checkpoint** (mode KV-first) :
+**Résultat attendu :**
 
 ```text
-============================================================
- Learner Login: APP01
-============================================================
-
-[INFO] KV-first mode: authenticating with your AAD account...
 [PASS] AAD login successful
 [INFO] Fetching SP credentials from Key Vault...
 [PASS] SP credentials retrieved from Key Vault
 [PASS] Snowflake PAT retrieved from Key Vault
 [PASS] Logged in to Azure
        Subscription: Azure subscription 1 (...)
-       Tenant: ...
        Learner prefix: APP01
-
 [PASS] Environment variables set:
        ARM_CLIENT_ID
        ARM_CLIENT_SECRET (hidden)
        ARM_TENANT_ID
        ARM_SUBSCRIPTION_ID
        LEARNER_PREFIX = APP01
-       TF_VAR_snowflake_token (from PAT file)
-
 ============================================================
  Ready for labs
 ============================================================
 ```
 
+**Si le navigateur ne s'ouvre pas ou si la connexion AAD échoue**, passez à l'Étape B.
+
+---
+
+#### Étape B — Mode fallback (si KV-first échoue)
+
+> `[IMPORTANT]` Le mode fallback nécessite les fichiers `secrets/shared-sp.txt` et
+> `secrets/snowflake_pat.txt`. Ces fichiers sont distribués par le formateur en secours.
+> **S'ils ne sont pas présents, le fallback échouera.** Demandez-les au formateur.
+
+**1.** Vérifiez que les fichiers secrets existent :
+
+```powershell
+# Windows
+Test-Path secrets\shared-sp.txt
+Test-Path secrets\snowflake_pat.txt
+```
+```bash
+# Linux/macOS
+test -f secrets/shared-sp.txt && echo "shared-sp OK"
+test -f secrets/snowflake_pat.txt && echo "snowflake_pat OK"
+```
+
+**Si le résultat n'est pas `True` / `OK`**, demandez ces fichiers au formateur.
+Ne continuez pas sans eux.
+
+**2.** Lancez le script avec `-ForceFallback` :
+
+<details>
+<summary>🪟 <b>Windows (PowerShell)</b></summary>
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01 -ForceFallback
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux/macOS (Bash)</b></summary>
+
+```bash
+./scripts/learner-login.sh --learner-prefix APP01 --force-fallback
+```
+</details>
+
+> Remplacez `APP01` par **votre** préfixe apprenant fourni par le formateur.
+
+**Résultat attendu :**
+
+```text
+[INFO] Fallback mode: using local secrets files...
+[PASS] Logged in to Azure
+       Subscription: Azure subscription 1 (...)
+       Learner prefix: APP01
+[PASS] Environment variables set
+============================================================
+ Ready for labs
+============================================================
+```
+
+---
+
 #### Vérifier la connexion Azure
+
+**Après l'Étape A ou B**, vérifiez que vous êtes connecté :
 
 ```bash
 az account show --query 'name' -o tsv
 ```
 
-**Checkpoint** : le nom de la souscription Azure.
+**Résultat attendu :** le nom de la souscription Azure (ex: `Azure subscription 1`).
 
 #### Vérifier le préfixe apprenant
 
+```powershell
+# Windows
+$env:LEARNER_PREFIX
+```
 ```bash
-echo $LEARNER_PREFIX       # Linux/macOS
-echo $env:LEARNER_PREFIX   # Windows PowerShell
+# Linux/macOS
+echo $LEARNER_PREFIX
 ```
 
-**Checkpoint** : votre prefixe (ex. `APP01`).
+**Résultat attendu :** votre préfixe (ex: `APP01`).
 
-> **IMPORTANT** Vous devez relancer `Learner-Login` au debut de chaque session
-> (nouveau terminal, redemarrage VM). Les variables d'environnement ne persistent
-> pas entre les sessions.
+> `[SECURITY]` Les fichiers `secrets/` sont gitignored. Ne les commitez jamais.
+> Préférez le mode KV-first (Étape A) qui ne stocke aucun secret sur votre VM.
 
 ---
 
@@ -669,7 +736,11 @@ git remote add origin <VOTRE_REPO_APPRENANT>
 
 ### 📝 Étape 5.6 — Validation finale (10 min)
 
-#### Relancer le diagnostic
+> `[IMPORTANT]` **Exécutez chaque commande une par une.**
+> Ne copiez pas plusieurs commandes sur la même ligne.
+> Chaque commande ci-dessous est séparée — exécutez-les individuellement.
+
+**1.** Relancez le diagnostic des outils :
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -687,25 +758,25 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -Check
 ```
 </details>
 
-**Checkpoint** : `Toolchain status: READY`.
+**Résultat attendu :** `Toolchain status: READY`.
 
-#### Vérifier la connexion Snowflake
+**2.** Vérifiez la connexion Snowflake :
 
 ```bash
 snow sql -q 'SELECT 1' -c training
 ```
 
-**Checkpoint** : un resultat contenant `1`.
+**Résultat attendu :** un résultat contenant `1`.
 
-#### Vérifier le projet
+**3.** Vérifiez le projet Git :
 
 ```bash
 git status
 ```
 
-**Checkpoint** : branche propre, aucun fichier modifie (sauf `preflight.md` et `preflight.json` qui sont ignores).
+**Résultat attendu :** branche propre, aucun fichier modifié (sauf `preflight.md` et `preflight.json` qui sont ignorés).
 
-#### Lancer le test de connectivité complet
+**4.** Lancez le test de connectivité complet :
 
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
@@ -723,12 +794,12 @@ git status
 ```
 </details>
 
-**Checkpoint** : `Status: READY` avec 0 FAIL.
+**Résultat attendu :** `Status: READY` avec 0 FAIL.
 
-> Si `Blob write access` est en FAIL, c'est un probleme RBAC cote formateur.
-> Le role `Storage Blob Data Contributor` n'a pas ete attribue au SP ou
-> la propagation n'est pas encore effective (jusqu'a 10 minutes).
-> Consultez le [guide de troubleshooting](troubleshooting.md) entree 15.
+> Si `Blob write access` est en FAIL, c'est un problème RBAC côté formateur.
+> Le role `Storage Blob Data Contributor` n'a pas été attribué au SP ou
+> la propagation n'est pas encore effective (jusqu'à 10 minutes).
+> Consultez le [guide de troubleshooting](troubleshooting.md) entrée 15.
 
 ---
 
