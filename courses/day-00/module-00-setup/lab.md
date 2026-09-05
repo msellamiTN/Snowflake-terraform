@@ -923,6 +923,10 @@ snow sql -q 'SELECT 1' -c training
 
 **Résultat attendu :** un résultat contenant `1`.
 
+> Si vous obtenez `Private Key authentication requires authenticator set to SNOWFLAKE_JWT`,
+> la variable `SNOWFLAKE_PRIVATE_KEY_FILE` est définie dans votre session.
+> Voir `troubleshooting.md` entrée 33.
+
 **3.** Vérifiez le projet Git :
 
 ```bash
@@ -930,6 +934,17 @@ git status
 ```
 
 **Résultat attendu :** branche propre, aucun fichier modifié (sauf `preflight.md` et `preflight.json` qui sont ignorés).
+
+**3b.** Vérifiez que la session Azure est le service principal :
+
+```powershell
+az account show --query "user.name" -o tsv
+```
+
+**Résultat attendu :** l'appId du SP (`ab35eee0-5d09-4c4d-b41c-f536ce7dbdf0`), pas `apprenantXX@...`.
+
+> Si vous voyez l'utilisateur AAD, relancez `Learner-Login.ps1` et vérifiez le message d'erreur.
+> Voir `troubleshooting.md` entrée 34.
 
 **4.** Lancez le test de connectivité complet :
 
@@ -1064,12 +1079,13 @@ Report written to: student-track/_reports/module-00-APP01.md
 
 1. `Toolchain status: READY`
 2. `az account show --query 'name' -o tsv` affiche la souscription Azure
-3. `snow sql -q 'SELECT 1' -c training` retourne un résultat
-4. Connexion confirmée dans **Snowflake Snowsight Web UI** avec le rôle `SYSADMIN`
-5. `Test-LabConnectivity.ps1` affiche `Status: READY` (0 FAIL)
-6. Le projet type est cloné et ne contient aucun fichier `.tf`
-7. `secrets/shared-sp.txt` et `secrets/snowflake_pat.txt` sont présents (persistés depuis KV)
-8. `$env:TF_VAR_snowflake_token` est défini (non vide)
+3. `az account show --query 'user.name' -o tsv` affiche l'appId du SP (`ab35eee0-...`), pas l'utilisateur AAD
+4. `snow sql -q 'SELECT 1' -c training` retourne un résultat
+5. Connexion confirmée dans **Snowflake Snowsight Web UI** avec le rôle `SYSADMIN`
+6. `Test-LabConnectivity.ps1` affiche `Status: READY` (0 FAIL)
+7. Le projet type est cloné et ne contient aucun fichier `.tf`
+8. `secrets/shared-sp.txt` et `secrets/snowflake_pat.txt` sont présents (persistés depuis KV)
+9. `$env:TF_VAR_snowflake_token` est défini (non vide)
 
 ```text
 Ready for Day 1
