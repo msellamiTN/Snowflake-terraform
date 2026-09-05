@@ -65,6 +65,15 @@ Le lab est un seul module avec 7 etapes :
 - [ ] **Linux** avec Bash;
 - [ ] **macOS** avec Bash ou Zsh.
 
+> `[IMPORTANT]` **Python 3.12 est requis** (pas 3.13 ni 3.14).
+> Si votre système a une version plus récente de Python, installez Python 3.12
+> avant de lancer `Install-Tools.ps1` :
+> ```powershell
+> winget install Python.Python.3.12
+> ```
+> Sans Python 3.12, les packages `cffi` et `pyyaml` échoueront à s'installer
+> (pas de wheels pre-compilés pour Python 3.14 sur Windows).
+
 ### 2. Votre URL de projet type
 
 Le depot du projet type est : `https://github.com/msellamiTN/data-platform-starter.git`

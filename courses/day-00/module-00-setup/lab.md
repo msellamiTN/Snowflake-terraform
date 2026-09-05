@@ -215,6 +215,55 @@ chmod +x scripts/install-tools.sh
 
 #### Installation
 
+> `[IMPORTANT]` **Python 3.12 est requis** (pas 3.13, pas 3.14).
+> Si votre VM a une autre version de Python (ex. 3.14), le script d'installation
+> tente automatiquement de trouver Python 3.12 via le launcher `py -3.12`.
+> Si Python 3.12 n'est pas installé, installez-le **avant** de continuer :
+>
+> <details>
+> <summary>🪟 <b>Windows — Installer Python 3.12</b></summary>
+>
+> ```powershell
+> # Option 1 : winget (recommandé)
+> winget install Python.Python.3.12
+>
+> # Option 2 : téléchargement manuel
+> # https://www.python.org/downloads/release/python-3120/
+> # Cochez "Add python.exe to PATH" lors de l'installation.
+> ```
+> </details>
+>
+> <details>
+> <summary>🐧 <b>Linux — Installer Python 3.12</b></summary>
+>
+> ```bash
+> sudo apt-get update
+> sudo apt-get install -y python3.12 python3.12-venv
+> ```
+> </details>
+>
+> <details>
+> <summary>🍎 <b>macOS — Installer Python 3.12</b></summary>
+>
+> ```bash
+> brew install python@3.12
+> ```
+> </details>
+>
+> Après l'installation de Python 3.12, **supprimez l'ancien venv** s'il existe
+> (il a pu être créé avec la mauvaise version) :
+>
+> ```powershell
+> # Windows
+> Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
+> ```
+> ```bash
+> # Linux/macOS
+> rm -rf "$HOME/.data2ai/venv"
+> ```
+>
+> Puis relancez `Install-Tools.ps1` — le script créera un venv avec Python 3.12.
+
 <details>
 <summary>🪟 <b>Windows (PowerShell)</b></summary>
 
@@ -231,7 +280,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Tools.ps1 -ReportPath
 ```
 </details>
 
-**Checkpoint** : le script installe les outils manquants sous `$HOME/.data2ai`. Les outils Python (Snow CLI, dbt) sont installes dans un environnement virtuel isole. Le rapport final indique `Toolchain status: READY`.
+**Checkpoint** : le script installe les outils manquants sous `$HOME/.data2ai`. Les outils Python (Snow CLI, dbt) sont installes dans un environnement virtuel isole **avec Python 3.12**. Le rapport final indique `Toolchain status: READY`.
+
+> `[NOTE]` Si vous aviez déjà un venv créé avec une mauvaise version de Python,
+> le script le détecte automatiquement, le supprime et le recrée avec Python 3.12.
+> Vous pouvez aussi le supprimer manuellement (voir ci-dessus).
 
 #### Corriger les échecs
 
@@ -310,8 +363,9 @@ Repondez a ces questions pour valider votre comprehension :
    - Windows : le dossier `$HOME\.data2ai\bin` a ete ajoute au PATH utilisateur.
    - Linux/macOS : le script affiche l'instruction `export PATH=...` a ajouter a votre profil shell.
 
-4. **Pourquoi un environnement virtuel isole ?**
+4. **Pourquoi un environnement virtuel isole avec Python 3.12 ?**
    - Pour eviter les conflits avec d'autres projets Python sur votre poste et garantir des versions reproductibles.
+   - Python 3.12 est la version requise par la politique de versions. Les packages comme `cffi` et `pyyaml` n'ont pas de wheels pre-compilés pour Python 3.14 sur Windows — utiliser 3.12 evite les echecs de compilation.
 
 ---
 
@@ -367,6 +421,16 @@ git check-ignore .env
 ---
 
 ### 📝 Étape 5.3 — Configurer la connexion Snowflake (20 min)
+
+> `[IMPORTANT]` **Prérequis :** l'étape 5.2 (configuration `.env`) doit être terminée.
+> Le script `New-SnowflakeConnection.ps1` lit `.env` — s'il est absent, il affiche
+> un avertissement et la connexion échouera. Vérifiez :
+>
+> ```powershell
+> Test-Path .env  # Windows
+> test -f .env    # Linux/macOS
+> ```
+> Le résultat doit être `True` / `0`.
 
 > `[IMPORTANT]` Cette etape configure Snow CLI et cree un fichier PAT local.
 > Le PAT est également stocké dans **Azure Key Vault** par le formateur
@@ -483,10 +547,20 @@ Si vous n'avez pas accès au Key Vault ou si votre compte AAD n'est pas configur
 Ce mode utilise les fichiers locaux `secrets/shared-sp.txt` et `secrets/snowflake_pat.txt`
 (distribués par le formateur en secours uniquement).
 
+> `[IMPORTANT]` **Vérifiez que les fichiers secrets existent avant d'utiliser le fallback :**
+>
+> ```powershell
+> Test-Path secrets\shared-sp.txt      # Windows
+> Test-Path secrets\snowflake_pat.txt  # Windows
+> test -f secrets/shared-sp.txt        # Linux/macOS
+> test -f secrets/snowflake_pat.txt    # Linux/macOS
+> ```
+>
+> Si ces fichiers sont absents, demandez-les au formateur. Le fallback échouera
+> sans `secrets/shared-sp.txt` (credentials Azure SP).
+
 > `[SECURITY]` Les fichiers `secrets/` sont gitignored. Ne les commitez jamais.
 > Préférez le mode KV-first qui ne stocke aucun secret sur votre VM.
-```
-</details>
 
 > Remplacez `APP01` par votre prefixe apprenant fourni par le formateur.
 

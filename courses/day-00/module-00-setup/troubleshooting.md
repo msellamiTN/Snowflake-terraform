@@ -86,8 +86,14 @@ Le script signale `WARN` si Python n'est pas la version 3.12.
 
 **Causes possibles :**
 
-- Python 3.12 n'est pas installe et une autre version est trouvee;
+- Python 3.12 n'est pas installe et une autre version est trouvee (ex. 3.14);
 - plusieurs versions de Python coexistent et la mauvaise est prioritaire.
+
+**Conséquences :**
+
+Si le venv est créé avec Python 3.13+ ou 3.14, les packages `cffi` et `pyyaml`
+échoueront à s'installer car il n'existe pas de wheels pre-compilés pour ces versions
+sur Windows. Voir les entrées **28** et **29** pour ce cas spécifique.
 
 **Correction :**
 
@@ -854,6 +860,174 @@ az role assignment list --scope "/subscriptions/.../vaults/kvdata2aitfsecretsmsn
 ```
 
 Si les secrets manquent, relancez `00-bootstrap` (ils sont créés par ce module).
+
+---
+
+### 28. `pip install` échoue avec `error: Microsoft Visual C++ 14.0 or greater is required`
+
+**Symptôme :**
+
+```text
+Building wheel for cffi (pyproject.toml) ... error
+error: Microsoft Visual C++ 14.0 or greater is required to build a wheel.
+Building wheel for pyyaml (pyproject.toml) ... error
+error: Microsoft Visual C++ 14.0 or greater is required.
+```
+
+**Cause :**
+
+Le venv Python a été créé avec **Python 3.14** (ou une version récente sans wheels pre-compilés).
+Les packages comme `cffi` et `pyyaml` n'ont pas de wheels binaires pour cp314 sur Windows.
+`pip` tente de compiler depuis le code source, ce qui requiert Microsoft Visual C++ Build Tools.
+
+**Correction :**
+
+1. **Installez Python 3.12** (la version requise par la politique) :
+
+```powershell
+winget install Python.Python.3.12
+```
+
+2. **Supprimez l'ancien venv** (créé avec la mauvaise version) :
+
+```powershell
+Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
+```
+
+3. **Relancez l'installation** — le script détecte Python 3.12 via `py -3.12` et crée un venv correct :
+
+```powershell
+.\scripts\Install-Tools.ps1
+```
+
+> `[NOTE]` Le script `Install-Tools.ps1` détecte désormais automatiquement si un venv
+> existant a été créé avec la mauvaise version de Python, le supprime et le recrée
+> avec Python 3.12. L'option `--prefer-binary` est également ajoutée à `pip install`
+> pour privilégier les wheels pre-compilés et éviter les builds depuis le source.
+
+---
+
+### 29. Snowflake CLI — `Installation did not complete` (Python version mismatch)
+
+**Symptôme :**
+
+```text
+Snowflake CLI    Core       FAIL    Installation did not complete
+```
+
+ou :
+
+```text
+dbt              Course     FAIL    Installation did not complete
+```
+
+**Cause :**
+
+Le venv a été créé avec une version de Python non compatible (ex. 3.13 ou 3.14).
+Les packages Snowflake CLI et dbt-snowflake nécessitent Python 3.12.
+L'installation échoue car les dépendances (cffi, pyyaml, etc.) ne peuvent pas être compilées.
+
+**Diagnostic :**
+
+```powershell
+# Vérifier la version du venv
+& "$HOME\.data2ai\venv\Scripts\python.exe" --version
+```
+
+Si le résultat n'est pas `Python 3.12.x`, le venv doit être recréé.
+
+**Correction :**
+
+```powershell
+# 1. Installer Python 3.12
+winget install Python.Python.3.12
+
+# 2. Supprimer l'ancien venv
+Remove-Item -Recurse -Force "$HOME\.data2ai\venv" -ErrorAction SilentlyContinue
+
+# 3. Relancer l'installation
+.\scripts\Install-Tools.ps1
+```
+
+Voir aussi l'entrée 28 pour les détails sur l'erreur MSVC.
+
+---
+
+### 30. `New-SnowflakeConnection.ps1` affiche `[WARN] .env not found`
+
+**Symptôme :**
+
+```text
+[WARN] .env not found — using environment variables only.
+```
+
+**Cause :**
+
+Le script `New-SnowflakeConnection.ps1` lit les paramètres de connexion depuis `.env`.
+Si le fichier n'existe pas, il affiche un avertissement et tente d'utiliser les variables
+d'environnement (qui sont probablement vides).
+
+**Correction :**
+
+Suivez l'étape 5.2 du lab pour créer `.env` :
+
+```powershell
+cp .env.example .env
+# Éditez .env avec votre préfixe apprenant
+```
+
+Puis relancez :
+
+```powershell
+.\scripts\New-SnowflakeConnection.ps1
+```
+
+---
+
+### 31. `Learner-Login.ps1` fallback échoue : `secrets/shared-sp.txt not found`
+
+**Symptôme :**
+
+```text
+[WARN] AAD login failed or cancelled.
+       Falling back to local secrets file.
+[FAIL] secrets/shared-sp.txt not found.
+```
+
+**Cause :**
+
+Le mode KV-first a échoué (compte AAD non configuré, navigateur annulé, etc.) et le
+mode fallback ne trouve pas le fichier `secrets/shared-sp.txt` contenant les credentials
+du service principal partagé.
+
+**Correction :**
+
+1. **Vérifiez que le fichier existe :**
+
+```powershell
+Test-Path secrets\shared-sp.txt
+```
+
+2. **Si absent**, demandez au formateur le fichier `secrets/shared-sp.txt`.
+   Ce fichier contient les credentials du service principal partagé :
+
+```text
+ARM_CLIENT_ID=...
+ARM_TENANT_ID=...
+ARM_SUBSCRIPTION_ID=...
+ARM_CLIENT_SECRET=...
+```
+
+3. **Si le fichier est présent mais le login échoue encore**, vérifiez que le secret
+   n'a pas expiré (voir entrée 18).
+
+4. **Préférez le mode KV-first** si votre compte AAD est configuré :
+
+```powershell
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+```
+
+> `[SECURITY]` Le fichier `secrets/shared-sp.txt` est gitignored. Ne le commitez jamais.
 
 ---
 
