@@ -80,40 +80,6 @@ Une fois `.env` configuré et `Learner-Login` exécuté, lancez le préflight co
 > Remplacez `APP01` par votre préfixe. Le rapport consolidé est écrit dans
 > `reports/vm-readiness.md`. Aucun secret n'y apparaît.
 
-### Ordre d'exécution des scripts
-
-> `[IMPORTANT]` L'ordre des scripts est important. Suivez cette séquence exacte.
-
-| # | Script | Quand | Action |
-|---|---|---|---|
-| 0 | `Set-ExecutionPolicy` | Une seule fois | Autorise les scripts PowerShell (Windows) |
-| 1 | `Install-Tools.ps1` | Une seule fois | Installe Terraform, Snow CLI, dbt, tflint |
-| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + écrit le PAT dans `secrets/snowflake_pat.txt` (fallback) |
-| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + récupère le PAT depuis Key Vault + set `TF_VAR_snowflake_token` |
-| 4 | `Test-LabConnectivity.ps1` | Vérification | Valide tous les accès (Snowflake + Azure + Git + Terraform) |
-
-```powershell
-# 0. Autoriser les scripts (une seule fois, Windows seulement)
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-
-# 1. Installer les outils (une seule fois)
-.\scripts\Install-Tools.ps1
-
-# 2. Configurer Snowflake (une seule fois)
-.\scripts\New-SnowflakeConnection.ps1
-
-# 3. Login Azure + variables Terraform (Chaque session)
-.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
-
-# 4. Vérifier tout
-.\scripts\Test-LabConnectivity.ps1 -SkipDevOps
-```
-
-> `[IMPORTANT]` `Learner-Login.ps1` récupère le PAT depuis **Azure Key Vault**
-> (secret partagé `SnowflakePAT`). Si Key Vault est inaccessible,
-> il utilise `secrets/snowflake_pat.txt` comme fallback (créé par `New-SnowflakeConnection.ps1`).
-> Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
-
 ### Cloner le projet type (5 min)
 
 Le projet type est le dépôt `data-platform-starter`. Il contient les scripts d'installation, la structure de gouvernance et les validateurs. **C'est votre racine de travail pour toute la formation.**
@@ -166,6 +132,43 @@ validate.sh
 ```
 
 > À partir d'ici, **toutes les commandes s'exécutent depuis la racine du clone**.
+
+---
+
+### Ordre d'exécution des scripts
+
+> `[IMPORTANT]` L'ordre des scripts est important. Suivez cette séquence exacte.
+
+| # | Script | Quand | Action |
+|---|---|---|---|
+| 0 | `Set-ExecutionPolicy` | Une seule fois | Autorise les scripts PowerShell (Windows) |
+| 1 | `Install-Tools.ps1` | Une seule fois | Installe Terraform, Snow CLI, dbt, tflint |
+| 2 | `New-SnowflakeConnection.ps1` | Une seule fois | Configure Snow CLI + écrit le PAT dans `secrets/snowflake_pat.txt` (fallback) |
+| 3 | `Learner-Login.ps1` | **Chaque session** | Login Azure + récupère le PAT depuis Key Vault + set `TF_VAR_snowflake_token` |
+| 4 | `Test-LabConnectivity.ps1` | Vérification | Valide tous les accès (Snowflake + Azure + Git + Terraform) |
+| - | `Test-VMReadiness.ps1` | Diagnostic | Vérifie outils + config + connectivité (non destructif, voir Pre-Flight ci-dessus) |
+
+```powershell
+# 0. Autoriser les scripts (une seule fois, Windows seulement)
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# 1. Installer les outils (une seule fois)
+.\scripts\Install-Tools.ps1
+
+# 2. Configurer Snowflake (une seule fois)
+.\scripts\New-SnowflakeConnection.ps1
+
+# 3. Login Azure + variables Terraform (Chaque session)
+.\scripts\Learner-Login.ps1 -LearnerPrefix APP01
+
+# 4. Vérifier tout
+.\scripts\Test-LabConnectivity.ps1 -SkipDevOps
+```
+
+> `[IMPORTANT]` `Learner-Login.ps1` récupère le PAT depuis **Azure Key Vault**
+> (secret partagé `SnowflakePAT`). Si Key Vault est inaccessible,
+> il utilise `secrets/snowflake_pat.txt` comme fallback (créé par `New-SnowflakeConnection.ps1`).
+> Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
 
 > `[WINDOWS]` Si vous obtenez l'erreur `l'exécution de scripts est désactivée`,
 > autorisez les scripts locaux une seule fois :
@@ -410,6 +413,24 @@ git check-ignore .env
 
 > `.env` est gitignored. Il ne sera jamais committé.
 
+**7.** Vérifiez que `config/shared.env` existe (configuration partagée chargée par les scripts) :
+
+```powershell
+# Windows
+Test-Path config/shared.env
+```
+```bash
+# Linux/macOS
+test -f config/shared.env && echo "OK"
+```
+
+**Résultat attendu :** `True` / `OK`.
+
+> `config/shared.env` est commité dans le dépôt. Il contient les paramètres partagés
+> (organisation Snowflake, compte, Key Vault, IDs Azure). Les scripts le chargent
+> automatiquement. S'il est absent, `Learner-Login.ps1` ne pourra pas résoudre
+> `KEY_VAULT_NAME` et le mode KV-first ne fonctionnera pas.
+
 ---
 
 ### 📝 Étape 5.3 — Configurer la connexion Snowflake (20 min)
@@ -431,10 +452,10 @@ test -f .env && echo "OK"
 
 **Si le résultat n'est pas `True` / `OK`, revenez à l'étape 5.2.**
 
-> `[IMPORTANT]` Cette étape configure Snow CLI et crée un fichier PAT local.
-> Le PAT est également stocké dans **Azure Key Vault** par le formateur
-> (secret partagé `SnowflakePAT`) pour que `Learner-Login.ps1` puisse le récupérer.
-> Le fichier `secrets/snowflake_pat.txt` sert de **fallback** si Key Vault est inaccessible.
+> `[IMPORTANT]` Cette étape configure Snow CLI et crée un fichier PAT local (`secrets/snowflake_pat.txt`).
+> En mode KV-first (étape 5.4 Étape A), le PAT est récupéré automatiquement depuis Key Vault —
+> cette étape est donc principalement nécessaire pour le mode fallback, ou pour vérifier la connexion Snowflake.
+> Le fichier `secrets/snowflake_pat.txt` créé ici sert de **fallback** si Key Vault est inaccessible.
 
 Le script de connexion lit `.env` automatiquement. Si `SNOWFLAKE_PAT` est vide dans `.env`, il vous le demande de façon masquée.
 
@@ -467,13 +488,19 @@ Snowflake PAT (token): ********
 
 Le PAT vous a été fourni par le formateur.
 
+> `[NOTE]` Le PAT est partagé entre tous les apprenants (utilisateur `DATA2AI`, rôle `SYSADMIN`).
+> L'isolation se fait via votre `LEARNER_PREFIX`, pas via le PAT.
+
 **3.** Vérifiez que la connexion fonctionne :
 
 ```bash
 snow sql -q 'SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_ACCOUNT()' -c training
 ```
 
-**Résultat attendu :** une ligne avec votre utilisateur, votre rôle et votre compte.
+**Résultat attendu :** une ligne avec `DATA2AI`, `SYSADMIN` et votre compte.
+
+> `[NOTE]` Le script a créé `secrets/snowflake_pat.txt`. Ce fichier sera utilisé
+> automatiquement par `Learner-Login.ps1` en mode fallback (étape 5.4 Étape B).
 
 **Si vous voyez `[WARN] No .env file found`**, revenez à l'étape 5.2.
 
@@ -544,6 +571,11 @@ nécessaires pour Terraform. Il existe **deux modes** — choisissez selon votre
 > et collez-la dans votre navigateur manuellement.
 
 Connectez-vous avec votre compte apprenant (ex: `apprenant01@mokhtarsellamigmail.onmicrosoft.com`).
+
+> `[IMPORTANT]` **Mot de passe AAD :** le formateur vous fournit individuellement votre
+> mot de passe AAD (format: `AzureLearner2026@XX` où `XX` est votre numéro apprenant).
+> Ce mot de passe est **différent** du mot de passe Snowflake (utilisé pour l'interface web).
+> Si vous n'avez pas reçu vos identifiants AAD, demandez-les au formateur avant de continuer.
 
 **3.** Le script récupère automatiquement les secrets depuis Key Vault et se reconnecte
 avec le service principal. Vous n'avez rien d'autre à faire.
@@ -812,8 +844,8 @@ L'apprentissage professionnel associe les commandes du terminal à la maîtrise 
 1. Ouvrez votre navigateur et accédez à : `https://app.snowflake.com`
 2. Saisissez votre identifiant de compte Snowflake : `<ORGANIZATION>-<ACCOUNT>` (valeur présente dans votre `.env`).
 3. Connectez-vous avec vos identifiants apprenant :
-   - **Nom d'utilisateur :** `<PREFIXE_APPRENANT>` (ex: `APP01`)
-   - **Mot de passe :** Renseigné lors de l'initialisation ou via PAT.
+   - **Nom d'utilisateur :** `apprenant01` (votre identifiant apprenant, **différent** de votre préfixe `APP01`)
+   - **Mot de passe :** fourni individuellement par le formateur (voir étape 5.3).
 4. Vérifiez en haut à droite que votre rôle actif est **`SYSADMIN`** (et non `ACCOUNTADMIN`).
 5. Cliquez sur **Worksheets > + SQL Worksheet**, collez et exécutez (`Ctrl + Enter`) :
    ```sql

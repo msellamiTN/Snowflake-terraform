@@ -8,7 +8,7 @@
 learner_count = 12
 
 # Azure AD domain (verify with: az rest --method get --url 'https://graph.microsoft.com/v1.0/organization' --query 'value[0].verifiedDomains[?isDefault].name' -o tsv)
-domain = "data2ai.onmicrosoft.com"
+domain = "mokhtarsellamigmail.onmicrosoft.com"
 
 # Patterns (defaults work for apprenant01-apprenant12)
 # username_pattern       = "apprenant{i}"
@@ -16,7 +16,7 @@ domain = "data2ai.onmicrosoft.com"
 # password_pattern       = "AzureLearner2026@{i}"
 
 # Password policy
-force_password_change = true
+force_password_change = false
 
 # Security group
 group_name = "Data2AI-Learners"

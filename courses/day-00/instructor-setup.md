@@ -16,7 +16,7 @@ Le formateur prépare trois environnements à l'aide de **4 modules Terraform** 
 | **Step 2** | `project/01-snowflake-learners` | Snowflake : 12 utilisateurs, rôles SYSADMIN, MFA bypass, mots de passe → KV |
 | **Step 3** | `project/02-azuread-learners` | Azure AD : 12 utilisateurs, groupe de sécurité, RBAC Reader |
 | **Step 4** | `project/03-devops-setup` | Azure DevOps : projet, entitlements, variable group → Key Vault |
-| **Step 5** | Distribution manuelle | Copier `secrets/shared-sp.txt` + `secrets/snowflake_pat.txt` sur les VMs apprenants |
+| **Step 5** | Distribution manuelle | Copier `secrets/shared-sp.txt` + `secrets/snowflake_pat.txt` sur les VMs apprenants. Distribuer individuellement `secrets/learner-azure-passwords.txt` et `secrets/learner-snowflake-passwords.txt` |
 
 > `[IaC]` **Tout est Infrastructure as Code.** Les 4 modules Terraform sont versionnés,
 > idempotents, et offrent un audit trail complet via Git + Terraform state.
@@ -207,8 +207,8 @@ code terraform.tfvars
 
 ```hcl
 learner_count = 12
-domain        = "data2ai.onmicrosoft.com"
-force_password_change = true
+domain        = "mokhtarsellamigmail.onmicrosoft.com"
+force_password_change = false
 group_name    = "Data2AI-Learners"
 
 subscription_id = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
@@ -246,12 +246,12 @@ code terraform.tfvars
 
 ```hcl
 project_name   = "terraform-snowflake"
-learner_upns   = ["apprenant01@data2ai.onmicrosoft.com", ...]  # depuis 02 output
+learner_upns   = ["apprenant01@mokhtarsellamigmail.onmicrosoft.com", ...]  # depuis 02 output
 license_type   = "express"
 
-key_vault_name    = "kvdata2aitfsecrets"
+key_vault_name    = "kvdata2aitfsecretsmsn"
 subscription_id   = "8c42d5b2-ab70-4051-ab0e-a96877557f6a"
-subscription_name = "Data2AI-Training"
+subscription_name = "Azure subscription 1"
 tenant_id         = "55fca982-2372-4352-8b7e-c28ac00ae8e3"
 auth_scheme       = "WorkloadIdentityFederation"
 
@@ -404,7 +404,7 @@ az keyvault secret list --vault-name kvdata2aitfsecretsmsn --query "[].name" -o 
 ```
 
 **Expected :** au minimum `ArmClientId`, `ArmClientSecret`, `ArmTenantId`,
-`ArmSubscriptionId`, `SnowflakePAT`.
+`ArmSubscriptionId`, `SnowflakePAT`, `SnowflakePassword-APP01` à `SnowflakePassword-APP12`.
 
 ### 7.3 — Flux d'authentification apprenant (KV-first)
 
@@ -493,8 +493,11 @@ Le formateur peut distribuer ces fichiers en secours uniquement.
 - [ ] Key Vault Secrets User accordé au groupe `Data2AI-Learners`
 - [ ] Secrets `ArmClientId`, `ArmClientSecret`, `ArmTenantId`, `ArmSubscriptionId` présents dans KV
 - [ ] Secret `SnowflakePAT` présent dans Key Vault
+- [ ] Secrets `SnowflakePassword-APP01` à `SnowflakePassword-APP12` présents dans KV
 - [ ] Apprenants peuvent s'authentifier via `Learner-Login.ps1` (mode KV-first)
 - [ ] Fallback : `secrets/shared-sp.txt` + `secrets/snowflake_pat.txt` disponibles en secours
+- [ ] Identifiants AAD distribués individuellement (`secrets/learner-azure-passwords.txt`)
+- [ ] Identifiants Snowflake distribués individuellement (`secrets/learner-snowflake-passwords.txt`)
 - [ ] Dépôt `data-platform-starter` poussé sur GitHub
 - [ ] `config/shared.env` commité (starter + racine)
 
@@ -661,9 +664,14 @@ Copiez les fichiers suivants sur chaque VM dans `secrets/` :
 |---|---|---|
 | `secrets/shared-sp.txt` | Identifiants du SP partagé (`ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`, `ARM_SUBSCRIPTION_ID`) | Étape 1.1 ci-dessus |
 | `secrets/snowflake_pat.txt` | PAT Snowflake partagé (utilisateur `DATA2AI`, rôle `SYSADMIN`) | Généré depuis Snowflake UI ou manuellement |
+| `secrets/learner-azure-passwords.txt` | UPNs + mots de passe AAD des apprenants (pour login browser KV-first) | Créé par `project/02-azuread-learners` (Terraform) |
+| `secrets/learner-snowflake-passwords.txt` | Usernames + mots de passe Snowflake des apprenants (pour login web Snowsight) | Créé par `project/01-snowflake-learners` (Terraform) |
 
 > `[SECURITY]` Ces fichiers sont gitignored. Ne les commitez jamais.
 > Distribuez-les de façon sécurisée (clé USB, partage restreint, etc.).
+> Les fichiers `learner-azure-passwords.txt` et `learner-snowflake-passwords.txt` 
+> contiennent les identifiants individuels de chaque apprenant — distribuez-les 
+> de façon **individuelle et sécurisée**, pas en copiant tout le fichier sur chaque VM.
 
 ### 12.3 — Vérifier la readiness de chaque VM
 

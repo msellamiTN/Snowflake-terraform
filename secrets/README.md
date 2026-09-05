@@ -66,6 +66,9 @@ The `.gitignore` excludes all files in `secrets/` except this README, so the dir
 |---|---|---|---|
 | `shared-sp.txt` | Day 0 (recovery only) | Azure SP credentials for `az login` | Instructor (fallback) |
 | `snowflake_pat.txt` | Day 0 (recovery only) | Snowflake PAT | Key Vault (preferred) or `New-SnowflakeConnection.ps1` |
+| `learner-azure-passwords.txt` | Day 0 (instructor only) | AAD learner UPNs + passwords for KV-first browser login | `project/02-azuread-learners` (Terraform) |
+| `learner-snowflake-passwords.txt` | Day 0 (instructor only) | Snowflake web login passwords (Snowsight) | Instructor / Key Vault `SnowflakePassword-APPxx` |
+| `learner-sp-secrets.txt` | Day 0 (instructor only) | Per-learner SP credentials (appId, secret, tenantId) | Instructor |
 | `snowflake_key.p8` | Day 4 (M10) | RSA private key for JWT auth | `openssl genrsa` |
 | `snowflake_key.pub` | Day 4 (M10) | RSA public key | `openssl rsa -pubout` |
 | `backend.hcl` | Day 2 (M2) | Azure Blob backend config | Learner creates |
