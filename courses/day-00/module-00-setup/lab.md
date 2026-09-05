@@ -27,8 +27,8 @@
 flowchart LR
     DEV["🧑‍💻 Apprenant"] -->|"1. git clone"| REPO["📦 data-platform-starter"]
     REPO -->|"2. Install-Tools"| TOOLS["⚙️ Toolchain: Terraform, Snow CLI, Azure CLI, dbt"]
-    REPO -->|"3. New-SnowflakeConnection"| SNOW["❄️ Snowflake CLI -c training"]
-    REPO -->|"4. Learner-Login"| AZURE["☁️ Azure SP + Key Vault PAT"]
+    REPO -->|"3. Learner-Login"| AZURE["☁️ Azure SP + Key Vault PAT"]
+    REPO -->|"4. New-SnowflakeConnection"| SNOW["❄️ Snowflake CLI -c training"]
     TOOLS --> VERIFY["✅ Test-LabConnectivity: READY"]
     SNOW --> VERIFY
     AZURE --> VERIFY
@@ -166,8 +166,8 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
 > `[IMPORTANT]` `Learner-Login.ps1` récupère le PAT depuis **Azure Key Vault**
-> (secret partagé `SnowflakePAT`). Si Key Vault est inaccessible,
-> il utilise `secrets/snowflake_pat.txt` comme fallback (créé par `New-SnowflakeConnection.ps1`).
+> (secret partagé `SnowflakePAT`) et l'écrit dans `secrets/snowflake_pat.txt`.
+> Si Key Vault est inaccessible, le PAT peut être saisi manuellement via `New-SnowflakeConnection.ps1`.
 > Sans cela, `terraform plan` vous demandera `var.snowflake_token` manuellement.
 
 > `[WINDOWS]` Si vous obtenez l'erreur `l'exécution de scripts est désactivée`,
@@ -958,7 +958,7 @@ L'apprentissage professionnel associe les commandes du terminal à la maîtrise 
 2. Saisissez votre identifiant de compte Snowflake : `<ORGANIZATION>-<ACCOUNT>` (valeur présente dans votre `.env`).
 3. Connectez-vous avec vos identifiants apprenant :
    - **Nom d'utilisateur :** `apprenant01` (votre identifiant apprenant, **différent** de votre préfixe `APP01`)
-   - **Mot de passe :** fourni individuellement par le formateur (voir étape 5.3).
+   - **Mot de passe :** fourni individuellement par le formateur (voir étape 5.4).
 4. Vérifiez en haut à droite que votre rôle actif est **`SYSADMIN`** (et non `ACCOUNTADMIN`).
 5. Cliquez sur **Worksheets > + SQL Worksheet**, collez et exécutez (`Ctrl + Enter`) :
    ```sql

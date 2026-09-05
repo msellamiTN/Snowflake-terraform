@@ -572,7 +572,7 @@ Le rapport affiche chaque outil avec son statut (`PASS` / `FAIL` / `WARN`) et la
 | `learner-tool` (version incorrecte) | La version installée ne correspond pas à la politique | Relancez `Install-Tools.ps1` (il épinglera les versions correctes). |
 | `learner-tool` (runtime broken) | Le venv Snowflake CLI a été cassé par une installation dbt dans le même environnement | Relancez `Install-Tools.ps1 -Force` (recrée les deux venvs séparés). |
 | `learner-config` | `.env` ou `LEARNER_PREFIX` non configuré | Suivez l'étape 5.2 du lab (configuration `.env`). |
-| `credential` | PAT ou connexion Snowflake manquant | Suivez l'étape 5.3 du lab (`New-SnowflakeConnection.ps1`). |
+| `credential` | PAT ou connexion Snowflake manquant | Suivez l'étape 5.4 du lab (`New-SnowflakeConnection.ps1`). |
 | `instructor-side` | RBAC Blob/Key Vault manquant | **Escalade formateur** — le SP n'a pas les droits ou la propagation n'est pas effective. |
 
 **Remédiation pour un outil cassé :**
